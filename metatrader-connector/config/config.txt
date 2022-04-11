@@ -1,0 +1,6 @@
+{
+	"secretsfile":"config/secretsfile.json",
+	"folderid":"",
+	"spreadsheet":"Trading Journal",
+	"worksheet":"2022"
+}
