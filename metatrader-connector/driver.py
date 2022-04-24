@@ -4,14 +4,12 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 import datetime
-from datetime import datetime, timedelta, date
+from datetime import timedelta, date
 import time
 
 
 from pydrive.drive import GoogleDrive
 from pydrive.auth  import GoogleAuth
-
-import MetaTrader5 as mt5
 
 from  helpers import *
 from chart import DrawChart
@@ -19,131 +17,113 @@ from chart import DrawChart
 
 class DriveFileController:
     REQUEST_SCOPE = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-    def __init__(self, secrets, folderid, spreadsheet, worksheet):
+    def __init__(self, secrets, folderid, spreadsheet, worksheet, dir):
 
         # use creds to create a client to interact with the Google Drive API
         creds = ServiceAccountCredentials.from_json_keyfile_name(secrets, DriveFileController.REQUEST_SCOPE)
         client = gspread.authorize(creds)
 
-
-        # Used for managing images
+        # Authenticate
         gauth = GoogleAuth()
         gauth.credentials = creds
-
         self.drive = GoogleDrive(gauth)
         self.folderid = folderid
 
-
         # Inits
         self.worksheet = client.open(spreadsheet).worksheet(worksheet)
-        self.freeRow = 0
         self.lastPosition = 0
-        self.allValues = None
+        self.database = self.worksheet.get_all_values()
+        self.next_free_idx = len(self.database)
+        self.dir = dir
 
-    def getImagesRequest(self):
+    def build_request_images(self):
         return "'%s' in parents and trashed=false"%self.folderid
 
-    def getAllUploadedImages(self):
-        images = self.drive.ListFile({'q': self.getImagesRequest()}).GetList()
-        imagesDic = {}
+    def get_uploaded_images(self):
+        images = self.drive.ListFile({'q': self.build_request_images()}).GetList()
+        images_dic = {}
         for k in images:
-            imagesDic[k["title"].split(".")[0]] = k["id"]
-        return imagesDic
+            images_dic[k["title"].split(".")[0]] = k["id"]
+        return images_dic
 
-    def deleteAllUploadedFiles():
+    def delete_uploaded_images():
         request_template = "'root' in parents and trashed=false"
-        file_list = drive.ListFile({'q': request_template}).GetList()
-        for folder in file_list:
-            print(folder['title'])
+        file_lst = drive.ListFile({'q': request_template}).GetList()
+        for folder in file_lst:
+            log(folder['title'])
             file1 = drive.CreateFile({'id': folder["id"]})
             file1.Delete()
 
-    # Extract and output all of the values
-    def loadValuesFromSheet(self):
-        self.allValues = self.worksheet.get_all_values()
-        self.freeRow = len(self.allValues)
-        self.header = self.allValues[0]
-        #log(self.allValues)
 
-
-    def updateInformation(self, positionarray):
+    def update_google_drive(self, positions):
         # Last position in the sheet
-        self.loadValuesFromSheet()
-        positionsUploaded = []
+        positions_google = []
 
+        # Formatting
         self.worksheet.format("A1:Q1",{'textFormat':{'fontSize':10,'fontFamily':"Calibri","bold":True}})
-        self.worksheet.format("B2:Q%d"%self.freeRow,{'textFormat':{'fontSize':10,'fontFamily':"Calibri"}})
-        self.worksheet.format("A1:A%d"%self.freeRow,{'textFormat':{'fontSize':10,'fontFamily':"Calibri","bold":True}})
+        self.worksheet.format("B2:Q%d"%self.next_free_idx,{'textFormat':{'fontSize':10,'fontFamily':"Calibri"}})
+        self.worksheet.format("A1:A%d"%self.next_free_idx,{'textFormat':{'fontSize':10,'fontFamily':"Calibri","bold":True}})
 
+        if self.next_free_idx >1:
+            positions_google =list(map(lambda x: x[0],self.database))
 
-        #self.freeRow = 1
-        if self.freeRow >1:
-            positionsUploaded =list(map(lambda x: x[0],self.allValues))
+        # Update rows and images
+        # if position is not in the already saved list
+        images_lis = self.get_uploaded_images()
+        for pid in positions:
+            pd = positions[pid]
 
-        #log("Uploaded Positions:")
-        #log(positionsUploaded)
+            # add info to database it not uploaded
+            if pid not in positions_google:
+                entry = pd.get_data_for_excel()
+                self.database.append(entry)
+                self.next_free_idx = self.next_free_idx + 1
+                self.worksheet.update('A%d:M%d'%(self.next_free_idx,self.next_free_idx), [entry])
 
+            # add only if image was not uploaded
+            if pid not in images_lis.keys():
+                try:
+                    img_name = DrawChart(self.dir).generate_chart(pd)
 
-        # Update rows
-        for positionData in positionarray:
-            # if position is not in the already saved list
-            position = positionData.position
-            if str(position) not in positionsUploaded:
-
-                self.freeRow = self.freeRow + 1
-                entry = positionData.getDataForExcelRow()
-                self.allValues.append(entry)
-                self.worksheet.update('A%d:M%d'%(self.freeRow,self.freeRow), [entry])
-
-
-
-        # upload images
-        # only the ones that can be generated
-        allImages = self.getAllUploadedImages()
-        imagekeys = allImages.keys()
-        for positionData in positionarray:
-            if positionData.exchange != 0:
-                if str(positionData.position) not in imagekeys:
-
-                    chart = DrawChart(positionData)
-                    chart.drawChart()
-
-                    log(" Uploading %s"%chart.chartname)
-                    file = self.drive.CreateFile({'title': chart.chartname,'parents':[{'id':self.folderid}]})
-                    file.SetContentFile(os.path.join(chart.chartdir, chart.chartname))
+                    log(" Uploading %s"%img_name)
+                    file = self.drive.CreateFile({'title': img_name,'parents':[{'id':self.folderid}]})
+                    file.SetContentFile(os.path.join(self.dir, img_name))
                     file.Upload()
 
                     # Add to the array
-                    allImages[(str(positionData.position))] = file["id"]
+                    images_lis[pid] = file["id"]
 
                     # Change Permissions so anyone with the link can view it
                     permission = file.InsertPermission({
                         'type': 'anyone',
                         'value': 'anyone',
                         'role': 'reader'})
+                except Exception as e:
+                    log(e)
 
-        #
+
         # Add Image links to the rows
-        imagekeys = allImages.keys()
-        links = self.worksheet.range('P1:P%d'%(self.freeRow))
-        for i in range(1,self.freeRow):
-            row = self.allValues[i]
-            position = str(row[0])
+        links = self.worksheet.range('P1:P%d'%(self.next_free_idx))
+        for i in range(1,self.next_free_idx):
+            row = self.database[i]
+            pid = str(row[0])
 
             link = links[i].value
 
             # if there is no link
             if link == "":
-                if position in allImages:
+                if pid in images_lis:
                     log(" Inserting \"Hyperlink\" into P%d"%(i+1))
-                    file = self.drive.CreateFile({'id': allImages[str(position)],'parents':[{'id':self.folderid}]})
+                    file = self.drive.CreateFile({'id': images_lis[pid],'parents':[{'id':self.folderid}]})
                     file.FetchMetadata(fetch_all=True)
                     link = file['alternateLink']
 
                     #if "www." not in link and "https://" in link:
                     #    link = link.replace("https://","https://www.")
                     value = '=HYPERLINK(\"%s\",\"<link>\")'%(link)
-                    self.worksheet.update_acell('P%d'%(i+1),value)
+                    self.worksheet.update_acell('P%d'%(i+1), value)
                 else:
                     log(" Inserting \"none\" into P%d"%(i+1))
                     self.worksheet.update_acell('P%d'%(i+1),"none")
+        '''
+        '''
