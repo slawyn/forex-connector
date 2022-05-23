@@ -12,7 +12,7 @@ from pydrive.drive import GoogleDrive
 from pydrive.auth  import GoogleAuth
 
 from  helpers import *
-from chart import DrawChart
+from chart import Chart
 
 
 class DriveFileController:
@@ -55,13 +55,13 @@ class DriveFileController:
             file1.Delete()
 
 
-    def update_google_drive(self, positions):
+    def update_google_sheet(self, positions):
         # Last position in the sheet
         positions_google = []
 
         # Formatting
         self.worksheet.format("A1:Q1",{'textFormat':{'fontSize':10,'fontFamily':"Calibri","bold":True}})
-        self.worksheet.format("B2:Q%d"%self.next_free_idx,{'textFormat':{'fontSize':10,'fontFamily':"Calibri"}})
+        self.worksheet.format("B2:O%d"%self.next_free_idx,{'textFormat':{'fontSize':10,'fontFamily':"Calibri"}})
         self.worksheet.format("A1:A%d"%self.next_free_idx,{'textFormat':{'fontSize':10,'fontFamily':"Calibri","bold":True}})
 
         if self.next_free_idx >1:
@@ -77,13 +77,15 @@ class DriveFileController:
             if pid not in positions_google:
                 entry = pd.get_data_for_excel()
                 self.database.append(entry)
-                self.next_free_idx = self.next_free_idx + 1
+                self.next_free_idx += 1
                 self.worksheet.update('A%d:M%d'%(self.next_free_idx,self.next_free_idx), [entry])
+
+            img_name = Chart().generate_chart(self.dir, pd.get_id(), pd.get_rates(), pd.get_limits(), pd.get_symbol_name(), pd.get_deals())
 
             # add only if image was not uploaded
             if pid not in images_lis.keys():
                 try:
-                    img_name = DrawChart(self.dir).generate_chart(pd)
+                    img_name = Chart().generate_chart(self.dir, pd.get_id(), pd.get_rates(), pd.get_limits(), pd.get_symbol_name(), pd.get_deals())
 
                     log(" Uploading %s"%img_name)
                     file = self.drive.CreateFile({'title': img_name,'parents':[{'id':self.folderid}]})

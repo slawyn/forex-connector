@@ -1,6 +1,6 @@
 from helpers import *
 from driver import DriveFileController
-from chart import DrawChart
+from chart import Chart
 
 import MetaTrader5 as mt5
 
@@ -9,6 +9,7 @@ import sys
 import datetime
 
 class Position:
+    DEAL_TYPES = {0:"BUY", 1:"SELL"}
     def __init__(self, pos_id):
         self.id = pos_id
 
@@ -115,14 +116,7 @@ class Position:
 
     def get_deals(self):
         def filter(d):
-            type = ''
-            if d.type == 0:
-                type = 'B'
-            elif d.type == 1:
-                type = 'S'
-
-
-            return [type, d.time, d.price]
+            return [Position.DEAL_TYPES[d.type], d.time, d.price]
         result = map(filter, self.opening_deals + self.closing_deals)
         return result
 
@@ -161,10 +155,7 @@ class Position:
             self.pips_tp = 0
 
         # Type of order
-        if self.opening_deals[0].type == 0:
-            self.sell_or_buy = "BUY"
-        else:
-            self.sell_or_buy = "SELL"
+        self.sell_or_buy = Position.DEAL_TYPES[self.opening_deals[0].type]
 
     '''
     Create Data Set for Excel
@@ -263,7 +254,7 @@ class Trader:
             self.ratio = 1
             self.risk = 2
             self.symbols = None
-            #
+
             self.update_account_info()
 
     ''' Collect Account Information '''
@@ -299,7 +290,6 @@ class Trader:
             for period in reversed(range(len(Trader.TIMEFRAMES))):
                 time_frame = Trader.MT_TIMEFRAMES[period]
                 rates = mt5.copy_rates_range(pd.get_symbol_name(), time_frame, time_start, time_stop)
-                #print("%s %d %s"%(pid, len(rates), period))
                 if len(rates)>80 or time_frame == Trader.MT_TIMEFRAMES[0]:
                     pd.add_rates(rates, Trader.TIMEFRAMES[period])
                     break
@@ -307,12 +297,13 @@ class Trader:
             #start, end, period = calculate_plot_range(pd.get_start_msc(), pd.get_end_msc())
             #rates = mt5.copy_rates_range(pd.get_symbol_name(), Trader.TIMEFRAMES[period], start, end)
 
-        self.drive_handle.update_google_drive(positions)
+        self.drive_handle.update_google_sheet(positions)
 
     ''' Collect Symbols '''
     def update_symbols(self):
         self.symbols = mt5.symbols_get()
 
+    ''' Get Orders '''
     def get_orders(self):
         return m5.orders_get()
 

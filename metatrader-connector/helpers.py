@@ -36,6 +36,34 @@ def load_config(filename):
     f.close()
     return config
 
+'''
+Find min and max for price and volume
+'''
+def get_min_max(rates):
+
+    # Find highest and lowest
+    price_max = 0
+    price_min = 0xFFFFFFFF
+    volume_max = 0
+    volume_min = 0xFFFFFFFF
+
+    # time-0 open-1 high-2 low-3 close-4 tickvolume-5 spread-6 realvolume-7
+    for rate in rates:
+        if rate[2]>price_max:
+            price_max = rate[2]
+
+        if rate[3]<price_min:
+            price_min = rate[3]
+
+        if rate[5]>volume_max:
+            volume_max = rate[5]
+
+        if rate[5]<volume_min:
+            volume_min = rate[5]
+
+    return price_max, price_min, volume_max, volume_min
+
+
 def time_go_back_n_weeks(date_msc, n):
     return date_msc - (n*WEEK)
 
