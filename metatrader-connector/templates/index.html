@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Flask Buttons Example</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="{{url_for('static', filename='scripts/script.js')}}"></script>
+</head>
+
+<body>\
+    <h1>Trader Gui</h1>
+
+    <table>
+        <tr>
+            <td>
+                <form>
+                    <button type="submit">Save to Google</button>
+                </form>
+            </td>
+            <td>
+                <form action="/update">
+                    <button type="submit">Update</button>
+                </form>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button type="submit" style="width:100%; height:100%; background-color: aqua;">Buy[Market]</button>
+            </td>
+            <td>
+                <button type="submit" style="width:100%; height:100%; background-color: aqua;">Buy[Limit]</button>
+            </td>
+            <td>
+                <button type="submit" style="width:100%; height:100%; background-color: aqua;">Buy[Stop]</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button type="submit"
+                    style="width:100%; height:100%; background-color: rgb(255, 0, 0);">Sell[Market]</button>
+            </td>
+            <td>
+                <button type="submit"
+                    style="width:100%; height:100%; background-color: rgb(255, 0, 0);">Sell[Limit]</button>
+            </td>
+            <td>
+                <button type="submit"
+                    style="width:100%; height:100%; background-color: rgb(255, 0, 0);">Sell[Stop]</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button onclick="sortTable('IdTable', 0);" style="background-color: rgb(255, 145, 0);">Sort by
+                    Name</button>
+            </td>
+            <td>
+                <button onclick="sortTable('IdTable', 1);" style="background-color: rgb(233, 116, 7);">
+                    Sort by Change</button>
+            </td>
+        </tr>
+    </table>
+    <div>
+        {{ test_table | safe }}
+    </div>
+    <script type="text/javascript">
+        $(document).on('submit', '#todo-form', function (e) {
+            console.log('hello');
+            e.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: '/',
+                data: {
+                    todo: $("#todo").val()
+                },
+                success: function () {
+                    alert('saved');
+                }
+            })
+        });
+    </script>
+</body>
+
+</html>

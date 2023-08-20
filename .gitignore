@@ -1,5 +1,7 @@
 
 metatrader-connector/client_secrets.json
 metatrader-connector/config.txt
-.png
-.json
+*.png
+*.json
+*.pyc
+__py_chache__/*
