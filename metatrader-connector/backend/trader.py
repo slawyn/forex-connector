@@ -255,27 +255,30 @@ class Trader:
 
     def __init__(self, configname):
         # 1. Establish connection to the MetaTrader 5 terminal
-        if not mt5.initialize():
-            raise ValueError("initialize() failed, error code =" + str(mt5.last_error()))
-        else:
+        if self.reinit():
             self.config = load_config(configname)
             self.ratio = 1
             self.risk = 2
             self.symbols = None
-
             self.update_account_info()
 
-    ''' Collect Account Information '''
+    def reinit(self):
+        if not mt5.initialize():
+            raise ValueError("initialize() failed, error code =" + str(mt5.last_error()))
+        else:
+            return True
+
+    def is_connected(self):
+        return mt5.account_info() != None
 
     def update_account_info(self):
+        ''' Collect Account Information '''
         acc_info = mt5.account_info()
         self.balance = acc_info.balance
         self.currency = acc_info.currency
 
-    ''' Collect Information '''
-
     def update_history_info(self):
-
+        ''' Collect Information '''
         # Get Positions of closed deals and add them to excel sheet
         self.drive_handle = DriveFileController(self.config["secretsfile"], self.config["folderid"], self.config["spreadsheet"], self.config["worksheet"], self.config["dir"])
         positions = self.get_history_positions(self.config["date"])
@@ -304,19 +307,17 @@ class Trader:
                     pd.add_rates(rates, Trader.TIMEFRAMES[period])
                     break
 
-            #start, end, period = calculate_plot_range(pd.get_start_msc(), pd.get_end_msc())
-            #rates = mt5.copy_rates_range(pd.get_symbol_name(), Trader.TIMEFRAMES[period], start, end)
+            # start, end, period = calculate_plot_range(pd.get_start_msc(), pd.get_end_msc())
+            # rates = mt5.copy_rates_range(pd.get_symbol_name(), Trader.TIMEFRAMES[period], start, end)
 
         self.drive_handle.update_google_sheet(positions)
 
-    ''' Collect Symbols '''
-
     def update_symbols(self):
+        ''' Collect Symbols '''
         self.symbols = mt5.symbols_get()
 
-    ''' Get Orders '''
-
     def get_orders(self):
+        ''' Get Orders '''
         return mt5.orders_get()
 
     def get_atr(self, sym):

@@ -12,12 +12,49 @@ code {
     monospace;
 }
 
+button {
+  display: block;
+  width: 100%;
+}
+
+.redbutton {
+  background-color: red;
+  font-style: italic;
+
+  transition-duration: 0.4s;
+  border-style: double;
+  border-color: red;
+}
+
+.redbutton:hover,
+.bluebutton:hover {
+  background-color: #effff000;
+  color: white;
+}
+
+.bluebutton {
+  background-color: rgb(0, 187, 255);
+  font-style: italic;
+  border: 2px;
+  transition-duration: 0.4s;
+  border-style: double;
+  border-color: rgb(0, 187, 255);
+}
+
+.buttontable {
+  font-style: italic;
+  width: fit-content;
+  text-align: left;
+}
+
+
 .mystyle {
   font-size: 11pt;
   font-family: Arial;
   border-collapse: collapse;
   border: 1px solid silver;
-
+  text-align: left;
+  width: fit-content;
 }
 
 .mystyle td,

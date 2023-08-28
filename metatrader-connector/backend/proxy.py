@@ -3,8 +3,8 @@ from trader import Trader
 import tkinter as tk
 from tkinter import ttk
 import datetime
-from flask import Flask, render_template
-
+from flask import Flask, request, render_template
+from commander import Commander
 
 APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_PATH = os.path.join(APP_PATH, 'html/')
@@ -21,25 +21,34 @@ class App:
     COL_2 = 'CHANGE'
     COL_3 = 'TIME'
 
-    def __init__(self, trader):
-        self.trader = trader
+    def __init__(self):
+        self.trader = Trader(CONFIG_NAME)
+        self.commander = Commander()
+
+    def send_to_commander(self, data):
+        data = self.commander.send_instrument(data)
 
     def run(self):
         self.window.mainloop()
 
     def _save_to_google(self):
+        if not self.trader.is_connected():
+            self.trader.reinit()
         self.trader.update_history_info()
 
     def _build_tree(self):
         indices = []
         data = {App.COL_0: [], App.COL_1: [], App.COL_2: [], App.COL_3: [], }
         columns = [App.COL_0, App.COL_1, App.COL_2, App.COL_3]
+
+        ###
+        if not self.trader.is_connected():
+            self.trader.reinit()
         syms = self.trader.get_symbols_sorted()
         react_data = []
 
         for idx in range(len(syms)):
             sym = syms[idx]
-
             symtick = self.trader.get_tick(sym)
 
             # Filter based on in and out currency
@@ -87,16 +96,14 @@ def update_table():
     '''Updates table with instruments
     '''
     index, columns, data, rd = app._build_tree()
-
-    # create html
-    #df = pd.DataFrame(data, columns=columns, index=index)
-
-    # df.style.pipe(make_pretty)
-    #table = df.to_html(classes='mystyle', table_id='IdTable')
-    # return table
     return rd
 
-# Route for seeing a data
+
+def send_command(data):
+    '''Updates table with instruments
+    '''
+    app.send_to_commander(data)
+    return {'id': '0'}
 
 
 @flask.route('/data')
@@ -111,21 +118,22 @@ def get_time():
     }
 
 
-@flask.route('/')
-def index():
-    return render_template("index.html", test_table=update_table())
-
-
 @flask.route('/update', methods=['GET', 'POST', 'DELETE', 'PATCH'])
 def update():
     return update_table()
-    # return render_template("index.html", test_table=update_table())  # , 204
+
+
+@flask.route('/command', methods=['POST'])
+def command():
+    data = request.get_json()
+    instrument = data.get("Instrument")
+    return send_command(instrument)
 
 
 if __name__ == "__main__":
     try:
 
-        app = App(Trader(CONFIG_NAME))
+        app = App()
         flask.run(debug=True)
     except Exception as e:
         log(e)

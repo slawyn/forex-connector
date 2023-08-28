@@ -2,20 +2,7 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import Table from "./Table";
-
-
-
-function handleSortColum0() {
-  return null;
-}
-
-function handleSortColum1() {
-  return null;
-}
-
-function handleSortColum2() {
-  return null;
-}
+import Button from "./Button"
 
 function App() {
   // usestate for setting a javascript
@@ -63,7 +50,7 @@ function App() {
         {/* Calling a data from setdata for showing */}
         <p>{data.date}</p>
 
-        <table className="mystyle">
+        <table className="buttontable">
           <tbody>
             <tr>
               <td>
@@ -79,35 +66,24 @@ function App() {
             </tr>
             <tr>
               <td>
-                <button type="submit">Buy[Market]</button>
+                <Button name={"Buy[Market]"} customClass={"bluebutton"} />
               </td>
               <td>
-                <button type="submit" >Buy[Limit]</button>
+                <Button name={"Buy[Limit]"} customClass={"bluebutton"} />
               </td>
               <td>
-                <button type="submit">Buy[Stop]</button>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <button type="submit">Sell[Market]</button>
-              </td>
-              <td>
-                <button type="submit">Sell[Limit]</button>
-              </td>
-              <td>
-                <button type="submit">Sell[Stop]</button>
+                <Button name={"Buy[Stop]"} customClass={"bluebutton"} />
               </td>
             </tr>
             <tr>
               <td>
-                <button onClick={handleSortColum0} >Sort byName</button>
+                <Button name={"Sell[Market]"} customClass={"redbutton"} />
               </td>
               <td>
-                <button onClick={handleSortColum1} >Sort by Atr</button>
+                <Button name={"Sell[Limit]"} customClass={"redbutton"} />
               </td>
               <td>
-                <button onClick={handleSortColum2} >Sort by Change</button>
+                <Button name={"Sell[Stop]"} customClass={"redbutton"} />
               </td>
             </tr>
           </tbody>

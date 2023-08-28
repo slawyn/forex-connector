@@ -47,6 +47,25 @@ const sort = (ref, col) => {
     };
 }
 
+function postInstrument(instr) {
+    const instrument = instr;
+    return () => {
+
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer my-token',
+
+            },
+            body: JSON.stringify({ 'Instrument': instrument })
+        };
+        fetch('/command', requestOptions)
+            .then(response => response.json())
+            .then(data => { console.log("LOG:Instrument sent") });
+    }
+}
+
 
 const TableHeadItem = ({ hparam0, hparam1, item, className }) => {
     return (
@@ -58,8 +77,9 @@ const TableHeadItem = ({ hparam0, hparam1, item, className }) => {
 
 
 const TableRow = ({ data }) => {
+    var instrument = data[0];
     return (
-        <tr>
+        <tr onClick={postInstrument(instrument)}>
             {data.map((item) => {
                 return <td key={item}>{item}</td>;
             })}
