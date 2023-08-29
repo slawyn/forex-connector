@@ -314,6 +314,9 @@ class Trader:
     def update_symbols(self):
         ''' Collect Symbols '''
         self.symbols = mt5.symbols_get()
+        if self.symbols == None or len(self.symbols) == 0:
+            mt5.initialize()
+            self.symbols = mt5.symbols_get()
 
     def send_order(self, symbol, type, volume, price, sl, tp, stoplimit, comment=""):
         try:

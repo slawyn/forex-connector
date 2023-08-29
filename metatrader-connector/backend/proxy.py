@@ -116,7 +116,7 @@ def get_time():
     }
 
 
-@flask.route('/update', methods=['GET', 'POST', 'DELETE', 'PATCH'])
+@flask.route('/update', methods=['GET'])
 def update():
     return update_table()
 

@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect, createRef } from "react";
 
 
 const sort = (ref, col) => {
@@ -87,26 +87,63 @@ const TableRow = ({ data }) => {
     );
 };
 
-const Table = ({ theadData, tbodyData, customClass }) => {
-    const tableRef = useRef(null);
-    var headerCount = -1;
-    return (
-        <table ref={tableRef} className={customClass}>
-            <thead>
-                <tr>
-                    {theadData.map((h) => {
-                        headerCount += 1;
-                        return <TableHeadItem hparam0={tableRef.current} hparam1={headerCount} key={h} item={h} className={customClass} />;
+class Table extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.tableRef = React.createRef();
+        this.customClass = props.customClass;
+        this.headerData = ["INSTRUMENT", "ATR", "CHANGE", "TIME"];
+        this.state = {
+            data: []
+        };
+    }
+
+    UpdateComponent() {
+        /* Updater */
+        // Using fetch to fetch the api from
+        // flask server it will be redirected to proxy
+        fetch("/update").then((res) =>
+            res.json().then((received) => {
+                this.setState({
+                    data: received
+                })
+            })
+
+
+        );
+    }
+
+    componentDidMount() {
+        //this.UpdateComponent();
+        /* Update periodically */
+        this.interval = setInterval(() => this.UpdateComponent(), 2000);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.interval);
+    }
+
+    render() {
+        var headerCount = -1;
+        return (
+            <table ref={this.tableRef} className={this.customClass}>
+                <thead>
+                    <tr>
+                        {this.headerData.map((h) => {
+                            headerCount += 1;
+                            return <TableHeadItem hparam0={this.tableRef.current} hparam1={headerCount} key={h} item={h} className={this.ustomClass} />;
+                        })}
+                    </tr>
+                </thead>
+                <tbody>
+                    {this.state.data.map((item) => {
+                        return <TableRow key={item.id} data={item.items} />;
                     })}
-                </tr>
-            </thead>
-            <tbody>
-                {tbodyData.map((item) => {
-                    return <TableRow key={item.id} data={item.items} />;
-                })}
-            </tbody>
-        </table>
-    );
+                </tbody>
+            </table>
+        );
+    }
 };
 
 

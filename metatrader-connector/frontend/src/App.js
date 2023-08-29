@@ -17,8 +17,6 @@ function App() {
     programming: "",
   });
 
-  const [table, settable] = useState([]);
-  const [value, onChangeText] = React.useState('Useless Multiline Placeholder');
   // Using useEffect for single rendering
   useEffect(() => {
     // Using fetch to fetch the api from
@@ -35,30 +33,28 @@ function App() {
       })
     );
 
-    fetch("/update").then((res) =>
-      res.json().then((data) => {
-        settable(data);
-      })
-    );
+
   }, []);
 
-  const theadData1 = ["INSTRUMENT", "ATR", "CHANGE", "TIME"];
+
 
   return (
 
     <div className="App">
       <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
       <header className="App-header">
+
         {/* Calling a data from setdata for showing */}
         <div>Trader gui {data.date}</div>
         <div className="clsGlobalContainer">
+
           {/* Left block*/}
           <div className="clsSymbolsContainer">
             <TextInput />
-            <Table theadData={theadData1} tbodyData={table} customClass={"mystyle"} />
+            <Table customClass={"mystyle"} />
           </div>
-          {/* Right block*/}
 
+          {/* Right block*/}
           <div className="clsTraderTable">
             <table>
               <tbody>
