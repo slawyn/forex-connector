@@ -16,6 +16,7 @@ class Commander():
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server.connect((Commander.HOST, Commander.PORT))
             log("STATUS: Commander connected")
+            time.sleep(0.2)
         except Exception as e:
             error = True
             log("ERROR: Commander failed connect")
@@ -29,9 +30,7 @@ class Commander():
         rdata = []
         data = bytes(string, 'ascii')
         try:
-            time.sleep(0.2)
             self.server.sendall(data)
-            #rdata = self.server.recv(1024)
             log(f"STATUS: Commander sent {string}")
         except Exception as e:
             print(e)
@@ -40,11 +39,16 @@ class Commander():
 
         return rdata, error
 
+    def ping(self):
+        rdata, error = self.send_receive("\r\n")
+        if error:
+            error = self.connect()
+        return error
+
     def send_instrument(self, instrument):
         rdata = []
-        if not self.connect():
+        if not self.ping():
             rdata, error = self.send_receive(f"INSTRUMENT:{instrument}\r\n")
-            self.disconnect()
         return rdata
 
     def send_test(self):

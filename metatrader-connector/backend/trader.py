@@ -212,11 +212,10 @@ class Position:
 
         return data
 
-    '''
-    Print data
-    '''
-
     def print_data(self):
+        '''
+        Print data
+        '''
         log("## %s[%s] {%s} ###################" % (self.id, self.opening_deals[0].symbol, self.sell_or_buy))
         log("\t%-20s %-2f" % ("{SL}:", self.price_sl))
         log("\t%-20s %-2f" % ("{TP}:", self.price_tp))
@@ -268,7 +267,7 @@ class Trader:
         else:
             return True
 
-    def is_connected(self):
+    def needs_reconnect(self):
         return mt5.account_info() != None
 
     def update_account_info(self):
@@ -316,13 +315,25 @@ class Trader:
         ''' Collect Symbols '''
         self.symbols = mt5.symbols_get()
 
+    def send_order(self, symbol, type, volume, price, sl, tp, stoplimit, comment=""):
+        try:
+            result = mt5.order_send(action=action, magic=magic, order=order, symbol=symbol,  volume=volume, price=price, stoplimit=stoplimit, sl=sl, tp=tp, deviation=deviation,
+                                    type=type, type_filling=type_filling, type_time=type_time, expiration=expiration, comment=comment, position=position, position_by=position_by)
+        except Exception as e:
+            log(e)
+        pass
+
     def get_orders(self):
+        if self.needs_reconnect():
+            self.reinit()
         ''' Get Orders '''
         return mt5.orders_get()
 
     def get_atr(self, sym):
+        if self.needs_reconnect():
+            self.reinit()
+
         info = mt5.symbol_info_tick(sym.name)
-        #
         stop_msc = info.time_msc
         start_msc = time_go_back_n_weeks(stop_msc, 2)
         rates = mt5.copy_rates_range(sym.name, mt5.TIMEFRAME_D1, start_msc/1000, stop_msc/1000)
@@ -336,14 +347,6 @@ class Trader:
             return tick
         else:
             raise ValueError("Symbol cannot be None")
-
-    def send_order(self, symbol, type, volume, price, sl, tp, stoplimit, comment=""):
-        try:
-            result = mt5.order_send(action=action, magic=magic, order=order, symbol=symbol,  volume=volume, price=price, stoplimit=stoplimit, sl=sl, tp=tp, deviation=deviation,
-                                    type=type, type_filling=type_filling, type_time=type_time, expiration=expiration, comment=comment, position=position, position_by=position_by)
-        except Exception as e:
-            log(e)
-        pass
 
     def get_symbols(self):
         if self.symbols is None:
@@ -362,7 +365,7 @@ class Trader:
     def get_symbols_by_wildcard(self, wildcard):
         syms = []
         for s in self.get_symbols():
-            if wilcard in s:
+            if wildcard in s:
                 syms.append(s)
         return syms
 

@@ -32,21 +32,21 @@ class App:
         self.window.mainloop()
 
     def _save_to_google(self):
-        if not self.trader.is_connected():
-            self.trader.reinit()
         self.trader.update_history_info()
 
-    def _build_tree(self):
+    def get_account_info():
+        pass
+
+    def _build_tree(self, filter):
+        '''Builds a list of instruments based on filter
+        '''
         indices = []
         data = {App.COL_0: [], App.COL_1: [], App.COL_2: [], App.COL_3: [], }
         columns = [App.COL_0, App.COL_1, App.COL_2, App.COL_3]
-
-        ###
-        if not self.trader.is_connected():
-            self.trader.reinit()
-        syms = self.trader.get_symbols_sorted()
         react_data = []
 
+        ##
+        syms = self.trader.get_symbols_sorted()
         for idx in range(len(syms)):
             sym = syms[idx]
             symtick = self.trader.get_tick(sym)
@@ -56,29 +56,26 @@ class App:
                 percent_change = sym.price_change  # 100.0 * (((symtick.bid)-sym.session_open)/sym.session_open)
 
                 # Filter based on change
-                if abs(percent_change) > 0:
-                    log(f"[+]{sym.name}")
-                    atr = self.trader.get_atr(sym)
-                    fg = ('',)
-                    if percent_change > 0:
-                        fg = ('positive',)
-                    else:
-                        fg = ('negative',)
-
-                    indices.append(idx)
-                    data[App.COL_0].append(sym.name)
-                    data[App.COL_1].append("%-2.2f   " % atr)
-                    data[App.COL_2].append("%-2.2f" % percent_change)
-                    data[App.COL_3].append(datetime.datetime.fromtimestamp(sym.time))
-
-                    react_data.append({"id": idx,
-                                      "items": [sym.name,
-                                                "%-2.2f" % atr,
-                                                "%-2.2f" % percent_change,
-                                                datetime.datetime.fromtimestamp(sym.time)]
-                                       })
+                # TODO add filter here
+                atr = self.trader.get_atr(sym)
+                fg = ('',)
+                if percent_change > 0:
+                    fg = ('positive',)
                 else:
-                    log(f"[-]{sym.name}")
+                    fg = ('negative',)
+
+                indices.append(idx)
+                data[App.COL_0].append(sym.name)
+                data[App.COL_1].append("%-2.2f   " % atr)
+                data[App.COL_2].append("%-2.2f" % percent_change)
+                data[App.COL_3].append(datetime.datetime.fromtimestamp(sym.time))
+
+                react_data.append({"id": idx,
+                                   "items": [sym.name,
+                                             "%-2.2f" % atr,
+                                             "%-2.2f" % percent_change,
+                                             datetime.datetime.fromtimestamp(sym.time)]
+                                   })
 
         return indices, columns, data, react_data
 
@@ -95,7 +92,8 @@ def make_pretty(styler):
 def update_table():
     '''Updates table with instruments
     '''
-    index, columns, data, rd = app._build_tree()
+    filter = []
+    index, columns, data, rd = app._build_tree(filter)
     return rd
 
 

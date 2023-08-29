@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import Table from "./Table";
-import Button from "./Button"
+import Button from "./Button";
+import TextInput from "./TextInput";
+
+
 
 function App() {
   // usestate for setting a javascript
@@ -15,7 +18,7 @@ function App() {
   });
 
   const [table, settable] = useState([]);
-
+  const [value, onChangeText] = React.useState('Useless Multiline Placeholder');
   // Using useEffect for single rendering
   useEffect(() => {
     // Using fetch to fetch the api from
@@ -46,52 +49,58 @@ function App() {
     <div className="App">
       <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
       <header className="App-header">
-        <h1>Trader gui</h1>
         {/* Calling a data from setdata for showing */}
-        <p>{data.date}</p>
+        <div>Trader gui {data.date}</div>
+        <div className="clsGlobalContainer">
+          {/* Left block*/}
+          <div className="clsSymbolsContainer">
+            <TextInput />
+            <Table theadData={theadData1} tbodyData={table} customClass={"mystyle"} />
+          </div>
+          {/* Right block*/}
 
-        <table className="buttontable">
-          <tbody>
-            <tr>
-              <td>
-                <form>
-                  <button type="submit">Save to Google</button>
-                </form>
-              </td>
-              <td>
-                <form action="/update">
-                  <button type="submit">Update</button>
-                </form>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <Button name={"Buy[Market]"} customClass={"bluebutton"} />
-              </td>
-              <td>
-                <Button name={"Buy[Limit]"} customClass={"bluebutton"} />
-              </td>
-              <td>
-                <Button name={"Buy[Stop]"} customClass={"bluebutton"} />
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <Button name={"Sell[Market]"} customClass={"redbutton"} />
-              </td>
-              <td>
-                <Button name={"Sell[Limit]"} customClass={"redbutton"} />
-              </td>
-              <td>
-                <Button name={"Sell[Stop]"} customClass={"redbutton"} />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div>
-          <Table theadData={theadData1} tbodyData={table} customClass={"mystyle"} />
+          <div className="clsTraderTable">
+            <table>
+              <tbody>
+                <tr>
+                  <td>
+                    <form>
+                      <button type="submit">Save to Google</button>
+                    </form>
+                  </td>
+                  <td>
+                    <form action="/update">
+                      <button type="submit">Update</button>
+                    </form>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <Button name={"Buy[Market]"} customClass={"bluebutton"} />
+                  </td>
+                  <td>
+                    <Button name={"Buy[Limit]"} customClass={"bluebutton"} />
+                  </td>
+                  <td>
+                    <Button name={"Buy[Stop]"} customClass={"bluebutton"} />
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <Button name={"Sell[Market]"} customClass={"redbutton"} />
+                  </td>
+                  <td>
+                    <Button name={"Sell[Limit]"} customClass={"redbutton"} />
+                  </td>
+                  <td>
+                    <Button name={"Sell[Stop]"} customClass={"redbutton"} />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </header>
+      </header >
     </div >
 
   );
