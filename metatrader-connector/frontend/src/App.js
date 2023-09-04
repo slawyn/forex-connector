@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import Table from "./Table";
 import Button from "./Button";
-import TextInput from "./TextInput";
+
 
 
 
@@ -50,7 +50,6 @@ function App() {
 
           {/* Left block*/}
           <div className="clsSymbolsContainer">
-            <TextInput />
             <Table customClass={"mystyle"} />
           </div>
 

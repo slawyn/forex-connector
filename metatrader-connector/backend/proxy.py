@@ -1,5 +1,5 @@
 from helpers import *
-from trader import Trader
+from trader import Trader, AccountInfo
 import tkinter as tk
 from tkinter import ttk
 import datetime
@@ -24,6 +24,7 @@ class App:
     def __init__(self):
         self.trader = Trader(CONFIG_NAME)
         self.commander = Commander()
+        self._set_filter("currency")
 
     def send_to_commander(self, data):
         data = self.commander.send_instrument(data)
@@ -34,10 +35,20 @@ class App:
     def _save_to_google(self):
         self.trader.update_history_info()
 
-    def get_account_info():
-        pass
+    def _set_filter(self, filter):
+        self.trader.set_filter(filter)
 
-    def _build_tree(self, filter):
+    def _get_account_info(self):
+        info = self.trader.get_account_info()
+        return {"balance": info.balance,
+                "currency": info.currency,
+                "profit": info.profit,
+                "leverage": info.leverage,
+                "company": info.company,
+                "server": info.server,
+                "login": info.login}
+
+    def _get_symbols(self, filter):
         '''Builds a list of instruments based on filter
         '''
         indices = []
@@ -49,33 +60,20 @@ class App:
         syms = self.trader.get_symbols_sorted()
         for idx in range(len(syms)):
             sym = syms[idx]
-            symtick = self.trader.get_tick(sym)
+            atr = self.trader.get_atr(sym)
 
-            # Filter based on in and out currency
-            if symtick != None and (sym.currency_base == self.trader.currency or sym.currency_profit == self.trader.currency):
-                percent_change = sym.price_change  # 100.0 * (((symtick.bid)-sym.session_open)/sym.session_open)
+            indices.append(idx)
+            data[App.COL_0].append(sym.name)
+            data[App.COL_1].append("%-2.2f   " % atr)
+            data[App.COL_2].append("%-2.2f" % sym.price_change)
+            data[App.COL_3].append(datetime.datetime.fromtimestamp(sym.time))
 
-                # Filter based on change
-                # TODO add filter here
-                atr = self.trader.get_atr(sym)
-                fg = ('',)
-                if percent_change > 0:
-                    fg = ('positive',)
-                else:
-                    fg = ('negative',)
-
-                indices.append(idx)
-                data[App.COL_0].append(sym.name)
-                data[App.COL_1].append("%-2.2f   " % atr)
-                data[App.COL_2].append("%-2.2f" % percent_change)
-                data[App.COL_3].append(datetime.datetime.fromtimestamp(sym.time))
-
-                react_data.append({"id": idx,
-                                   "items": [sym.name,
-                                             "%-2.2f" % atr,
-                                             "%-2.2f" % percent_change,
-                                             datetime.datetime.fromtimestamp(sym.time)]
-                                   })
+            react_data.append({"id": idx,
+                               "items": [sym.name,
+                                         "%-2.2f" % atr,
+                                         "%-2.2f" % sym.price_change,
+                                         datetime.datetime.fromtimestamp(sym.time)]
+                               })
 
         return indices, columns, data, react_data
 
@@ -89,12 +87,13 @@ def make_pretty(styler):
     return styler
 
 
-def update_table():
+def get_with_terminal_info():
     '''Updates table with instruments
     '''
     filter = []
-    index, columns, data, rd = app._build_tree(filter)
-    return rd
+    index, columns, data, instruments = app._get_symbols(filter)
+    account = app._get_account_info()
+    return {"instruments": instruments, "account": account}
 
 
 def send_command(data):
@@ -118,7 +117,7 @@ def get_time():
 
 @flask.route('/update', methods=['GET'])
 def update():
-    return update_table()
+    return get_with_terminal_info()
 
 
 @flask.route('/command', methods=['POST'])

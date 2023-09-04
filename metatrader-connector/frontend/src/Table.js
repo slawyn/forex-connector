@@ -1,19 +1,38 @@
 import React, { useRef, useState, useEffect, createRef } from "react";
+import TextInput from "./TextInput";
 
 
-const sort = (ref, col) => {
-    var sortDirection = true;
+/**
+ * 
+ * @param {table refenrece} table 
+ * @param {row reference} row 
+ */
+function highLightRow(table, row) {
+    var rows = table.current.rows;
+    for (var i = 0; i < (rows.length); i++) {
+        rows[i].style.background = "";
+    }
+    row.current.style.background = "orange";
+}
+/**
+ * 
+ * @param {table reference} table 
+ * @param {column to sort by} col 
+ * @returns 
+ */
+const sortRows = (table, col) => {
+    var sortRowsDirection = true;
     var column = col;
-    var table = ref;
+    var tableRef = table.current;
     return () => {
-        sortDirection = !sortDirection;
+        sortRowsDirection = !sortRowsDirection;
         var rows, i, x, y, shouldSwitch;
         var switching = true;
 
         while (switching) {
 
             switching = false;
-            rows = table.rows;
+            rows = tableRef.rows;
 
             /* Loop through all table rows (except the
             first, which contains table headers): */
@@ -24,7 +43,7 @@ const sort = (ref, col) => {
                 y = rows[i + 1].getElementsByTagName("TD")[column];
 
                 // If so, mark as a switch and break the loop:
-                if (sortDirection) {
+                if (sortRowsDirection) {
 
                     if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
 
@@ -47,10 +66,16 @@ const sort = (ref, col) => {
     };
 }
 
-function postInstrument(instr) {
-    const instrument = instr;
-    return () => {
 
+
+
+const selectInstrument = (table, row, instr) => {
+    const instrument = instr;
+    const rowRef = row;
+    const tableRef = table;
+    /* Post instrument here */
+    return () => {
+        highLightRow(table, row);
         const requestOptions = {
             method: 'POST',
             headers: {
@@ -69,23 +94,34 @@ function postInstrument(instr) {
 
 const TableHeadItem = ({ hparam0, hparam1, item, className }) => {
     return (
-        <th title={item} className={className} onClick={sort(hparam0, hparam1)}>
+        <th title={item} className={className} onClick={sortRows(hparam0, hparam1)}>
             {item}
         </th>
     );
 };
 
 
-const TableRow = ({ data }) => {
-    var instrument = data[0];
-    return (
-        <tr onClick={postInstrument(instrument)}>
-            {data.map((item) => {
-                return <td key={item}>{item}</td>;
-            })}
-        </tr>
-    );
-};
+class TableRow extends React.Component {
+    constructor(props) {
+        super(props);
+        this.tableRef = props.table;
+        this.data = props.data;
+        this.rowRef = React.createRef();
+    }
+
+    componentDidMount() {
+    }
+
+    render() {
+        return (
+            <tr ref={this.rowRef} onClick={selectInstrument(this.tableRef, this.rowRef, this.data[0])}>
+                {this.data.map((item) => {
+                    return <td key={item}>{item}</td>;
+                })}
+            </tr>)
+    }
+}
+
 
 class Table extends React.Component {
 
@@ -95,7 +131,7 @@ class Table extends React.Component {
         this.customClass = props.customClass;
         this.headerData = ["INSTRUMENT", "ATR", "CHANGE", "TIME"];
         this.state = {
-            data: []
+            data: { account: [], instruments: [] }
         };
     }
 
@@ -109,8 +145,6 @@ class Table extends React.Component {
                     data: received
                 })
             })
-
-
         );
     }
 
@@ -127,21 +161,39 @@ class Table extends React.Component {
     render() {
         var headerCount = -1;
         return (
-            <table ref={this.tableRef} className={this.customClass}>
-                <thead>
-                    <tr>
-                        {this.headerData.map((h) => {
-                            headerCount += 1;
-                            return <TableHeadItem hparam0={this.tableRef.current} hparam1={headerCount} key={h} item={h} className={this.ustomClass} />;
+            <div>
+                <table className={this.customClass}>
+                    <tbody>
+                        <tr>
+                            <td className={this.customClass}>Company:{this.state.data.account.company}</td>
+                            <td className={this.customClass}>Balance:{this.state.data.account.balance}{this.state.data.account.currency}</td>
+                            <td className={this.customClass}>{this.state.data.account.login}</td>
+                        </tr>
+                        <tr>
+                            <td className={this.customClass}>Server:{this.state.data.account.server}</td>
+                            <td className={this.customClass}>Profit:{this.state.data.account.profit}</td>
+                            <td className={this.customClass}>Leverage:{this.state.data.account.leverage}</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+
+                <table ref={this.tableRef} className={this.customClass}>
+                    <thead>
+                        <tr>
+                            {this.headerData.map((h) => {
+                                headerCount += 1;
+                                return <TableHeadItem hparam0={this.tableRef} hparam1={headerCount} key={h} item={h} className={this.customClass} />;
+                            })}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {this.state.data.instruments.map((item) => {
+                            return <TableRow key={item.id} table={this.tableRef} data={item.items} />;
                         })}
-                    </tr>
-                </thead>
-                <tbody>
-                    {this.state.data.map((item) => {
-                        return <TableRow key={item.id} data={item.items} />;
-                    })}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div >
         );
     }
 };

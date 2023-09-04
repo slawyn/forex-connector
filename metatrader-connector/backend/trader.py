@@ -9,6 +9,26 @@ import sys
 import datetime
 
 
+class AccountInfo:
+    def __init__(self, balance=0, currency="", profit=0, leverage=0, company="", server="", login=0):
+        self.balance = balance
+        self.currency = currency
+        self.profit = profit
+        self.leverage = leverage
+        self.company = company
+        self.server = server
+        self.login = login
+
+    def set_data(self, balance, currency, profit, leverage, company, server, login):
+        self.balance = balance
+        self.currency = currency
+        self.profit = profit
+        self.leverage = leverage
+        self.company = company
+        self.server = server
+        self.login = login
+
+
 class Position:
     DEAL_TYPES = {0: "BUY", 1: "SELL"}
 
@@ -72,11 +92,9 @@ class Position:
 
         diff_volume = self.opening_volume - self.closing_volume
 
-    '''
-    Add orders to position
-    '''
-
     def add_orders(self, orders):
+        '''Add orders to position
+        '''
         # Check if stop loss has been set, if not set it to a value by parsing other orders regarding this position
         # Problem some data doesn't have stop loss or take profit data in the database, although it is set in metatrader. Don't know why
         if orders != None:
@@ -86,18 +104,15 @@ class Position:
 
                 if order.tp > 0.0:
                     self.price_tp = order.tp
-    '''
-    Add symbol info to position
-    '''
 
     def set_symbol_info(self, sym):
+        '''Add symbol info to position
+        '''
         self.symbol_info = sym
 
-    '''
-    Gets
-    '''
-
     def get_symbol_name(self):
+        '''Gets
+        '''
         return self.opening_deals[0].symbol
 
     def get_id(self):
@@ -125,12 +140,9 @@ class Position:
         result = map(filter, self.opening_deals + self.closing_deals)
         return result
 
-    '''
-    Calculate
-    '''
-
     def calculate(self):
-
+        '''Calculate
+        '''
         # closed only if difference is less than 0.01
         self.price_open_avg = self.price_open_avg/self.opening_volume
         self.price_close_avg = self.price_close_avg/self.closing_volume
@@ -163,11 +175,9 @@ class Position:
         # Type of order
         self.sell_or_buy = Position.DEAL_TYPES[self.opening_deals[0].type]
 
-    '''
-    Create Data Set for Excel
-    '''
-
     def get_data_for_excel(self):
+        '''Create Data Set for Excel
+        '''
         data = []
 
         # 0
@@ -259,6 +269,7 @@ class Trader:
             self.ratio = 1
             self.risk = 2
             self.symbols = None
+            self.account_info = AccountInfo()
             self.update_account_info()
 
     def reinit(self):
@@ -271,10 +282,12 @@ class Trader:
         return mt5.account_info() != None
 
     def update_account_info(self):
-        ''' Collect Account Information '''
+        ''' Collect Essential Account Information '''
         acc_info = mt5.account_info()
-        self.balance = acc_info.balance
-        self.currency = acc_info.currency
+        self.account_info.set_data(acc_info.balance, acc_info.currency, acc_info.profit, acc_info.leverage, acc_info.company, acc_info.server, acc_info.login)
+
+    def get_account_info(self):
+        return self.account_info
 
     def update_history_info(self):
         ''' Collect Information '''
@@ -326,10 +339,19 @@ class Trader:
             log(e)
         pass
 
+    def _filter_currency(self, sym):
+        return sym.currency_base == self.account_info.currency or sym.currency_profit == self.account_info.currency
+
+    def set_filter(self, filter):
+        if filter == "currency":
+            self.filter_function = self._filter_currency
+        else:
+            self.filter_function = lambda self, sym: True
+
     def get_orders(self):
+        ''' Get Orders '''
         if self.needs_reconnect():
             self.reinit()
-        ''' Get Orders '''
         return mt5.orders_get()
 
     def get_atr(self, sym):
@@ -349,7 +371,7 @@ class Trader:
             tick = mt5.symbol_info_tick(sym.name)
             return tick
         else:
-            raise ValueError("Symbol cannot be None")
+            raise ValueError("ERROR: Symbol cannot be None")
 
     def get_symbols(self):
         if self.symbols is None:
@@ -360,7 +382,8 @@ class Trader:
     def get_symbols_sorted(self):
         syms = []
         for s in self.get_symbols():
-            if s != None:
+            # TODO check for tick != None here if needed
+            if s != None and self.get_tick(s) != None and self.filter_function(s):
                 syms.append(s)
         syms.sort(key=lambda x: x.name)
         return syms
