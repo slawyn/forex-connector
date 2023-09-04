@@ -1,8 +1,8 @@
 // Importing modules
 import React, { useState, useEffect } from "react";
 import "./App.css";
-import Table from "./Table";
-import Button from "./Button";
+import Table from "./Symbols";
+import Trader from "./Trader";
 
 
 
@@ -19,8 +19,6 @@ function App() {
 
   // Using useEffect for single rendering
   useEffect(() => {
-    // Using fetch to fetch the api from
-    // flask server it will be redirected to proxy
     fetch("/data").then((res) =>
       res.json().then((data) => {
         // Setting a data from api
@@ -32,8 +30,6 @@ function App() {
         });
       })
     );
-
-
   }, []);
 
 
@@ -55,44 +51,7 @@ function App() {
 
           {/* Right block*/}
           <div className="clsTraderTable">
-            <table>
-              <tbody>
-                <tr>
-                  <td>
-                    <form>
-                      <button type="submit">Save to Google</button>
-                    </form>
-                  </td>
-                  <td>
-                    <form action="/update">
-                      <button type="submit">Update</button>
-                    </form>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <Button name={"Buy[Market]"} customClass={"bluebutton"} />
-                  </td>
-                  <td>
-                    <Button name={"Buy[Limit]"} customClass={"bluebutton"} />
-                  </td>
-                  <td>
-                    <Button name={"Buy[Stop]"} customClass={"bluebutton"} />
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <Button name={"Sell[Market]"} customClass={"redbutton"} />
-                  </td>
-                  <td>
-                    <Button name={"Sell[Limit]"} customClass={"redbutton"} />
-                  </td>
-                  <td>
-                    <Button name={"Sell[Stop]"} customClass={"redbutton"} />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <Trader customClass={"mystyle"} />
           </div>
         </div>
       </header >

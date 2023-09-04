@@ -22,8 +22,6 @@ function highLightRow(table, row) {
  */
 const sortRows = (table, col) => {
     var sortRowsDirection = true;
-    var column = col;
-    var tableRef = table.current;
     return () => {
         sortRowsDirection = !sortRowsDirection;
         var rows, i, x, y, shouldSwitch;
@@ -32,15 +30,15 @@ const sortRows = (table, col) => {
         while (switching) {
 
             switching = false;
-            rows = tableRef.rows;
+            rows = table.current.rows;
 
             /* Loop through all table rows (except the
             first, which contains table headers): */
             for (i = 1; i < (rows.length - 1); i++) {
                 shouldSwitch = false;
 
-                x = rows[i].getElementsByTagName("TD")[column];
-                y = rows[i + 1].getElementsByTagName("TD")[column];
+                x = rows[i].getElementsByTagName("TD")[col];
+                y = rows[i + 1].getElementsByTagName("TD")[col];
 
                 // If so, mark as a switch and break the loop:
                 if (sortRowsDirection) {
@@ -70,9 +68,6 @@ const sortRows = (table, col) => {
 
 
 const selectInstrument = (table, row, instr) => {
-    const instrument = instr;
-    const rowRef = row;
-    const tableRef = table;
     /* Post instrument here */
     return () => {
         highLightRow(table, row);
@@ -83,7 +78,7 @@ const selectInstrument = (table, row, instr) => {
                 'Authorization': 'Bearer my-token',
 
             },
-            body: JSON.stringify({ 'Instrument': instrument })
+            body: JSON.stringify({ 'Instrument': instr })
         };
         fetch('/command', requestOptions)
             .then(response => response.json())
