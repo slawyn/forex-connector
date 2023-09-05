@@ -4,18 +4,6 @@ import TextInput from "./TextInput";
 
 /**
  * 
- * @param {table refenrece} table 
- * @param {row reference} row 
- */
-function highLightRow(table, row) {
-    var rows = table.current.rows;
-    for (var i = 0; i < (rows.length); i++) {
-        rows[i].style.background = "";
-    }
-    row.current.style.background = "orange";
-}
-/**
- * 
  * @param {table reference} table 
  * @param {column to sort by} col 
  * @returns 
@@ -63,58 +51,60 @@ const sortRows = (table, col) => {
         }
     };
 }
+const selectTerminalSymbol = (symbol) => {
+    const requestOptions = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer my-token',
 
-
-
-
-const selectInstrument = (table, row, instr) => {
-    /* Post instrument here */
-    return () => {
-        highLightRow(table, row);
-        const requestOptions = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer my-token',
-
-            },
-            body: JSON.stringify({ 'Instrument': instr })
-        };
-        fetch('/command', requestOptions)
-            .then(response => response.json())
-            .then(data => { console.log("LOG:Instrument sent") });
-    }
+        },
+        body: JSON.stringify({ 'Instrument': symbol })
+    };
+    fetch('/command', requestOptions)
+        .then(response => response.json())
+        .then(data => { console.log("LOG:Instrument sent") });
 }
 
-
-const TableHeadItem = ({ hparam0, hparam1, item, className }) => {
+const TableHeadItem = (props) => {
     return (
-        <th title={item} className={className} onClick={sortRows(hparam0, hparam1)}>
-            {item}
+        <th title={props.item} className={props.className} onClick={sortRows(props.hparam0, props.hparam1)}>
+            {props.item}
         </th>
     );
 };
 
 
-class TableRow extends React.Component {
-    constructor(props) {
-        super(props);
-        this.tableRef = props.table;
-        this.data = props.data;
-        this.rowRef = React.createRef();
-    }
+const TableRows = (props) => {
 
-    componentDidMount() {
-    }
+    const [selectedId, setHighlight] = useState(-1);
 
-    render() {
-        return (
-            <tr ref={this.rowRef} onClick={selectInstrument(this.tableRef, this.rowRef, this.data[0])}>
-                {this.data.map((item) => {
-                    return <td key={item}>{item}</td>;
-                })}
-            </tr>)
-    }
+    const selectRow = (symbol, rowid) => {
+        setHighlight(rowid);
+        selectTerminalSymbol(symbol);
+    };
+
+    return (
+        <>
+            {
+                /** Map instruments to rows */
+                props.data.map((rowData) => {
+                    return <tr key={rowData.id} onClick={() => selectRow(rowData.items[0], rowData.id)} className={props.customClass} style={{
+                        backgroundColor: rowData.id === selectedId ? 'orange' : '',
+                    }} >
+                        {
+                            /** Map row line */
+                            rowData.items.map((cellData) => {
+                                return <td key={cellData}>{cellData}</td>
+                            })
+                        }
+
+                    </tr>
+                })
+            }
+
+        </>
+    );
 }
 
 
@@ -183,9 +173,9 @@ class Table extends React.Component {
                         </tr>
                     </thead>
                     <tbody>
-                        {this.state.data.instruments.map((item) => {
-                            return <TableRow key={item.id} table={this.tableRef} data={item.items} />;
-                        })}
+                        {
+                            <TableRows data={this.state.data.instruments} className={this.customClass} />
+                        }
                     </tbody>
                 </table>
             </div >
