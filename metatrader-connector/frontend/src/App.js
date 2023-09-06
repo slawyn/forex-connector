@@ -10,7 +10,7 @@ import Trader from "./Trader";
 function App() {
   // usestate for setting a javascript
   // object for storing and using data
-  const [data, setdata] = useState({
+  const [data, setData] = useState({
     name: "",
     age: 0,
     date: "",
@@ -21,8 +21,7 @@ function App() {
   useEffect(() => {
     fetch("/data").then((res) =>
       res.json().then((data) => {
-        // Setting a data from api
-        setdata({
+        setData({
           name: data.Name,
           age: data.Age,
           date: data.Date,
@@ -31,7 +30,6 @@ function App() {
       })
     );
   }, []);
-
 
 
   return (
