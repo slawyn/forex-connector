@@ -8,10 +8,8 @@ const Button = ({ name, customClass }) => {
     );
 };
 
-function Trader(props) {
-
+const Trader = (props) => {
     return (
-
         <table>
             <tbody>
                 <tr>

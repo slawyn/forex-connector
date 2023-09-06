@@ -18,7 +18,7 @@ function App() {
   });
 
   // Using useEffect for single rendering
-  useEffect(() => {
+  React.useEffect(() => {
     fetch("/data").then((res) =>
       res.json().then((data) => {
         setData({

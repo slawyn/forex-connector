@@ -51,27 +51,13 @@ const sortRows = (table, col) => {
         }
     };
 }
-const selectTerminalSymbol = (symbol) => {
-    const requestOptions = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer my-token',
 
-        },
-        body: JSON.stringify({ 'Instrument': symbol })
-    };
-    fetch('/command', requestOptions)
-        .then(response => response.json())
-        .then(data => { console.log("LOG:Instrument sent") });
-}
 
 const TableHeads = (props) => {
     return (
         <tr key={"HEADERS"}>
-            {props.data.map((header) => {
-                console.log(header);
-                return <th title={header} key={header} className={props.className} onClick={sortRows(1, null)}>
+            {props.data.map((header, index) => {
+                return <th title={header} key={header} className={props.className} onClick={() => { props.sorter(index) }}>
                     {header}
                 </th>
             })}
@@ -81,19 +67,62 @@ const TableHeads = (props) => {
 
 
 const TableRows = (props) => {
-
     const [selectedId, setHighlight] = useState(-1);
 
+    /**
+     * 
+     * @param {Selectes Symbol} symbol 
+     * @param {Selected Row Id} rowid 
+     */
     const selectRow = (symbol, rowid) => {
         setHighlight(rowid);
         selectTerminalSymbol(symbol);
     };
 
+    /**
+     * 
+     * @param {Selected Symbol} symbol 
+     */
+    const selectTerminalSymbol = (symbol) => {
+        const requestOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer my-token',
+
+            },
+            body: JSON.stringify({ 'Instrument': symbol })
+        };
+        fetch('/command', requestOptions)
+            .then(response => response.json())
+            .then(data => { console.log("LOG:Instrument sent") });
+    }
+
+    /**
+     * Sort Data when possible
+     */
+    const sortedData = React.useMemo(() => {
+        let objs = [...props.data];
+        if (props.sortConfig != null) {
+            objs.sort((a, b) => {
+                if (a.items[props.sortConfig.key] < b.items[props.sortConfig.key]) {
+                    return props.sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (a.items[props.sortConfig.key] > b.items[props.sortConfig.key]) {
+                    return props.sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return objs;
+    }, [props.data, props.sortConfig]);
+
+
     return (
         <>
             {
                 /** Map instruments to rows */
-                props.data.map((rowData) => {
+                sortedData.map((rowData) => {
                     return <tr key={rowData.id} onClick={() => selectRow(rowData.items[0], rowData.id)} className={props.customClass} style={{
 
                         backgroundColor: rowData.id === selectedId ? 'orange' : rowData.updated === true ? 'red' : '',
@@ -114,76 +143,81 @@ const TableRows = (props) => {
 }
 
 
-class Table extends React.Component {
+const Table = (props) => {
+    const headerData = ["INSTRUMENT", "SPREAD", "ATR", "RATIO[%]", "CHANGE[%]", "TIME"];
 
-    constructor(props) {
-        super(props);
-        this.tableRef = React.createRef();
-        this.customClass = props.customClass;
-        this.headerData = ["INSTRUMENT", "SPREAD", "ATR", "RATIO[%]", "CHANGE[%]", "TIME"];
-        this.state = {
-            data: { account: [], instruments: [] }
-        };
+    const [terminalData, setTerminalData] = React.useState({ account: [], instruments: [] });
+    const [sortConfig, setSortConfig] = React.useState({ key: 0, direction: 'ascending' });
+
+    /**
+     * 
+     * @param {Key to Sort by} sortkey 
+     */
+    const requestSort = (sortkey) => {
+        let direction = 'ascending'
+        if (sortConfig.key === sortkey && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key: sortkey, direction: direction });
     }
 
-    UpdateComponent() {
-        /* Updater */
-        // Using fetch to fetch the api from
-        // flask server it will be redirected to proxy
+    /**
+     * Fetch Terminal Data
+     */
+    const fetchTerminalData = () => {
         fetch("/update").then((res) =>
-            res.json().then((received) => {
-                this.setState({
-                    data: received
-                })
+            res.json().then((receivedTerminalData) => {
+                setTerminalData(
+                    receivedTerminalData
+                )
             })
         );
-    }
+    };
 
-    componentDidMount() {
-        //this.UpdateComponent();
-        /* Update periodically */
-        this.interval = setInterval(() => this.UpdateComponent(), 2000);
-    }
+    /**
+     * Effects
+     */
+    React.useEffect(() => {
+        /* Mount */
+        const interval = setInterval(() => fetchTerminalData(), 2000);
 
-    componentWillUnmount() {
-        clearInterval(this.interval);
-    }
+        /* Unmount */
+        return () => clearInterval(interval);
+    }, []);
 
-    render() {
-        var headerCount = -1;
-        return (
-            <div>
-                <table className={this.customClass}>
-                    <tbody>
-                        <tr>
-                            <td className={this.customClass}>Company:{this.state.data.account.company}</td>
-                            <td className={this.customClass}>Balance:{this.state.data.account.balance}{this.state.data.account.currency}</td>
-                            <td className={this.customClass}>{this.state.data.account.login}</td>
-                        </tr>
-                        <tr>
-                            <td className={this.customClass}>Server:{this.state.data.account.server}</td>
-                            <td className={this.customClass}>Profit:{this.state.data.account.profit}</td>
-                            <td className={this.customClass}>Leverage:{this.state.data.account.leverage}</td>
-                        </tr>
 
-                    </tbody>
-                </table>
+    return (
+        <div>
+            <table className={props.customClass}>
+                <tbody>
+                    <tr>
+                        <td className={props.customClass}>Company:{terminalData.account.company}</td>
+                        <td className={props.customClass}>Balance:{terminalData.account.balance}{terminalData.account.currency}</td>
+                        <td className={props.customClass}>{terminalData.account.login}</td>
+                    </tr>
+                    <tr>
+                        <td className={props.customClass}>Server:{terminalData.account.server}</td>
+                        <td className={props.customClass}>Profit:{terminalData.account.profit}</td>
+                        <td className={props.customClass}>Leverage:{terminalData.account.leverage}</td>
+                    </tr>
 
-                <table ref={this.tableRef} className={this.customClass}>
-                    <thead>
-                        {
-                            <TableHeads data={this.headerData} className={this.customClass} hparam0={this.tableRef} />
-                        }
-                    </thead>
-                    <tbody>
-                        {
-                            <TableRows data={this.state.data.instruments} className={this.customClass} />
-                        }
-                    </tbody>
-                </table>
-            </div >
-        );
-    }
+                </tbody>
+            </table>
+            <table className={props.customClass}>
+                <thead>
+                    {
+                        <TableHeads data={headerData} className={props.customClass} sorter={requestSort} />
+                    }
+                </thead>
+                <tbody>
+                    {
+                        <TableRows data={terminalData.instruments} sortConfig={sortConfig} className={props.customClass} />
+                    }
+                </tbody>
+            </table>
+        </div >
+    );
+
 };
 
 
