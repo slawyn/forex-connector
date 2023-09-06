@@ -66,11 +66,16 @@ const selectTerminalSymbol = (symbol) => {
         .then(data => { console.log("LOG:Instrument sent") });
 }
 
-const TableHeadItem = (props) => {
+const TableHeads = (props) => {
     return (
-        <th title={props.item} className={props.className} onClick={sortRows(props.hparam0, props.hparam1)}>
-            {props.item}
-        </th>
+        <tr key={"HEADERS"}>
+            {props.data.map((header) => {
+                console.log(header);
+                return <th title={header} key={header} className={props.className} onClick={sortRows(1, null)}>
+                    {header}
+                </th>
+            })}
+        </tr>
     );
 };
 
@@ -90,12 +95,13 @@ const TableRows = (props) => {
                 /** Map instruments to rows */
                 props.data.map((rowData) => {
                     return <tr key={rowData.id} onClick={() => selectRow(rowData.items[0], rowData.id)} className={props.customClass} style={{
-                        backgroundColor: rowData.id === selectedId ? 'orange' : '',
+
+                        backgroundColor: rowData.id === selectedId ? 'orange' : rowData.updated === true ? 'red' : '',
                     }} >
                         {
                             /** Map row line */
                             rowData.items.map((cellData) => {
-                                return <td key={cellData}>{cellData}</td>
+                                return <td>{cellData}</td>
                             })
                         }
 
@@ -114,7 +120,7 @@ class Table extends React.Component {
         super(props);
         this.tableRef = React.createRef();
         this.customClass = props.customClass;
-        this.headerData = ["INSTRUMENT", "ATR", "CHANGE", "TIME"];
+        this.headerData = ["INSTRUMENT", "SPREAD", "ATR", "RATIO[%]", "CHANGE[%]", "TIME"];
         this.state = {
             data: { account: [], instruments: [] }
         };
@@ -165,12 +171,9 @@ class Table extends React.Component {
 
                 <table ref={this.tableRef} className={this.customClass}>
                     <thead>
-                        <tr>
-                            {this.headerData.map((h) => {
-                                headerCount += 1;
-                                return <TableHeadItem hparam0={this.tableRef} hparam1={headerCount} key={h} item={h} className={this.customClass} />;
-                            })}
-                        </tr>
+                        {
+                            <TableHeads data={this.headerData} className={this.customClass} hparam0={this.tableRef} />
+                        }
                     </thead>
                     <tbody>
                         {

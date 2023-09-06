@@ -18,8 +18,9 @@ app = None
 class App:
     COL_0 = 'INSTRUMENT'
     COL_1 = 'ATR'
-    COL_2 = 'CHANGE'
-    COL_3 = 'TIME'
+    COL_2 = 'SPREAD'
+    COL_3 = 'CHANGE'
+    COL_4 = 'TIME'
 
     def __init__(self):
         self.trader = Trader(CONFIG_NAME)
@@ -52,26 +53,32 @@ class App:
         '''Builds a list of instruments based on filter
         '''
         indices = []
-        data = {App.COL_0: [], App.COL_1: [], App.COL_2: [], App.COL_3: [], }
-        columns = [App.COL_0, App.COL_1, App.COL_2, App.COL_3]
+        data = {App.COL_0: [], App.COL_1: [], App.COL_2: [], App.COL_3: [], App.COL_4: []}
+        columns = [App.COL_0, App.COL_1, App.COL_2, App.COL_3, App.COL_4]
         react_data = []
 
         ##
         syms = self.trader.get_symbols_sorted()
-        for idx in range(len(syms)):
+        indices = range(len(syms))
+        for idx in indices:
             sym = syms[idx]
             atr = self.trader.get_atr(sym)
-
-            indices.append(idx)
+            step = sym.trade_tick_size
+            spread = (sym.spread*step)
+            ratio = (spread/atr)*100
+            atr_reserve = ((sym.session_open-sym.bid)/atr)*100
             data[App.COL_0].append(sym.name)
-            data[App.COL_1].append("%-2.2f   " % atr)
-            data[App.COL_2].append("%-2.2f" % sym.price_change)
-            data[App.COL_3].append(datetime.datetime.fromtimestamp(sym.time))
+            data[App.COL_1].append(sym.spread)
+            data[App.COL_2].append("%-2.2f" % atr)
+            data[App.COL_3].append("%-2.2f" % sym.price_change)
+            data[App.COL_4].append(datetime.datetime.fromtimestamp(sym.time))
 
             react_data.append({"id": idx,
                                "items": [sym.name,
+                                         f"%-2.{sym.digits}f" % (spread),
                                          "%-2.2f" % atr,
-                                         "%-2.2f" % sym.price_change,
+                                         "%-2.2f" % (ratio),
+                                         "%-2.2f" % (atr_reserve),
                                          datetime.datetime.fromtimestamp(sym.time)]
                                })
 
