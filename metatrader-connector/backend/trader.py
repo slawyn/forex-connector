@@ -10,23 +10,17 @@ import datetime
 
 
 class AccountInfo:
-    def __init__(self, balance=0, currency="", profit=0, leverage=0, company="", server="", login=0):
-        self.balance = balance
-        self.currency = currency
-        self.profit = profit
-        self.leverage = leverage
-        self.company = company
-        self.server = server
-        self.login = login
+    def __init__(self, acc):
+        self.set_data(acc)
 
-    def set_data(self, balance, currency, profit, leverage, company, server, login):
-        self.balance = balance
-        self.currency = currency
-        self.profit = profit
-        self.leverage = leverage
-        self.company = company
-        self.server = server
-        self.login = login
+    def set_data(self, acc):
+        self.balance = acc.balance
+        self.currency = acc.currency
+        self.profit = acc.profit
+        self.leverage = acc.leverage
+        self.company = acc.company
+        self.server = acc.server
+        self.login = acc.login
 
 
 class Position:
@@ -62,19 +56,17 @@ class Position:
         self.period = ""
         self.rates = []
 
-    '''
-    Rates and period
-    '''
-
     def add_rates(self, rates, period):
+        '''
+        Rates and period
+        '''
         self.period = period
         self.rates = rates
 
-    '''
-    Add deal to position
-    '''
-
     def add_deal(self, deal):
+        '''
+        Add deal to position
+        '''
         self.swap_total = self.swap_total + deal.swap
         self.profit_total = self.profit_total + deal.profit
         self.volume_total += deal.volume
@@ -260,6 +252,7 @@ class Symbol:
         self.spread = sym.spread * self.step
         self.digits = sym.digits
         self.name = sym.name
+        self.volume_step = sym.volume_step
 
         # updatable: first creation sets the updated flag
         self.update(sym)
@@ -273,7 +266,7 @@ class Symbol:
         self.session_open = sym.session_open
 
     def get_info(self):
-        return self.updated, self.name, self.spread, self.ask, self.bid, self.digits, self.step, self.session_open
+        return self.updated, self.name, self.spread, self.ask, self.bid, self.digits, self.step, self.session_open, self.volume_step
 
     def is_updated(self):
         return self.updated
@@ -296,7 +289,7 @@ class Trader:
             self.risk = 2
             self.symbols = None
             self.symbols = {}
-            self.account_info = AccountInfo()
+            self.account_info = AccountInfo(mt5.account_info())
             self.update_account_info()
 
     def reinit(self):
@@ -311,7 +304,7 @@ class Trader:
     def update_account_info(self):
         ''' Collect Essential Account Information '''
         acc_info = mt5.account_info()
-        self.account_info.set_data(acc_info.balance, acc_info.currency, acc_info.profit, acc_info.leverage, acc_info.company, acc_info.server, acc_info.login)
+        self.account_info.set_data(mt5.account_info())
 
     def get_account_info(self):
         return self.account_info

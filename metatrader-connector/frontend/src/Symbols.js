@@ -145,26 +145,26 @@ const Table = (props) => {
             <table className={props.customClass}>
                 <tbody>
                     <tr>
-                        <td className={props.customClass}>Company:{props.terminalData.account.company}</td>
-                        <td className={props.customClass}>Balance:{props.terminalData.account.balance}{props.terminalData.account.currency}</td>
-                        <td className={props.customClass}>{props.terminalData.account.login}</td>
+                        <td className={props.customClass}>Company:{props.data.account.company}</td>
+                        <td className={props.customClass}>Balance:{props.data.account.balance}{props.data.account.currency}</td>
+                        <td className={props.customClass}>{props.data.account.login}</td>
                     </tr>
                     <tr>
-                        <td className={props.customClass}>Server:{props.terminalData.account.server}</td>
-                        <td className={props.customClass}>Profit:{props.terminalData.account.profit}</td>
-                        <td className={props.customClass}>Leverage:{props.terminalData.account.leverage}</td>
+                        <td className={props.customClass}>Server:{props.data.account.server}</td>
+                        <td className={props.customClass}>Profit:{props.data.account.profit}</td>
+                        <td className={props.customClass}>Leverage:{props.data.account.leverage}</td>
                     </tr>
                 </tbody>
             </table>
             <table className={props.customClass}>
                 <thead>
                     {
-                        <TableHeads data={props.terminalData.headers} className={props.customClass} sorter={requestSort} />
+                        <TableHeads data={props.data.headers} className={props.customClass} sorter={requestSort} />
                     }
                 </thead>
                 <tbody>
                     {
-                        <TableRows data={props.terminalData.instruments} sortConfig={sortConfig} className={props.customClass} selector={props.selector} />
+                        <TableRows data={props.data.instruments} sortConfig={sortConfig} className={props.customClass} selector={props.selector} />
                     }
                 </tbody>
             </table>

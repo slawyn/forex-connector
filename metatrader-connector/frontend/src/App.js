@@ -53,7 +53,7 @@ function App() {
 
   React.useEffect(() => {
     /* Mount */
-    const interval = setInterval(() => { fetchServerData(); fetchTerminalData() }, 1000);
+    const interval = setInterval(() => { fetchServerData(); fetchTerminalData() }, 2000);
 
     /* Unmount */
     return () => clearInterval(interval);
@@ -92,12 +92,12 @@ function App() {
 
           {/* Left block*/}
           <div className="clsSymbolsContainer">
-            <Table customClass={theme} terminalData={terminalData} instrument={selectedInstrument} selector={selectInstrument} />
+            <Table customClass={theme} data={terminalData} instrument={selectedInstrument} selector={selectInstrument} />
           </div>
 
           {/* Right block*/}
           <div className="clsTraderTable">
-            <Trader customClass={theme} terminalData={terminalData} instrument={selectedInstrument} />
+            <Trader customClass={theme} data={terminalData} instrument={selectedInstrument} />
           </div>
         </div>
       </header >

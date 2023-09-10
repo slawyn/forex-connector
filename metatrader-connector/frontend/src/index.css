@@ -28,7 +28,8 @@ button {
 }
 
 .redbutton:hover,
-.bluebutton:hover {
+.bluebutton:hover,
+.orangebutton:hover {
   background-color: #effff000;
   color: white;
 }
@@ -47,12 +48,6 @@ button {
   width: fit-content;
   text-align: left;
 }
-
-.orangebutton:hover {
-  background-color: #effff000;
-  color: white;
-}
-
 
 .orangebutton {
   background-color: rgb(226, 84, 8);
@@ -85,7 +80,7 @@ th {
 }
 
 .clsStyle tr:nth-child(even) {
-  background: #1974ca;
+  background: #413f3f;
 }
 
 .clsStyle tr:hover {

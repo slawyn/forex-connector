@@ -19,13 +19,16 @@ app = None
 
 
 class App:
-    COL_0 = 'INSTRUMENT'
-    COL_1 = 'SPREAD'
-    COL_2 = 'ATR'
-    COL_3 = 'WEDGE[%]'
-    COL_4 = 'AVAILABLE[%]'
-    COL_5 = 'UPDATE'
-    COLUMNS = [COL_0, COL_1, COL_2, COL_3, COL_4, COL_5]
+    COL_INSTRUMENT = 'INSTRUMENT'
+    COL_ASK = 'ASK'
+    COL_BID = 'BID'
+    COL_VOLUME_STEP = 'VOLUME'
+    COL_SPREAD = 'SPREAD'
+    COL_ATR = 'ATR'
+    COL_WEDGE = 'WEDGE[%]'
+    COL_AVAIL = 'AVAILABLE[%]'
+    COL_UPDATE = 'UPDATE'
+    COLUMNS = [COL_INSTRUMENT, COL_ASK, COL_BID, COL_VOLUME_STEP, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
 
     def __init__(self):
         self.trader = Trader(CONFIG_NAME)
@@ -70,16 +73,19 @@ class App:
         for idx in indices:
             sym = syms[idx]
             atr = self.trader.get_atr(sym)
-            updated, name, spread, ask, bid, digits, step, session_open = sym.get_info()
+            updated, name, spread, ask, bid, digits, step, session_open, volume_step = sym.get_info()
 
             # additional calcs
             ratio = (spread/atr)*100
             atr_reserve = ((session_open-bid)/atr)*100
 
             # Create data set
-            time_diff_sec = (sym.time - epoch)
+            time_diff_sec = (epoch - sym.time)
             react_data.append({"id": idx,
                                "items": [name,
+                                         ask,
+                                         bid,
+                                         volume_step,
                                          f"%-2.{digits}f" % (spread),
                                          "%-2.2f" % atr,
                                          "%-2.2f" % (ratio),
