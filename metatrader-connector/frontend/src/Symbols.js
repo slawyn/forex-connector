@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, createRef } from "react";
 import TextInput from "./TextInput";
-
+import Trader from "./Trader";
 
 /**
  * 
@@ -67,36 +67,18 @@ const TableHeads = (props) => {
 
 
 const TableRows = (props) => {
-    const [selectedId, setHighlight] = useState(-1);
 
+    const [selectedId, setSelectedId] = React.useState("");
     /**
      * 
      * @param {Selectes Symbol} symbol 
-     * @param {Selected Row Id} rowid 
      */
-    const selectRow = (symbol, rowid) => {
-        setHighlight(rowid);
-        selectTerminalSymbol(symbol);
+    const selectRow = (symbol, id) => {
+        setSelectedId(id);
+        props.selector(symbol);
     };
 
-    /**
-     * 
-     * @param {Selected Symbol} symbol 
-     */
-    const selectTerminalSymbol = (symbol) => {
-        const requestOptions = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer my-token',
 
-            },
-            body: JSON.stringify({ 'Instrument': symbol })
-        };
-        fetch('/command', requestOptions)
-            .then(response => response.json())
-            .then(data => { console.log("LOG:Instrument sent") });
-    }
 
     /**
      * Sort Data when possible
@@ -144,9 +126,6 @@ const TableRows = (props) => {
 
 
 const Table = (props) => {
-    const headerData = ["INSTRUMENT", "SPREAD", "ATR", "RATIO[%]", "CHANGE[%]", "TIME"];
-
-    const [terminalData, setTerminalData] = React.useState({ account: [], instruments: [] });
     const [sortConfig, setSortConfig] = React.useState({ key: 0, direction: 'ascending' });
 
     /**
@@ -161,57 +140,31 @@ const Table = (props) => {
         setSortConfig({ key: sortkey, direction: direction });
     }
 
-    /**
-     * Fetch Terminal Data
-     */
-    const fetchTerminalData = () => {
-        fetch("/update").then((res) =>
-            res.json().then((receivedTerminalData) => {
-                setTerminalData(
-                    receivedTerminalData
-                )
-            })
-        );
-    };
-
-    /**
-     * Effects
-     */
-    React.useEffect(() => {
-        /* Mount */
-        const interval = setInterval(() => fetchTerminalData(), 2000);
-
-        /* Unmount */
-        return () => clearInterval(interval);
-    }, []);
-
-
     return (
         <div>
             <table className={props.customClass}>
                 <tbody>
                     <tr>
-                        <td className={props.customClass}>Company:{terminalData.account.company}</td>
-                        <td className={props.customClass}>Balance:{terminalData.account.balance}{terminalData.account.currency}</td>
-                        <td className={props.customClass}>{terminalData.account.login}</td>
+                        <td className={props.customClass}>Company:{props.terminalData.account.company}</td>
+                        <td className={props.customClass}>Balance:{props.terminalData.account.balance}{props.terminalData.account.currency}</td>
+                        <td className={props.customClass}>{props.terminalData.account.login}</td>
                     </tr>
                     <tr>
-                        <td className={props.customClass}>Server:{terminalData.account.server}</td>
-                        <td className={props.customClass}>Profit:{terminalData.account.profit}</td>
-                        <td className={props.customClass}>Leverage:{terminalData.account.leverage}</td>
+                        <td className={props.customClass}>Server:{props.terminalData.account.server}</td>
+                        <td className={props.customClass}>Profit:{props.terminalData.account.profit}</td>
+                        <td className={props.customClass}>Leverage:{props.terminalData.account.leverage}</td>
                     </tr>
-
                 </tbody>
             </table>
             <table className={props.customClass}>
                 <thead>
                     {
-                        <TableHeads data={headerData} className={props.customClass} sorter={requestSort} />
+                        <TableHeads data={props.terminalData.headers} className={props.customClass} sorter={requestSort} />
                     }
                 </thead>
                 <tbody>
                     {
-                        <TableRows data={terminalData.instruments} sortConfig={sortConfig} className={props.customClass} />
+                        <TableRows data={props.terminalData.instruments} sortConfig={sortConfig} className={props.customClass} selector={props.selector} />
                     }
                 </tbody>
             </table>

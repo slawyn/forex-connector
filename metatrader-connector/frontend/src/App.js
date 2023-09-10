@@ -10,27 +10,75 @@ import Trader from "./Trader";
 function App() {
   // usestate for setting a javascript
   // object for storing and using data
-  const [data, setData] = useState({
-    name: "",
-    age: 0,
-    date: "",
-    programming: "",
-  });
+  const [serverData, setServerData] = useState({ date: "" });
+  const [selectedInstrument, setSelectedInstrument] = useState("");
+  const [terminalData, setTerminalData] = React.useState({ account: [], headers: [], instruments: [] });
+  const theme = "clsStyle";
 
-  // Using useEffect for single rendering
-  React.useEffect(() => {
-    fetch("/data").then((res) =>
-      res.json().then((data) => {
-        setData({
-          name: data.Name,
-          age: data.Age,
-          date: data.Date,
-          programming: data.programming,
+  /**
+   * 
+   * @param {Trading Symbol} symbol 
+   */
+  const selectInstrument = (symbol) => {
+    setSelectedInstrument(symbol);
+    transmitTerminalSymbol(symbol);
+  };
+
+  /**
+   * Fetch Server Data
+   */
+  const fetchServerData = () => {
+    fetch("/server").then((res) =>
+      res.json().then((receivedData) => {
+        setServerData({
+          date: receivedData.date
         });
       })
     );
+  };
+
+  /**
+ * Fetch Terminal Data
+ */
+  const fetchTerminalData = () => {
+    fetch("/update").then((res) =>
+      res.json().then((receivedTerminalData) => {
+        setTerminalData(
+          receivedTerminalData
+        )
+      })
+    );
+  };
+
+
+  React.useEffect(() => {
+    /* Mount */
+    const interval = setInterval(() => { fetchServerData(); fetchTerminalData() }, 1000);
+
+    /* Unmount */
+    return () => clearInterval(interval);
   }, []);
 
+
+
+  /**
+ * 
+ * @param {Selected Symbol} symbol 
+ */
+  const transmitTerminalSymbol = (symbol) => {
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer my-token',
+
+      },
+      body: JSON.stringify({ 'Instrument': symbol })
+    };
+    fetch('/command', requestOptions)
+      .then(response => response.json())
+      .then(data => { });
+  }
 
   return (
 
@@ -39,17 +87,17 @@ function App() {
       <header className="App-header">
 
         {/* Calling a data from setdata for showing */}
-        <div>Trader gui {data.date}</div>
+        <div>Trader gui {serverData.date}</div>
         <div className="clsGlobalContainer">
 
           {/* Left block*/}
           <div className="clsSymbolsContainer">
-            <Table customClass={"mystyle"} />
+            <Table customClass={theme} terminalData={terminalData} instrument={selectedInstrument} selector={selectInstrument} />
           </div>
 
           {/* Right block*/}
           <div className="clsTraderTable">
-            <Trader customClass={"mystyle"} />
+            <Trader customClass={theme} terminalData={terminalData} instrument={selectedInstrument} />
           </div>
         </div>
       </header >

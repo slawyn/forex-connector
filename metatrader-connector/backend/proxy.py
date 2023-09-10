@@ -3,8 +3,11 @@ from trader import Trader, AccountInfo
 import tkinter as tk
 from tkinter import ttk
 import datetime
+from datetime import datetime
 from flask import Flask, request, render_template
 from commander import Commander
+import time
+
 
 APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_PATH = os.path.join(APP_PATH, 'html/')
@@ -17,10 +20,12 @@ app = None
 
 class App:
     COL_0 = 'INSTRUMENT'
-    COL_1 = 'ATR'
-    COL_2 = 'SPREAD'
-    COL_3 = 'CHANGE'
-    COL_4 = 'TIME'
+    COL_1 = 'SPREAD'
+    COL_2 = 'ATR'
+    COL_3 = 'WEDGE[%]'
+    COL_4 = 'AVAILABLE[%]'
+    COL_5 = 'UPDATE'
+    COLUMNS = [COL_0, COL_1, COL_2, COL_3, COL_4, COL_5]
 
     def __init__(self):
         self.trader = Trader(CONFIG_NAME)
@@ -53,36 +58,43 @@ class App:
         '''Builds a list of instruments based on filter
         '''
         indices = []
-        data = {App.COL_0: [], App.COL_1: [], App.COL_2: [], App.COL_3: [], App.COL_4: []}
-        columns = [App.COL_0, App.COL_1, App.COL_2, App.COL_3, App.COL_4]
         react_data = []
 
         ##
-        syms = self.trader.get_symbols_sorted()
+
+        syms = self.trader.get_updated_symbols_sorted()
         indices = range(len(syms))
+        date = datetime.utcnow() - datetime(1970, 1, 1)
+        epoch = date.total_seconds()  # - (1*60*60)
+
         for idx in indices:
             sym = syms[idx]
             atr = self.trader.get_atr(sym)
-            step = sym.trade_tick_size
-            spread = (sym.spread*step)
-            ratio = (spread/atr)*100
-            atr_reserve = ((sym.session_open-sym.bid)/atr)*100
-            data[App.COL_0].append(sym.name)
-            data[App.COL_1].append(sym.spread)
-            data[App.COL_2].append("%-2.2f" % atr)
-            data[App.COL_3].append("%-2.2f" % sym.price_change)
-            data[App.COL_4].append(datetime.datetime.fromtimestamp(sym.time))
+            updated, name, spread, ask, bid, digits, step, session_open = sym.get_info()
 
+            # additional calcs
+            ratio = (spread/atr)*100
+            atr_reserve = ((session_open-bid)/atr)*100
+
+            # Create data set
+            time_diff_sec = (sym.time - epoch)
             react_data.append({"id": idx,
-                               "items": [sym.name,
-                                         f"%-2.{sym.digits}f" % (spread),
+                               "items": [name,
+                                         f"%-2.{digits}f" % (spread),
                                          "%-2.2f" % atr,
                                          "%-2.2f" % (ratio),
                                          "%-2.2f" % (atr_reserve),
-                                         datetime.datetime.fromtimestamp(sym.time)]
+                                         convert_timestamp_to_string(time_diff_sec)]
                                })
 
-        return indices, columns, data, react_data
+        return indices, App.COLUMNS,  react_data
+
+
+def convert_timestamp_to_string(timestamp_sec):
+    seconds = int(timestamp_sec % 60)
+    minutes = int(timestamp_sec/60 % 60)
+    hours = int(timestamp_sec/60/60)
+    return f"{hours:02}: {minutes:02}: {seconds:02}"
 
 
 def make_pretty(styler):
@@ -98,9 +110,9 @@ def get_with_terminal_info():
     '''Updates table with instruments
     '''
     filter = []
-    index, columns, data, instruments = app._get_symbols(filter)
+    index, headers, instruments = app._get_symbols(filter)
     account = app._get_account_info()
-    return {"instruments": instruments, "account": account}
+    return {"headers": headers, "instruments": instruments, "account": account}
 
 
 def send_command(data):
@@ -110,16 +122,11 @@ def send_command(data):
     return {'id': '0'}
 
 
-@flask.route('/data')
+@flask.route('/server')
 def get_time():
 
     # Returning an api for showing in  reactjs
-    return {
-        'Name': "geek",
-        "Age": "22",
-        "Date": datetime.datetime.now(),
-        "programming": "python"
-    }
+    return {"date": datetime.now()}
 
 
 @flask.route('/update', methods=['GET'])

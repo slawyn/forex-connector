@@ -253,6 +253,32 @@ class Position:
             log("\t%-20s [%-s]" % ("   Volume:", d.volume))
 
 
+class Symbol:
+    def __init__(self, sym):
+        self.time = sym.time
+        self.step = sym.trade_tick_size
+        self.spread = sym.spread * self.step
+        self.digits = sym.digits
+        self.name = sym.name
+
+        # updatable: first creation sets the updated flag
+        self.update(sym)
+        self.updated = True
+
+    def update(self, sym):
+        self.updated = (self.time != sym.time)
+        self.ask = sym.ask
+        self.bid = sym.bid
+        self.time = sym.time
+        self.session_open = sym.session_open
+
+    def get_info(self):
+        return self.updated, self.name, self.spread, self.ask, self.bid, self.digits, self.step, self.session_open
+
+    def is_updated(self):
+        return self.updated
+
+
 class Trader:
     TIMEFRAMES = ["M2", "M3", "M4", "M5", "M6", "M10", "M12", "M20", "M30", "H1", "H2", "H3", "H4", "H6", "H8", "H12", "D1", "W1", "MN1"]
     MT_TIMEFRAMES = [mt5.TIMEFRAME_M2, mt5.TIMEFRAME_M3, mt5.TIMEFRAME_M4, mt5.TIMEFRAME_M5, mt5.TIMEFRAME_M6, mt5.TIMEFRAME_M10, mt5.TIMEFRAME_M12, mt5.TIMEFRAME_M20, mt5.TIMEFRAME_M30,
@@ -269,6 +295,7 @@ class Trader:
             self.ratio = 1
             self.risk = 2
             self.symbols = None
+            self.symbols = {}
             self.account_info = AccountInfo()
             self.update_account_info()
 
@@ -324,13 +351,6 @@ class Trader:
 
         self.drive_handle.update_google_sheet(positions)
 
-    def update_symbols(self):
-        ''' Collect Symbols '''
-        self.symbols = mt5.symbols_get()
-        if self.symbols == None or len(self.symbols) == 0:
-            mt5.initialize()
-            self.symbols = mt5.symbols_get()
-
     def send_order(self, symbol, type, volume, price, sl, tp, stoplimit, comment=""):
         try:
             result = mt5.order_send(action=action, magic=magic, order=order, symbol=symbol,  volume=volume, price=price, stoplimit=stoplimit, sl=sl, tp=tp, deviation=deviation,
@@ -374,17 +394,33 @@ class Trader:
             raise ValueError("ERROR: Symbol cannot be None")
 
     def get_symbols(self):
-        if self.symbols is None:
-            self.update_symbols()
+        ''' Collect Symbols '''
+        symbols = mt5.symbols_get()
+        if symbols == None or len(symbols) == 0:
+            mt5.initialize()
+            symbols = []
 
-        return self.symbols
+        return symbols
 
-    def get_symbols_sorted(self):
+    def get_updated_symbols_sorted(self):
         syms = []
-        for s in self.get_symbols():
-            # TODO check for tick != None here if needed
-            if s != None and self.get_tick(s) != None and self.filter_function(s):
-                syms.append(s)
+        for sym in self.get_symbols():
+            exported_symbol = None
+
+            # check if symbol is none
+            try:
+                exported_symbol = self.symbols[sym.name]
+                exported_symbol.update(sym)
+            except:
+                pass
+            finally:
+                if exported_symbol == None:
+                    exported_symbol = Symbol(sym)
+                    self.symbols[sym.name] = exported_symbol
+
+            if self.get_tick(sym) != None and self.filter_function(sym):
+                syms.append(exported_symbol)
+
         syms.sort(key=lambda x: x.name)
         return syms
 
