@@ -253,6 +253,7 @@ class Symbol:
         self.digits = sym.digits
         self.name = sym.name
         self.volume_step = sym.volume_step
+        self.point_value = (sym.trade_tick_value*sym.point)/sym.trade_tick_size
 
         # updatable: first creation sets the updated flag
         self.update(sym)
@@ -266,7 +267,7 @@ class Symbol:
         self.session_open = sym.session_open
 
     def get_info(self):
-        return self.updated, self.name, self.spread, self.ask, self.bid, self.digits, self.step, self.session_open, self.volume_step
+        return self.updated, self.name, self.spread, self.ask, self.bid, self.digits, self.step, self.session_open, self.volume_step, self.point_value
 
     def is_updated(self):
         return self.updated

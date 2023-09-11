@@ -37,14 +37,26 @@ function App() {
     );
   };
 
+
+
+
+  const mapTerminalData = (data) => {
+    return Object.entries(data).map(([key, value]) => { return { id: key, items: value } });
+  };
+
   /**
  * Fetch Terminal Data
  */
   const fetchTerminalData = () => {
     fetch("/update").then((res) =>
       res.json().then((receivedTerminalData) => {
-        setTerminalData(
-          receivedTerminalData
+
+        /* Partial update */
+        setTerminalData((previousstate) => ({
+          account: receivedTerminalData.account,
+          headers: receivedTerminalData.headers,
+          instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments }
+        })
         )
       })
     );
@@ -92,12 +104,16 @@ function App() {
 
           {/* Left block*/}
           <div className="clsSymbolsContainer">
-            <Table customClass={theme} data={terminalData} instrument={selectedInstrument} selector={selectInstrument} />
+            <Table key={"1"} customClass={theme}
+              account={terminalData.account}
+              headers={terminalData.headers}
+              data={mapTerminalData(terminalData.instruments)}
+              instrument={selectedInstrument} selector={selectInstrument} />
           </div>
 
           {/* Right block*/}
           <div className="clsTraderTable">
-            <Trader customClass={theme} data={terminalData} instrument={selectedInstrument} />
+            <Trader key={"2"} customClass={theme} account={terminalData.account} data={terminalData.instruments} instrument={selectedInstrument} />
           </div>
         </div>
       </header >

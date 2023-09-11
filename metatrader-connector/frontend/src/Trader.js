@@ -53,14 +53,30 @@ const Calculator = (props) => {
             <tbody>
                 <tr>
                     <td className={props.customClass}>Selected:{props.instrument}</td>
+                    <td>
+                        <div class="input-wrapper">
+                            <div class="blueTag">Ask</div>
+                            <input type="text" value={props.trade.ask} />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="input-wrapper">
+                            <div class="redTag">Bid</div>
+                            <input type="text" value={props.trade.bid} />
+                        </div>
+                    </td>
+
                 </tr>
                 <tr>
                     <td>
                         <div class="input-wrapper">
-                            <div class="orangeTag">Risk[%]</div>
-                            <input type="text" value={props.trade.risk} />
+                            <div class="orangeTag">Volume[LOT]</div>
+                            <input type="text" value={props.trade.volume} />
                         </div>
                     </td>
+                </tr>
+
+                <tr>
                     <td>
                         <div class="input-wrapper">
                             <div class="orangeTag">Ratio[%]</div>
@@ -71,16 +87,8 @@ const Calculator = (props) => {
                 <tr>
                     <td>
                         <div class="input-wrapper">
-                            <div class="blueTag">Ask</div>
-                            <input type="text" value={props.trade.ask} />
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="input-wrapper">
-                            <div class="redTag">Bid</div>
-                            <input type="text" value={props.trade.bid} />
+                            <div class="orangeTag">Risk[%]</div>
+                            <input type="text" value={props.trade.risk} />
                         </div>
                     </td>
                 </tr>
@@ -92,26 +100,24 @@ const Calculator = (props) => {
 
 
 const Trader = (props) => {
+    const [trade, setTrade] = useState({ risk: 1.0, ratio: 50.0, bid: 0, ask: 0, volume: 0 });
 
-    const [trade, setTrade] = useState({ risk: 1.0, ratio: 50.0, bid: 0, ask: 0 });
-
-
-    const calculateEntry = (ask, bid, balance) => {
-        setTrade({ bid: bid, ask: ask });
+    const calculateEntry = (ask, bid, volume, balance) => {
+        var calcBid = bid * volume;
+        var calcAsk = ask
+        setTrade({ bid: calcBid, ask: calcAsk, volume: volume });
     }
 
     React.useEffect(() => {
-        var instruments = props.data.instruments;
+        var instruments = props.data;
         var selected = props.instrument;
-        for (var i = 0; i < instruments.length; ++i) {
-            var items = instruments[i].items;
-            if (items[0] == selected) {
-                calculateEntry(items[1], items[2], props.data.account.balance)
-                break;
-            }
+        var item = instruments[selected];
+        if (item != null && item[0] === selected) {
+            calculateEntry(item[1], item[2], item[3], props.account.balance)
         }
 
-    }, [props.data.instruments]);
+
+    }, [props.data]);
 
     return (
         <>

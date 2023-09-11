@@ -22,13 +22,13 @@ class App:
     COL_INSTRUMENT = 'INSTRUMENT'
     COL_ASK = 'ASK'
     COL_BID = 'BID'
-    COL_VOLUME_STEP = 'VOLUME'
+    COL_POINT_VALUE = 'PVALUE'
     COL_SPREAD = 'SPREAD'
     COL_ATR = 'ATR'
     COL_WEDGE = 'WEDGE[%]'
     COL_AVAIL = 'AVAILABLE[%]'
     COL_UPDATE = 'UPDATE'
-    COLUMNS = [COL_INSTRUMENT, COL_ASK, COL_BID, COL_VOLUME_STEP, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
+    COLUMNS = [COL_INSTRUMENT, COL_ASK, COL_BID, COL_POINT_VALUE, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
 
     def __init__(self):
         self.trader = Trader(CONFIG_NAME)
@@ -61,7 +61,7 @@ class App:
         '''Builds a list of instruments based on filter
         '''
         indices = []
-        react_data = []
+        react_data = {}
 
         ##
 
@@ -73,7 +73,7 @@ class App:
         for idx in indices:
             sym = syms[idx]
             atr = self.trader.get_atr(sym)
-            updated, name, spread, ask, bid, digits, step, session_open, volume_step = sym.get_info()
+            updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value = sym.get_info()
 
             # additional calcs
             ratio = (spread/atr)*100
@@ -81,17 +81,16 @@ class App:
 
             # Create data set
             time_diff_sec = (epoch - sym.time)
-            react_data.append({"id": idx,
-                               "items": [name,
-                                         ask,
-                                         bid,
-                                         volume_step,
-                                         f"%-2.{digits}f" % (spread),
-                                         "%-2.2f" % atr,
-                                         "%-2.2f" % (ratio),
-                                         "%-2.2f" % (atr_reserve),
-                                         convert_timestamp_to_string(time_diff_sec)]
-                               })
+            if updated:
+                react_data[name] = [name,
+                                    ask,
+                                    bid,
+                                    "%-2.4f" % point_value,
+                                    f"%-2.{digits}f" % (spread),
+                                    "%-2.2f" % atr,
+                                    "%-2.2f" % (ratio),
+                                    "%-2.2f" % (atr_reserve),
+                                    convert_timestamp_to_string(time_diff_sec)]
 
         return indices, App.COLUMNS,  react_data
 

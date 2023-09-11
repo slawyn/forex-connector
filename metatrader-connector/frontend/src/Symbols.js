@@ -73,8 +73,8 @@ const TableRows = (props) => {
      * 
      * @param {Selectes Symbol} symbol 
      */
-    const selectRow = (symbol, id) => {
-        setSelectedId(id);
+    const selectRow = (symbol) => {
+        setSelectedId(symbol);
         props.selector(symbol);
     };
 
@@ -105,7 +105,8 @@ const TableRows = (props) => {
             {
                 /** Map instruments to rows */
                 sortedData.map((rowData) => {
-                    return <tr key={rowData.id} onClick={() => selectRow(rowData.items[0], rowData.id)} className={props.customClass} style={{
+
+                    return <tr key={rowData.id} onClick={() => selectRow(rowData.id)} className={props.customClass} style={{
 
                         backgroundColor: rowData.id === selectedId ? 'orange' : rowData.updated === true ? 'red' : '',
                     }} >
@@ -145,27 +146,23 @@ const Table = (props) => {
             <table className={props.customClass}>
                 <tbody>
                     <tr>
-                        <td className={props.customClass}>Company:{props.data.account.company}</td>
-                        <td className={props.customClass}>Balance:{props.data.account.balance}{props.data.account.currency}</td>
-                        <td className={props.customClass}>{props.data.account.login}</td>
+                        <td className={props.customClass}>Company:{props.account.company}</td>
+                        <td className={props.customClass}>Balance:{props.account.balance}{props.account.currency}</td>
+                        <td className={props.customClass}>{props.account.login}</td>
                     </tr>
                     <tr>
-                        <td className={props.customClass}>Server:{props.data.account.server}</td>
-                        <td className={props.customClass}>Profit:{props.data.account.profit}</td>
-                        <td className={props.customClass}>Leverage:{props.data.account.leverage}</td>
+                        <td className={props.customClass}>Server:{props.account.server}</td>
+                        <td className={props.customClass}>Profit:{props.account.profit}</td>
+                        <td className={props.customClass}>Leverage:{props.account.leverage}</td>
                     </tr>
                 </tbody>
             </table>
             <table className={props.customClass}>
                 <thead>
-                    {
-                        <TableHeads data={props.data.headers} className={props.customClass} sorter={requestSort} />
-                    }
+                    <TableHeads data={props.headers} className={props.customClass} sorter={requestSort} />
                 </thead>
                 <tbody>
-                    {
-                        <TableRows data={props.data.instruments} sortConfig={sortConfig} className={props.customClass} selector={props.selector} />
-                    }
+                    <TableRows data={props.data} sortConfig={sortConfig} className={props.customClass} selector={props.selector} />
                 </tbody>
             </table>
         </div >
