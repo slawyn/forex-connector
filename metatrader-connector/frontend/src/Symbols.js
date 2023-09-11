@@ -2,57 +2,6 @@ import React, { useRef, useState, useEffect, createRef } from "react";
 import TextInput from "./TextInput";
 import Trader from "./Trader";
 
-/**
- * 
- * @param {table reference} table 
- * @param {column to sort by} col 
- * @returns 
- */
-const sortRows = (table, col) => {
-    var sortRowsDirection = true;
-    return () => {
-        sortRowsDirection = !sortRowsDirection;
-        var rows, i, x, y, shouldSwitch;
-        var switching = true;
-
-        while (switching) {
-
-            switching = false;
-            rows = table.current.rows;
-
-            /* Loop through all table rows (except the
-            first, which contains table headers): */
-            for (i = 1; i < (rows.length - 1); i++) {
-                shouldSwitch = false;
-
-                x = rows[i].getElementsByTagName("TD")[col];
-                y = rows[i + 1].getElementsByTagName("TD")[col];
-
-                // If so, mark as a switch and break the loop:
-                if (sortRowsDirection) {
-
-                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-
-                        shouldSwitch = true;
-                        break;
-                    }
-                } else if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                    shouldSwitch = true;
-                    break;
-                }
-            }
-
-            /* If a switch has been marked, make the switch
-                and mark that a switch has been done: */
-            if (shouldSwitch) {
-                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                switching = true;
-            }
-        }
-    };
-}
-
-
 const TableHeads = (props) => {
     return (
         <tr key={"HEADERS"}>
@@ -126,7 +75,7 @@ const TableRows = (props) => {
 }
 
 
-const Table = (props) => {
+const Symbols = (props) => {
     const [sortConfig, setSortConfig] = React.useState({ key: 0, direction: 'ascending' });
 
     /**
@@ -171,4 +120,4 @@ const Table = (props) => {
 };
 
 
-export { Table as default };
+export default Symbols;

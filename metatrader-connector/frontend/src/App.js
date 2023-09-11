@@ -1,7 +1,7 @@
 // Importing modules
 import React, { useState, useEffect } from "react";
 import "./App.css";
-import Table from "./Symbols";
+import Symbols from "./Symbols";
 import Trader from "./Trader";
 
 
@@ -104,7 +104,8 @@ function App() {
 
           {/* Left block*/}
           <div className="clsSymbolsContainer">
-            <Table key={"1"} customClass={theme}
+            <Symbols key={"1"}
+              customClass={theme}
               account={terminalData.account}
               headers={terminalData.headers}
               data={mapTerminalData(terminalData.instruments)}
@@ -113,7 +114,11 @@ function App() {
 
           {/* Right block*/}
           <div className="clsTraderTable">
-            <Trader key={"2"} customClass={theme} account={terminalData.account} data={terminalData.instruments} instrument={selectedInstrument} />
+            <Trader key={"2"}
+              customClass={theme}
+              account={terminalData.account}
+              data={terminalData.instruments}
+              instrument={selectedInstrument} />
           </div>
         </div>
       </header >

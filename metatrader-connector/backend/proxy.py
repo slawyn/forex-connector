@@ -68,7 +68,7 @@ class App:
         syms = self.trader.get_updated_symbols_sorted()
         indices = range(len(syms))
         date = datetime.utcnow() - datetime(1970, 1, 1)
-        epoch = date.total_seconds()  # - (1*60*60)
+        epoch = date.total_seconds() + (2*60*60)
 
         for idx in indices:
             sym = syms[idx]
@@ -83,10 +83,10 @@ class App:
             time_diff_sec = (epoch - sym.time)
             if updated:
                 react_data[name] = [name,
-                                    ask,
-                                    bid,
+                                    f"%2.{digits}f" % ask,
+                                    f"%2.{digits}f" % bid,
                                     "%-2.4f" % point_value,
-                                    f"%-2.{digits}f" % (spread),
+                                    f"%2.{digits}f" % (spread),
                                     "%-2.2f" % atr,
                                     "%-2.2f" % (ratio),
                                     "%-2.2f" % (atr_reserve),
