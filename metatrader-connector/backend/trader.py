@@ -396,6 +396,10 @@ class Trader:
 
         return symbols
 
+    def get_symbol(self, sym_name):
+        exported_symbol = self.symbols[sym_name]
+        return exported_symbol
+
     def get_updated_symbols_sorted(self):
         syms = []
         for sym in self.get_symbols():

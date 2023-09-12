@@ -22,13 +22,12 @@ class App:
     COL_INSTRUMENT = 'INSTRUMENT'
     COL_ASK = 'ASK'
     COL_BID = 'BID'
-    COL_POINT_VALUE = 'PVALUE'
     COL_SPREAD = 'SPREAD'
     COL_ATR = 'ATR'
     COL_WEDGE = 'WEDGE[%]'
     COL_AVAIL = 'AVAILABLE[%]'
     COL_UPDATE = 'UPDATE'
-    COLUMNS = [COL_INSTRUMENT, COL_ASK, COL_BID, COL_POINT_VALUE, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
+    COLUMNS = [COL_INSTRUMENT, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
 
     def __init__(self):
         self.trader = Trader(CONFIG_NAME)
@@ -56,6 +55,10 @@ class App:
                 "company": info.company,
                 "server": info.server,
                 "login": info.login}
+
+    def _get_symbol(self, sym):
+        s = self.trader.get_symbol(sym)
+        return s
 
     def _get_symbols(self, filter):
         '''Builds a list of instruments based on filter
@@ -85,7 +88,6 @@ class App:
                 react_data[name] = [name,
                                     f"%2.{digits}f" % ask,
                                     f"%2.{digits}f" % bid,
-                                    "%-2.4f" % point_value,
                                     f"%2.{digits}f" % (spread),
                                     "%-2.2f" % atr,
                                     "%-2.2f" % (ratio),
@@ -123,8 +125,7 @@ def get_with_terminal_info():
 def send_command(data):
     '''Updates table with instruments
     '''
-    app.send_to_commander(data)
-    return {'id': '0'}
+    return
 
 
 @flask.route('/server')
@@ -143,7 +144,12 @@ def update():
 def command():
     data = request.get_json()
     instrument = data.get("Instrument")
-    return send_command(instrument)
+
+    status = app.send_to_commander(instrument)
+    symbol = app._get_symbol(instrument)
+
+    updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value = symbol.get_info()
+    return {"info": {"name": name, "step": step, "ask": ask, "bid": bid, "volume_step": volume_step, "point_value": point_value}}
 
 
 if __name__ == "__main__":

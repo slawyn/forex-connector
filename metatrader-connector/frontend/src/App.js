@@ -11,7 +11,7 @@ function App() {
   // usestate for setting a javascript
   // object for storing and using data
   const [serverData, setServerData] = useState({ date: "" });
-  const [selectedInstrument, setSelectedInstrument] = useState("");
+  const [symbolData, setSymbolData] = useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0 } });
   const [terminalData, setTerminalData] = React.useState({ account: [], headers: [], instruments: [] });
   const theme = "clsStyle";
 
@@ -20,7 +20,6 @@ function App() {
    * @param {Trading Symbol} symbol 
    */
   const selectInstrument = (symbol) => {
-    setSelectedInstrument(symbol);
     transmitTerminalSymbol(symbol);
   };
 
@@ -89,7 +88,9 @@ function App() {
     };
     fetch('/command', requestOptions)
       .then(response => response.json())
-      .then(data => { });
+      .then(((receivedSymbolData) => {
+        setSymbolData(receivedSymbolData)
+      }));
   }
 
   return (
@@ -109,7 +110,7 @@ function App() {
               account={terminalData.account}
               headers={terminalData.headers}
               data={mapTerminalData(terminalData.instruments)}
-              instrument={selectedInstrument} selector={selectInstrument} />
+              instrument={symbolData.info.name} selector={selectInstrument} />
           </div>
 
           {/* Right block*/}
@@ -118,7 +119,7 @@ function App() {
               customClass={theme}
               account={terminalData.account}
               data={terminalData.instruments}
-              instrument={selectedInstrument} />
+              symbolData={symbolData.info} />
           </div>
         </div>
       </header >

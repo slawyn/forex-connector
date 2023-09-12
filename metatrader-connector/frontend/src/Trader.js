@@ -57,13 +57,14 @@ const Buttons = (props) => {
 };
 
 const Calculator = (props) => {
+
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
             <table >
                 <tbody>
                     <tr>
-                        <td>Symbol: {props.instrument}</td>
+                        <td>Symbol: {props.trade.name}</td>
                     </tr>
                     <tr>
                         <td>
@@ -71,13 +72,13 @@ const Calculator = (props) => {
                                 id="trade-volume"
                                 TextField
                                 type="number"
-                                value={props.trade.volume}
+                                value={props.trade.riskVolume}
                                 variant="outlined"
                                 inputProps={{
-                                    step: 2,
+                                    step: props.trade.volume_step,
                                 }}
-
                                 InputLabelProps={{ shrink: true }}
+                                onChange={(e) => { props.handlervolume(e.target.value) }}
                                 label="Volume[LOT]"
                             />
                         </td>
@@ -107,9 +108,10 @@ const Calculator = (props) => {
                                 value={props.trade.risk}
                                 variant="outlined"
                                 inputProps={{
-                                    step: "1"
+                                    step: props.trade.risk_step
                                 }}
                                 InputLabelProps={{ shrink: true }}
+                                onChange={(e) => { props.handlerrisk(e.target.value) }}
                                 label="Risk[%]"
                             />
                         </td>
@@ -139,29 +141,33 @@ const Calculator = (props) => {
 
 
 const Trader = (props) => {
-    const [trade, setTrade] = useState({ risk: 1.0, ratio: 50.0, bid: 0, ask: 0, volume: 0 });
-
-    const calculateEntry = (ask, bid, volume, balance) => {
-        var riskAmount = balance * trade.risk;
-        var calcBid = bid;
-        var calcAsk = ask;
-        setTrade({ bid: calcBid, ask: calcAsk, volume: volume });
-    }
+    const [trade, setTrade] = useState({ name: "", risk: 1.0, ratio: 50.0, bid: 0, ask: 0, riskVolume: 0, volume_step: 0, risk_step: 1, balance: 0 });
 
     React.useEffect(() => {
-        var instruments = props.data;
-        var selected = props.instrument;
-        var item = instruments[selected];
-        if (item != null && item[0] === selected) {
-            calculateEntry(item[1], item[2], item[3], props.account.balance)
-        }
+        console.log(props.symbolData);
+        setTrade({ name: props.symbolData.name, bid: props.symbolData.bid, ask: props.symbolData.ask, riskVolume: props.symbolData.volume_step, volume_step: props.symbolData.volume_step, balance: props.account.balance });
+    }, [props.symbolData, props.account.balance]);
 
+    const handleVolumeChange = (value) => {
 
-    }, [props.data, props.instrument, props.account.balance]);
+        console.log(value);
+        setTrade((previousTrade) => ({
+            ...previousTrade,
+            riskVolume: value
+        }));
+    };
+
+    const handleRiskChange = (value) => {
+        console.log(value);
+        setTrade((previousTrade) => ({
+            ...previousTrade,
+            risk: value
+        }));
+    };
 
     return (
         <>
-            <Calculator customClass={props.customClass} trade={trade} instrument={props.instrument} />
+            <Calculator customClass={props.customClass} trade={trade} handlervolume={handleVolumeChange} handlerrisk={handleRiskChange} />
             <Orders customClass={"clsTrader"} />
             <Buttons customClass={"clsTrader"} />
         </>
