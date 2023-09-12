@@ -71,7 +71,7 @@ class App:
         syms = self.trader.get_updated_symbols_sorted()
         indices = range(len(syms))
         date = datetime.utcnow() - datetime(1970, 1, 1)
-        epoch = date.total_seconds() + (2*60*60)
+        epoch = date.total_seconds()  # + (2*60*60)
 
         for idx in indices:
             sym = syms[idx]
@@ -83,7 +83,8 @@ class App:
             atr_reserve = ((session_open-bid)/atr)*100
 
             # Create data set
-            time_diff_sec = (epoch - sym.time)
+            #timer = convert_timestamp_to_string(epoch - sym.time)
+            timer = get_current_date()
             if updated:
                 react_data[name] = [name,
                                     f"%2.{digits}f" % ask,
@@ -92,9 +93,13 @@ class App:
                                     "%-2.2f" % atr,
                                     "%-2.2f" % (ratio),
                                     "%-2.2f" % (atr_reserve),
-                                    convert_timestamp_to_string(time_diff_sec)]
+                                    timer]
 
         return indices, App.COLUMNS,  react_data
+
+
+def get_current_date():
+    return datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 
 def convert_timestamp_to_string(timestamp_sec):
@@ -132,7 +137,7 @@ def send_command(data):
 def get_time():
 
     # Returning an api for showing in  reactjs
-    return {"date": datetime.now()}
+    return {"date": get_current_date()}
 
 
 @flask.route('/update', methods=['GET'])

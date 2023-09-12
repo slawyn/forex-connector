@@ -4,13 +4,15 @@ import Trader from "./Trader";
 
 const TableHeads = (props) => {
     return (
-        <tr key={"HEADERS"}>
-            {props.data.map((header, index) => {
-                return <th title={header} key={header} className={props.className} onClick={() => { props.sorter(index) }}>
-                    {header}
-                </th>
-            })}
-        </tr>
+        <thead>
+            <tr>
+                {props.data.map((header, index) => {
+                    return <th title={header} key={header} className={props.className} onClick={() => { props.sorter(index) }}>
+                        {header}
+                    </th>
+                })}
+            </tr>
+        </thead>
     );
 };
 
@@ -50,13 +52,12 @@ const TableRows = (props) => {
 
 
     return (
-        <>
+        <tbody>
             {
                 /** Map instruments to rows */
                 sortedData.map((rowData) => {
 
                     return <tr key={rowData.id} onClick={() => selectRow(rowData.id)} className={props.customClass} style={{
-
                         backgroundColor: rowData.id === selectedId ? 'orange' : rowData.updated === true ? 'red' : '',
                     }} >
                         {
@@ -69,8 +70,7 @@ const TableRows = (props) => {
                     </tr>
                 })
             }
-
-        </>
+        </tbody>
     );
 }
 
@@ -107,12 +107,8 @@ const Symbols = (props) => {
                 </tbody>
             </table>
             <table className={props.customClass}>
-                <thead>
-                    <TableHeads data={props.headers} className={props.customClass} sorter={requestSort} />
-                </thead>
-                <tbody>
-                    <TableRows data={props.data} sortConfig={sortConfig} className={props.customClass} selector={props.selector} />
-                </tbody>
+                <TableHeads data={props.headers} className={props.customClass} sorter={requestSort} />
+                <TableRows data={props.data} sortConfig={sortConfig} className={props.customClass} selector={props.selector} />
             </table>
         </div >
     );

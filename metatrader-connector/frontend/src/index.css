@@ -16,46 +16,30 @@ code {
 button {
   display: block;
   width: 100%;
-}
-
-.redbutton {
-  background-color: red;
+  border-color: rgb(0, 0, 0);
+  border: 2px;
   font-style: italic;
-
   transition-duration: 0.4s;
   border-style: double;
-  border-color: red;
 }
 
-.redbutton:hover,
-.bluebutton:hover,
-.orangebutton:hover {
+.clsRedbutton:hover,
+.clsBluebutton:hover,
+.clsOrangebutton:hover {
   background-color: #effff000;
   color: white;
 }
 
-.bluebutton {
+.clsRedbutton {
+  background-color: red;
+}
+
+.clsBluebutton {
   background-color: rgb(0, 187, 255);
-  font-style: italic;
-  border: 2px;
-  transition-duration: 0.4s;
-  border-style: double;
-  border-color: rgb(0, 187, 255);
 }
 
-.buttontable {
-  font-style: italic;
-  width: fit-content;
-  text-align: left;
-}
-
-.orangebutton {
+.clsOrangebutton {
   background-color: rgb(226, 84, 8);
-  font-style: italic;
-  border: 2px;
-  transition-duration: 0.4s;
-  border-style: double;
-  border-color: rgb(255, 85, 0);
 }
 
 .clsStyle {
