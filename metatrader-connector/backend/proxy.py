@@ -1,5 +1,5 @@
 from helpers import *
-from trader import Trader, AccountInfo
+from trader import Trader, AccountInfo, TradeRequest
 import tkinter as tk
 from tkinter import ttk
 import datetime
@@ -60,6 +60,25 @@ class App:
         s = self.trader.get_symbol(sym)
         return s
 
+    def _trade(self, symbol,  lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell):
+        ACTIONS = {
+            "market_buy":  [TradeRequest.get_type_market_buy(), entry_buy, stoploss_buy, takeprofit_buy],
+            "limit_buy":   [TradeRequest.get_type_limit_buy(), entry_buy, stoploss_buy, takeprofit_buy],
+            "stop_buy":    [TradeRequest.get_type_stop_buy(), entry_buy, stoploss_buy, takeprofit_buy],
+            "market_sell": [TradeRequest.get_type_market_sell(), entry_sell, stoploss_sell, takeprofit_sell],
+            "limit_sell":  [TradeRequest.get_type_limit_sell(), entry_sell, stoploss_sell, takeprofit_sell],
+            "stop_sell":   [TradeRequest.get_type_stop_sell(), entry_sell, stoploss_sell, takeprofit_sell]
+        }
+
+        try:
+            action = ACTIONS[type]
+            tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3])
+            log(tr.get_request())
+            # self.trader.trade(tr)
+        except Exception as e:
+            print("Exception", e)
+        return True
+
     def _get_symbols(self, filter):
         '''Builds a list of instruments based on filter
         '''
@@ -76,7 +95,7 @@ class App:
         for idx in indices:
             sym = syms[idx]
             atr = self.trader.get_atr(sym)
-            updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value = sym.get_info()
+            updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size = sym.get_info()
 
             # additional calcs
             ratio = (spread/atr)*100
@@ -135,8 +154,6 @@ def send_command(data):
 
 @flask.route('/server')
 def get_time():
-
-    # Returning an api for showing in  reactjs
     return {"date": get_current_date()}
 
 
@@ -145,16 +162,32 @@ def update():
     return get_with_terminal_info()
 
 
+@flask.route('/trade', methods=['POST'])
+def trade():
+    data = request.get_json()
+    symbol = data.get("symbol")
+    lot = data.get("lot")
+    type = data.get("type")
+    entry_buy = data.get("entry_buy")
+    entry_sell = data.get("entry_sell")
+    stoploss_buy = data.get("stoploss_buy")
+    stoploss_sell = data.get("stoploss_sell")
+    takeprofit_buy = data.get("takeprofit_buy")
+    takeprofit_sell = data.get("takeprofit_sell")
+    app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell)
+    return {"id": 0}
+
+
 @flask.route('/command', methods=['POST'])
 def command():
     data = request.get_json()
-    instrument = data.get("Instrument")
+    instrument = data.get("instrument")
 
     status = app.send_to_commander(instrument)
     symbol = app._get_symbol(instrument)
 
-    updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value = symbol.get_info()
-    return {"info": {"name": name, "step": step, "ask": ask, "bid": bid, "volume_step": volume_step, "point_value": point_value}}
+    updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size = symbol.get_info()
+    return {"info": {"name": name, "step": step, "ask": ask, "bid": bid, "volume_step": volume_step, "point_value": point_value, "contract_size": contract_size}}
 
 
 if __name__ == "__main__":

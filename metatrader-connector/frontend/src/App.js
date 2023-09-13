@@ -23,6 +23,10 @@ function App() {
     transmitTerminalSymbol(symbol);
   };
 
+  const mapTerminalData = (data) => {
+    return Object.entries(data).map(([key, value]) => { return { id: key, items: value } });
+  };
+
   /**
    * Fetch Server Data
    */
@@ -36,12 +40,6 @@ function App() {
     );
   };
 
-
-
-
-  const mapTerminalData = (data) => {
-    return Object.entries(data).map(([key, value]) => { return { id: key, items: value } });
-  };
 
   /**
  * Fetch Terminal Data
@@ -84,7 +82,7 @@ function App() {
         'Authorization': 'Bearer my-token',
 
       },
-      body: JSON.stringify({ 'Instrument': symbol })
+      body: JSON.stringify({ 'instrument': symbol })
     };
     fetch('/command', requestOptions)
       .then(response => response.json())
@@ -92,6 +90,23 @@ function App() {
         setSymbolData(receivedSymbolData)
       }));
   }
+
+  const transmitTradeRequest = (request) => {
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer my-token',
+
+      },
+      body: JSON.stringify(request)
+    };
+    fetch('/trade', requestOptions)
+      .then(response => response.json())
+      .then(((receivedSymbolData) => {
+
+      }));
+  };
 
   return (
 
@@ -119,7 +134,8 @@ function App() {
               customClass={theme}
               account={terminalData.account}
               data={terminalData.instruments}
-              symbolData={symbolData.info} />
+              symbolData={symbolData.info}
+              handletrade={transmitTradeRequest} />
           </div>
         </div>
       </header >

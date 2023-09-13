@@ -23,6 +23,51 @@ class AccountInfo:
         self.login = acc.login
 
 
+class TradeRequest:
+    MAGIC = 234000
+    COMMENT = "TEST TRADE"
+    ORDER_TYPES = [mt5.ORDER_TYPE_BUY, mt5.ORDER_TYPE_BUY_LIMIT, mt5.ORDER_TYPE_BUY_STOP,
+                   mt5.ORDER_TYPE_SELL, mt5.ORDER_TYPE_SELL_LIMIT, mt5.ORDER_TYPE_SELL_STOP, ]
+
+    def __init__(self, symbol, lot, order_type, price, stoploss, takeprofit):
+        order_type = TradeRequest.ORDER_TYPES[order_type]
+        self.request = {
+            "action": mt5.TRADE_ACTION_DEAL,
+            "symbol": symbol,
+            "volume": lot,
+            "type": order_type,
+            "price": price,
+            "sl": stoploss,
+            "tp": takeprofit,
+            "deviation": 1,
+            "magic": TradeRequest.MAGIC,
+            "comment": TradeRequest.COMMENT,
+            "type_time": mt5.ORDER_TIME_GTC,
+            "type_filling": mt5.ORDER_FILLING_IOC
+        }
+
+    def get_type_market_buy():
+        return TradeRequest.ORDER_TYPES[0]
+
+    def get_type_limit_buy():
+        return TradeRequest.ORDER_TYPES[1]
+
+    def get_type_stop_buy():
+        return TradeRequest.ORDER_TYPES[2]
+
+    def get_type_market_sell():
+        return TradeRequest.ORDER_TYPES[3]
+
+    def get_type_limit_sell():
+        return TradeRequest.ORDER_TYPES[4]
+
+    def get_type_stop_sell():
+        return TradeRequest.ORDER_TYPES[5]
+
+    def get_request(self):
+        return self.request
+
+
 class Position:
     DEAL_TYPES = {0: "BUY", 1: "SELL"}
 
@@ -57,15 +102,13 @@ class Position:
         self.rates = []
 
     def add_rates(self, rates, period):
-        '''
-        Rates and period
+        '''Rates and period
         '''
         self.period = period
         self.rates = rates
 
     def add_deal(self, deal):
-        '''
-        Add deal to position
+        '''Add deal to position
         '''
         self.swap_total = self.swap_total + deal.swap
         self.profit_total = self.profit_total + deal.profit
@@ -254,6 +297,7 @@ class Symbol:
         self.name = sym.name
         self.volume_step = sym.volume_step
         self.point_value = (sym.trade_tick_value*sym.point)/sym.trade_tick_size
+        self.contract_size = sym.trade_contract_size
 
         # updatable: first creation sets the updated flag
         self.update(sym)
@@ -267,7 +311,7 @@ class Symbol:
         self.session_open = sym.session_open
 
     def get_info(self):
-        return self.updated, self.name, self.spread, self.ask, self.bid, self.digits, self.step, self.session_open, self.volume_step, self.point_value
+        return self.updated, self.name, self.spread, self.ask, self.bid, self.digits, self.step, self.session_open, self.volume_step, self.point_value, self.contract_size
 
     def is_updated(self):
         return self.updated
@@ -494,6 +538,10 @@ class Trader:
 
         log("Entry Count:%d" % len(pos_finished))
         return pos_finished
+
+    def trade(self, tradeRequest):
+        request = tradeRequest.getRequest()
+        result = mt5.order_send(request)
 
 
 '''
