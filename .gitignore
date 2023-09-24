@@ -1,7 +1,5 @@
-
 secretsfile.json
 __pycache__/
 *.png
-*.json
 *.pyc
 
