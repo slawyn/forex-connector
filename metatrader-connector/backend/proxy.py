@@ -1,5 +1,6 @@
 import datetime
 from flask import Flask, request, render_template
+from driver import DriveFileController
 
 from commander import Commander
 from trader.trader import Trader
@@ -14,7 +15,7 @@ APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_PATH = os.path.join(APP_PATH, 'html/')
 
 
-CONFIG_NAME = "backend/config/config.txt"
+CONFIG_NAME = "config/config.txt"
 flask = Flask(__name__)
 app = None
 
@@ -81,11 +82,24 @@ class App:
             print("Exception", e)
         return True
 
+    def _save_to_google(self):
+        ''' Collect Information '''
+        # Get Positions of closed deals and add them to excel sheet
+        drive_handle = DriveFileController(self.config["secretsfile"],
+                                           self.config["folderid"],
+                                           self.config["spreadsheet"],
+                                           self.config["worksheet"],
+                                           self.config["dir"])
+        start_date = convert_string_to_date(self.config["date"])
+        positions = self.trader.get_closed_positions(start_date)
+        drive_handle.update_google_sheet(positions)
+        return []
+
     def _get_history_positions(self):
         start_date = convert_string_to_date(self.config["date"])
         positions = self.trader.get_history_positions(start_date, onlyfinished=False)
-        print(positions)
-        return positions
+        json_positions = [positions[p].get_json() for p in positions]
+        return json_positions
 
     def _get_symbols(self, filter_updated=True):
         '''Builds a list of instruments based on filter
@@ -151,18 +165,13 @@ def get_with_terminal_info(force=False):
     filter = not force
     index, headers, instruments = app._get_symbols(filter)
     account = app._get_account_info()
-    return {"headers": headers, "instruments": instruments, "account": account}
+    return {"date": get_current_date(), "headers": headers, "instruments": instruments, "account": account}
 
 
 def send_command(data):
     '''Updates table with instruments
     '''
     return
-
-
-@flask.route('/server')
-def get_time():
-    return {"date": get_current_date()}
 
 
 @flask.route('/update', methods=['GET'])
@@ -172,13 +181,19 @@ def update():
 
 @flask.route('/get-positions', methods=['GET'])
 def get_positions():
-    pos = app._get_history_positions()
-    return pos
+    json_positions = app._get_history_positions()
+    return {"positions": json_positions}
 
 
 @flask.route('/update-all', methods=['GET'])
 def update_all():
     return get_with_terminal_info(force=True)
+
+
+@flask.route('/save', methods=['POST'])
+def save():
+    app._save_to_google()
+    return {"id": 0}
 
 
 @flask.route('/trade', methods=['POST'])

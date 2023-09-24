@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import Symbols from "./Symbols";
 import Trader from "./Trader";
+import Orders from "./Orders";
 
 
 
@@ -10,9 +11,9 @@ import Trader from "./Trader";
 function App() {
   // usestate for setting a javascript
   // object for storing and using data
-  const [serverData, setServerData] = useState({ date: "" });
-  const [symbolData, setSymbolData] = useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0 } });
-  const [terminalData, setTerminalData] = React.useState({ account: [], headers: [], instruments: [] });
+  const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0 } });
+  const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: [] });
+  const [positionData, setPositionData] = React.useState([]);
   const theme = "clsStyle";
 
   /**
@@ -27,19 +28,6 @@ function App() {
     return Object.entries(data).map(([key, value]) => { return { id: key, items: value } });
   };
 
-  /**
-   * Fetch Server Data
-   */
-  const fetchServerData = () => {
-    fetch("/server").then((res) =>
-      res.json().then((receivedData) => {
-        setServerData({
-          date: receivedData.date
-        });
-      })
-    );
-  };
-
 
   /**
  * Fetch Terminal Data
@@ -50,6 +38,7 @@ function App() {
 
         /* Partial update */
         setTerminalData((previousstate) => ({
+          date: receivedTerminalData.date,
           account: receivedTerminalData.account,
           headers: receivedTerminalData.headers,
           instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments }
@@ -77,14 +66,10 @@ function App() {
   const fetchAllPositions = () => {
     fetch("/get-positions").then((res) =>
       res.json().then((receivedPositions) => {
-
+        setPositionData(receivedPositions);
       })
     );
   };
-
-
-
-
 
 
   /**
@@ -108,6 +93,24 @@ function App() {
       }));
   }
 
+  const transmitSavePositions = (selected) => {
+    selected = "";
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer my-token',
+
+      },
+      body: JSON.stringify(selected)
+    };
+    fetch('/save', requestOptions)
+      .then(response => response.json())
+      .then(((receivedSymbolData) => {
+
+      }));
+  };
+
   const transmitTradeRequest = (request) => {
     const requestOptions = {
       method: 'POST',
@@ -128,7 +131,7 @@ function App() {
 
   React.useEffect(() => {
     /* Mount */
-    const interval = setInterval(() => { fetchServerData(); fetchTerminalData() }, 2000);
+    const interval = setInterval(() => { fetchTerminalData() }, 2000);
 
     /* Unmount */
     return () => clearInterval(interval);
@@ -141,7 +144,7 @@ function App() {
       <header className="App-header">
 
         {/* Calling a data from setdata for showing */}
-        <div>Trader gui {serverData.date}</div>
+        <div>Trader gui {terminalData.date}</div>
         <div className="clsGlobalContainer">
 
           {/* Left block*/}
@@ -155,14 +158,18 @@ function App() {
           </div>
 
           {/* Right block*/}
-          <div className="clsTraderTable">
-            <Trader key={"2"}
-              customClass={theme}
-              account={terminalData.account}
-              data={terminalData.instruments}
-              symbolData={symbolData.info}
-              handletrade={transmitTradeRequest} />
-            <button onClick={fetchAllPositions}>Fetch All Positions</button>
+          <div className="clsTraderContainer">
+            <div className="clsTraderTable">
+              <Trader key={"2"}
+                customClass={theme}
+                account={terminalData.account}
+                data={terminalData.instruments}
+                symbolData={symbolData.info}
+                handletrade={transmitTradeRequest} />
+            </div>
+            <div className="clsPositionsTable">
+              <Orders customClass={"clsTrader"} saveall={transmitSavePositions} updateall={fetchAllPositions} />
+            </div>
           </div>
         </div>
       </header >

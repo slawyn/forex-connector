@@ -37,21 +37,6 @@ const calculatePoints = (riskAmount, contractSize, pointValue, riskLot) => {
     return points;
 };
 
-
-const Orders = (props) => {
-    return (
-        <table className={props.customClass} >
-            <tbody>
-                <tr>
-                    <td>
-                        <button className={"clsOrangebutton"} >{"Save to Google"}</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table >
-    );
-};
-
 const darkTheme = createTheme({
     palette: {
         mode: 'dark',
@@ -263,7 +248,6 @@ const Trader = (props) => {
     return (
         <>
             <Calculator customClass={props.customClass} trade={trade} handlertrade={handleTrade} handlervolume={handleVolumeChange} handlerrisk={handleRiskChange} />
-            <Orders customClass={"clsTrader"} />
         </>
     )
 

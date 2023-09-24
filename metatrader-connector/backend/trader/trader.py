@@ -1,5 +1,4 @@
 import datetime
-from driver import DriveFileController
 import MetaTrader5 as mt5
 import time
 
@@ -49,42 +48,6 @@ class Trader:
     def get_account_info(self):
         return self.account_info
 
-    def update_history_info(self):
-        ''' Collect Information '''
-        # Get Positions of closed deals and add them to excel sheet
-        self.drive_handle = DriveFileController(self.config["secretsfile"], self.config["folderid"], self.config["spreadsheet"], self.config["worksheet"], self.config["dir"])
-        start_date = convert_string_to_date(self.config["date"])
-        positions = self.get_history_positions(start_date)
-
-        # prepare positions for drawing
-        for pid in positions:
-            pd = positions[pid]
-            start_msc = pd.get_start_msc()
-            end_msc = pd.get_end_msc()
-            time_difference = (end_msc - start_msc)
-
-            start_msc -= (time_difference*4)
-            end_msc += (time_difference/2)
-
-            if end_msc > int(round(time.time() * 1000)):
-                end_msc = int(round(time.time() * 1000))
-
-            time_start = datetime.datetime.fromtimestamp(start_msc/1000.0)
-            time_stop = datetime.datetime.fromtimestamp(end_msc/1000.0)
-
-            rates_prev = None
-            for period in reversed(range(len(Trader.TIMEFRAMES))):
-                time_frame = Trader.MT_TIMEFRAMES[period]
-                rates = mt5.copy_rates_range(pd.get_symbol_name(), time_frame, time_start, time_stop)
-                if len(rates) > 80 or time_frame == Trader.MT_TIMEFRAMES[0]:
-                    pd.add_rates(rates, Trader.TIMEFRAMES[period])
-                    break
-
-            # start, end, period = calculate_plot_range(pd.get_start_msc(), pd.get_end_msc())
-            # rates = mt5.copy_rates_range(pd.get_symbol_name(), Trader.TIMEFRAMES[period], start, end)
-
-        self.drive_handle.update_google_sheet(positions)
-
     def send_order(self, symbol, type, volume, price, sl, tp, stoplimit, comment=""):
         try:
             result = mt5.order_send(action=action, magic=magic, order=order, symbol=symbol,  volume=volume, price=price, stoplimit=stoplimit, sl=sl, tp=tp, deviation=deviation,
@@ -119,6 +82,37 @@ class Trader:
         atr = calculate_average_true_range(rates)
 
         return atr
+
+    def get_closed_positions(self, start_date):
+        positions = self.get_history_positions(start_date)
+
+        # prepare positions for drawing
+        for pid in positions:
+            pd = positions[pid]
+            start_msc = pd.get_start_msc()
+            end_msc = pd.get_end_msc()
+            time_difference = (end_msc - start_msc)
+
+            start_msc -= (time_difference*4)
+            end_msc += (time_difference/2)
+
+            if end_msc > int(round(time.time() * 1000)):
+                end_msc = int(round(time.time() * 1000))
+
+            time_start = datetime.datetime.fromtimestamp(start_msc/1000.0)
+            time_stop = datetime.datetime.fromtimestamp(end_msc/1000.0)
+
+            for period in reversed(range(len(Trader.TIMEFRAMES))):
+                time_frame = Trader.MT_TIMEFRAMES[period]
+                rates = mt5.copy_rates_range(pd.get_symbol_name(), time_frame, time_start, time_stop)
+                if len(rates) > 80 or time_frame == Trader.MT_TIMEFRAMES[0]:
+                    pd.add_rates(rates, Trader.TIMEFRAMES[period])
+                    break
+
+            # start, end, period = calculate_plot_range(pd.get_start_msc(), pd.get_end_msc())
+            # rates = mt5.copy_rates_range(pd.get_symbol_name(), Trader.TIMEFRAMES[period], start, end)
+
+        return positions
 
     def get_tick(self, sym):
         if sym != None:

@@ -1,6 +1,6 @@
 @echo off
 set MT5_PATH=C:\Program Files\FxPro - MetaTrader 5\terminal64.exe
-set MT5_CONFIG=%CD%\backend\config\start.ini
+set MT5_CONFIG=%CD%\config\start.ini
 set MT5_NAME=terminal64.exe
 
 

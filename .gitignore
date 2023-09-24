@@ -1,7 +1,6 @@
 
-metatrader-connector/client_secrets.json
-metatrader-connector/config.txt
-metatrader-connector/__pycache__/
+secretsfile.json
+__pycache__/
 *.png
 *.json
 *.pyc

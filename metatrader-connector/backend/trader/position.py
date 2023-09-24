@@ -1,5 +1,6 @@
+import datetime
+
 from helpers import log
-from datetime import datetime
 
 
 class Position:
@@ -220,3 +221,37 @@ class Position:
             log("\t%-20s [%-s]" % ("   Time:", datetime.datetime.fromtimestamp(d.time)))
             log("\t%-20s [%-s]" % ("   Price:", d.price))
             log("\t%-20s [%-s]" % ("   Volume:", d.volume))
+
+    def get_json(self):
+        data = {"id": self.id,
+                "symbol": self.opening_deals[0].symbol,
+                "price_sl": self.price_sl,
+                "price_tp": self.price_tp,
+                "price_open_avg": self.price_open_avg,
+                "price_close_avg": self.price_close_avg,
+                "volume": self.volume_total,
+                "swap": self.swap_total,
+                "profit": self.profit_total,
+                "opened": [],
+                "closed": []
+                }
+
+        for d in self.opening_deals:
+            order = {"order": d.order,
+                     "time": datetime.datetime.fromtimestamp(d.time),
+                     "price": d.price,
+                     "volume": d.volume
+
+                     }
+            data["opened"].append(order)
+
+        for d in self.closing_deals:
+            order = {"order": d.order,
+                     "time": datetime.datetime.fromtimestamp(d.time),
+                     "price": d.price,
+                     "volume": d.volume
+
+                     }
+            data["closed"].append(order)
+
+        return data
