@@ -12,7 +12,14 @@ function App() {
   // usestate for setting a javascript
   // object for storing and using data
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0 } });
-  const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: [], open_positions: [] });
+  const [terminalData, setTerminalData] = React.useState({
+    date: "",
+    account: [],
+    headers: [],
+    instruments: {},
+    op_headers: [],
+    open: {}
+  });
   const [positionData, setPositionData] = React.useState([]);
   const theme = "clsStyle";
 
@@ -43,7 +50,8 @@ function App() {
           account: receivedTerminalData.account,
           headers: receivedTerminalData.headers,
           instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments },
-          open_positions: receivedTerminalData.open_positions
+          op_headers: receivedTerminalData.op_headers,
+          open: receivedTerminalData.open
         })
         )
       })
@@ -170,7 +178,11 @@ function App() {
                 handletrade={transmitTradeRequest} />
             </div>
             <div className="clsPositionsTable">
-              <Orders customClass={"clsTrader"} saveall={transmitSavePositions} updateall={fetchAllPositions} />
+              <Orders customClass={theme}
+                headers={terminalData.op_headers}
+                data={mapTerminalData(terminalData.open)}
+                saveall={transmitSavePositions}
+                updateall={fetchAllPositions} />
             </div>
           </div>
         </div>

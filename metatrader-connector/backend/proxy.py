@@ -105,13 +105,13 @@ class App:
         '''Open Positions
         '''
         positions = self.trader.get_open_positions()
-        diff_positions = [OpenPosition.get_info_header()]
+        diff_positions = {}
         for p in positions:
             pos = positions[p]
             if pos.updated or True:
-                diff_positions.append(pos.get_info())
+                diff_positions[pos.id] = pos.get_info()
 
-        return diff_positions
+        return OpenPosition.get_info_header(), diff_positions
 
     def _get_symbols(self, filter_updated=True):
         '''Builds a list of instruments based on filter
@@ -177,11 +177,11 @@ def get_with_terminal_info(force=False):
     filter = not force
     instr_headers, instr = app._get_symbols(filter)
     account = app._get_account_info()
-    open_positions = app._get_open_positions()
+    op_headers, open_positions = app._get_open_positions()
 
     # Instruments sub-dictionary
     instruments = {}
-    return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account": account, "open": open_positions}
+    return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account": account, "op_headers": op_headers, "open": open_positions}
 
 
 def send_command(data):

@@ -8,7 +8,33 @@ import InputAdornment from '@mui/material/InputAdornment';
 const Orders = (props) => {
     return (
         <table className={props.customClass} >
+            <thead>
+                <tr>
+                    {props.headers.map((header, index) => {
+                        return <th title={header} key={header} className={props.className}>
+                            {header}
+                        </th>
+                    })}
+                </tr>
+            </thead>
             <tbody>
+
+                {
+                    props.data.map((row) => {
+
+                        return <tr>
+                            {
+                                /** Map row line */
+                                row.items.map((cellData) => {
+                                    return <td>{cellData}</td>
+                                })
+                            }
+
+
+                        </tr>
+                    })
+                }
+
                 <tr>
                     <td>
                         <button onClick={props.saveall} className={"clsOrangebutton"} >{"Save to Google"}</button>

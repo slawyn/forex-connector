@@ -22,7 +22,7 @@ class OpenPosition:
 
     def __init__(self, pos):
         self.id = pos.ticket
-        self.time = pos.time
+        self.time = datetime.datetime.fromtimestamp(pos.time).strftime('%Y-%m-%d %H:%M')
         self.type = pos.type
         self.magic = pos.magic
         self.identifier = pos.identifier
