@@ -3,6 +3,6 @@
 	"folderid":"1g3aFjGgRA1V7IC9K2iwh2Ma5y28ymBE5",
 	"spreadsheet":"Trading Journal",
 	"worksheet":"2022",
-	"date": "2020-01-01 10:10:10",
+	"date": "2022-01-01 10:10:10",
 	"dir":"trades"
 }

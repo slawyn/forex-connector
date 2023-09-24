@@ -30,7 +30,8 @@ class App:
     COLUMNS = [COL_INSTRUMENT, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
 
     def __init__(self):
-        self.trader = Trader(CONFIG_NAME)
+        self.config = load_config(CONFIG_NAME)
+        self.trader = Trader(self.config)
         self.commander = Commander()
         self._set_filter("currency")
 
@@ -74,12 +75,18 @@ class App:
             action = ACTIONS[type]
             tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3])
             log(tr.get_request())
-            # self.trader.trade(tr)
+            self.trader.trade(tr)
         except Exception as e:
             print("Exception", e)
         return True
 
-    def _get_symbols(self, filter):
+    def _get_history_positions(self):
+        start_date = convert_string_to_date(self.config["date"])
+        positions = self.trader.get_history_positions(start_date, onlyfinished=False)
+        print(positions)
+        return positions
+
+    def _get_symbols(self, filter_updated=True):
         '''Builds a list of instruments based on filter
         '''
         indices = []
@@ -104,7 +111,7 @@ class App:
             # Create data set
             #timer = convert_timestamp_to_string(epoch - sym.time)
             timer = get_current_date()
-            if updated:
+            if updated or not filter_updated:
                 react_data[name] = [name,
                                     f"%2.{digits}f" % ask,
                                     f"%2.{digits}f" % bid,
@@ -137,10 +144,10 @@ def make_pretty(styler):
     return styler
 
 
-def get_with_terminal_info():
+def get_with_terminal_info(force=False):
     '''Updates table with instruments
     '''
-    filter = []
+    filter = not force
     index, headers, instruments = app._get_symbols(filter)
     account = app._get_account_info()
     return {"headers": headers, "instruments": instruments, "account": account}
@@ -160,6 +167,17 @@ def get_time():
 @flask.route('/update', methods=['GET'])
 def update():
     return get_with_terminal_info()
+
+
+@flask.route('/get-positions', methods=['GET'])
+def get_positions():
+    pos = app._get_history_positions()
+    return pos
+
+
+@flask.route('/update-all', methods=['GET'])
+def update_all():
+    return get_with_terminal_info(force=True)
 
 
 @flask.route('/trade', methods=['POST'])

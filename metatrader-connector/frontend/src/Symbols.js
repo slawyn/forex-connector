@@ -103,6 +103,9 @@ const Symbols = (props) => {
                         <td className={props.customClass}>Server:{props.account.server}</td>
                         <td className={props.customClass}>Profit:{props.account.profit}</td>
                         <td className={props.customClass}>Leverage:{props.account.leverage}</td>
+                        <td className={props.customClass}>
+                            <button className={"clsBluebutton"} onClick={props.updateall}>Get All</button>
+                        </td>
                     </tr>
                 </tbody>
             </table>

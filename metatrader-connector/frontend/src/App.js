@@ -59,14 +59,31 @@ function App() {
     );
   };
 
+  const fetchTerminalDataForce = () => {
+    fetch("/update-all").then((res) =>
+      res.json().then((receivedTerminalData) => {
 
-  React.useEffect(() => {
-    /* Mount */
-    const interval = setInterval(() => { fetchServerData(); fetchTerminalData() }, 2000);
+        /* Partial update */
+        setTerminalData((previousstate) => ({
+          account: receivedTerminalData.account,
+          headers: receivedTerminalData.headers,
+          instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments }
+        })
+        )
+      })
+    );
+  };
 
-    /* Unmount */
-    return () => clearInterval(interval);
-  }, []);
+  const fetchAllPositions = () => {
+    fetch("/get-positions").then((res) =>
+      res.json().then((receivedPositions) => {
+
+      })
+    );
+  };
+
+
+
 
 
 
@@ -108,6 +125,15 @@ function App() {
       }));
   };
 
+
+  React.useEffect(() => {
+    /* Mount */
+    const interval = setInterval(() => { fetchServerData(); fetchTerminalData() }, 2000);
+
+    /* Unmount */
+    return () => clearInterval(interval);
+  }, []);
+
   return (
 
     <div className="App">
@@ -125,7 +151,7 @@ function App() {
               account={terminalData.account}
               headers={terminalData.headers}
               data={mapTerminalData(terminalData.instruments)}
-              instrument={symbolData.info.name} selector={selectInstrument} />
+              instrument={symbolData.info.name} selector={selectInstrument} updateall={fetchTerminalDataForce} />
           </div>
 
           {/* Right block*/}
@@ -136,6 +162,7 @@ function App() {
               data={terminalData.instruments}
               symbolData={symbolData.info}
               handletrade={transmitTradeRequest} />
+            <button onClick={fetchAllPositions}>Fetch All Positions</button>
           </div>
         </div>
       </header >

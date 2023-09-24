@@ -326,10 +326,10 @@ class Trader:
         description: Used for communicating over the connector with mt5
     '''
 
-    def __init__(self, configname):
+    def __init__(self, config):
         # 1. Establish connection to the MetaTrader 5 terminal
         if self.reinit():
-            self.config = load_config(configname)
+            self.config = config
             self.ratio = 1
             self.risk = 2
             self.symbols = None
@@ -358,7 +358,8 @@ class Trader:
         ''' Collect Information '''
         # Get Positions of closed deals and add them to excel sheet
         self.drive_handle = DriveFileController(self.config["secretsfile"], self.config["folderid"], self.config["spreadsheet"], self.config["worksheet"], self.config["dir"])
-        positions = self.get_history_positions(self.config["date"])
+        start_date = convert_string_to_date(self.config["date"])
+        positions = self.get_history_positions(start_date)
 
         # prepare positions for drawing
         for pid in positions:
@@ -497,8 +498,7 @@ class Trader:
         log("\tRisk: %f Diff: %f tickval=%f point=%f ticksize=%f" % (loss_profit, points, sym.trade_tick_value, sym.point, sym.trade_tick_size))
         return [buy_stoploss, buy_takeprofit, sell_stoploss, sell_takeprofit]
 
-    def get_history_positions(self, date):
-        start_date = convert_string_to_date(date)
+    def get_history_positions(self, start_date, onlyfinished=True):
 
         # get history_deals for symbols whose names contain "GBP" within a specified interval
         history_deals = mt5.history_deals_get(start_date, datetime.datetime.now())
@@ -537,11 +537,15 @@ class Trader:
             pd.print_data()
 
         log("Entry Count:%d" % len(pos_finished))
-        return pos_finished
+        if onlyfinished:
+            return pos_finished
+        else:
+            return pos_temporary
 
     def trade(self, tradeRequest):
-        request = tradeRequest.getRequest()
+        request = tradeRequest.get_request()
         result = mt5.order_send(request)
+        log(result)
 
 
 '''
