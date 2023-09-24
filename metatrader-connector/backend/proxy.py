@@ -6,7 +6,7 @@ from commander import Commander
 from trader.trader import Trader
 from trader.request import TradeRequest
 from trader.accountinfo import AccountInfo
-from trader.position import Position
+from trader.position import Position, OpenPosition
 from trader.symbol import Symbol
 from helpers import *
 
@@ -101,6 +101,18 @@ class App:
         json_positions = [positions[p].get_json() for p in positions]
         return json_positions
 
+    def _get_open_positions(self):
+        '''Open Positions
+        '''
+        positions = self.trader.get_open_positions()
+        diff_positions = [OpenPosition.get_info_header()]
+        for p in positions:
+            pos = positions[p]
+            if pos.updated or True:
+                diff_positions.append(pos.get_info())
+
+        return diff_positions
+
     def _get_symbols(self, filter_updated=True):
         '''Builds a list of instruments based on filter
         '''
@@ -136,7 +148,7 @@ class App:
                                     "%-2.2f" % (atr_reserve),
                                     timer]
 
-        return indices, App.COLUMNS,  react_data
+        return App.COLUMNS,  react_data
 
 
 def get_current_date():
@@ -163,9 +175,13 @@ def get_with_terminal_info(force=False):
     '''Updates table with instruments
     '''
     filter = not force
-    index, headers, instruments = app._get_symbols(filter)
+    instr_headers, instr = app._get_symbols(filter)
     account = app._get_account_info()
-    return {"date": get_current_date(), "headers": headers, "instruments": instruments, "account": account}
+    open_positions = app._get_open_positions()
+
+    # Instruments sub-dictionary
+    instruments = {}
+    return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account": account, "open": open_positions}
 
 
 def send_command(data):

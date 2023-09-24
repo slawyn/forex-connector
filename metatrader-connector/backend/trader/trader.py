@@ -5,15 +5,15 @@ import time
 
 from chart import Chart
 from trader.accountinfo import AccountInfo
-from trader.position import Position
+from trader.position import Position, OpenPosition
 from trader.symbol import Symbol
 from trader.request import TradeRequest
 from helpers import *
 
 
 class Trader:
-    TIMEFRAMES = ["M2", "M3", "M4", "M5", "M6", "M10", "M12", "M20", "M30", "H1", "H2", "H3", "H4", "H6", "H8", "H12", "D1", "W1", "MN1"]
-    MT_TIMEFRAMES = [mt5.TIMEFRAME_M2, mt5.TIMEFRAME_M3, mt5.TIMEFRAME_M4, mt5.TIMEFRAME_M5, mt5.TIMEFRAME_M6, mt5.TIMEFRAME_M10, mt5.TIMEFRAME_M12, mt5.TIMEFRAME_M20, mt5.TIMEFRAME_M30,
+    TIMEFRAMES = ["M1", "M2", "M3", "M4", "M5", "M6", "M10", "M12", "M20", "M30", "H1", "H2", "H3", "H4", "H6", "H8", "H12", "D1", "W1", "MN1"]
+    MT_TIMEFRAMES = [mt5.TIMEFRAME_M1, mt5.TIMEFRAME_M2, mt5.TIMEFRAME_M3, mt5.TIMEFRAME_M4, mt5.TIMEFRAME_M5, mt5.TIMEFRAME_M6, mt5.TIMEFRAME_M10, mt5.TIMEFRAME_M12, mt5.TIMEFRAME_M20, mt5.TIMEFRAME_M30,
                      mt5.TIMEFRAME_H1, mt5.TIMEFRAME_H2, mt5.TIMEFRAME_H3, mt5.TIMEFRAME_H4, mt5.TIMEFRAME_H6, mt5.TIMEFRAME_H8, mt5.TIMEFRAME_H12, mt5.TIMEFRAME_D1, mt5.TIMEFRAME_W1, mt5.TIMEFRAME_MN1]
 
     '''
@@ -26,8 +26,8 @@ class Trader:
             self.config = config
             self.ratio = 1
             self.risk = 2
-            self.symbols = None
             self.symbols = {}
+            self.open_positions = {}
             self.account_info = AccountInfo(mt5.account_info())
             self.update_account_info()
 
@@ -83,7 +83,22 @@ class Trader:
 
         return atr
 
+    def get_open_positions(self):
+        positions = mt5.positions_get()
+
+        # Add to open positions
+        for pos in positions:
+            notFound = False
+            try:
+                open_position = self.open_positions[pos.ticket]
+                open_position.update(pos)
+            except:
+                self.open_positions[pos.ticket] = OpenPosition(pos)
+
+        return self.open_positions
+
     def get_closed_positions(self, start_date):
+        ''' Return the current positions. Position=0 --> Buy '''
         positions = self.get_history_positions(start_date)
 
         # prepare positions for drawing

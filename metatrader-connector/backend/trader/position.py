@@ -3,6 +3,87 @@ import datetime
 from helpers import log
 
 
+class OpenPosition:
+    HEADER = ["ID",
+              "TIME",
+              "TYPE",
+              "MAGIC",
+              "IDENTIFIER",
+              "REASON",
+              "COMMENT",
+              "SYMBOL",
+              "PROFIT",
+              "OPEN",
+              "SL",
+              "TP",
+              "PRICE",
+              "SWAP"
+              ]
+
+    def __init__(self, pos):
+        self.id = pos.ticket
+        self.time = pos.time
+        self.type = pos.type
+        self.magic = pos.magic
+        self.identifier = pos.identifier
+        self.reason = pos.reason
+        self.comment = pos.comment
+        self.symbol = pos.symbol
+        self.profit = pos.profit
+        self.update(pos)
+
+        self.updated = True
+
+    def update(self, pos):
+        self.updated = pos.profit != self.profit
+        self.profit = pos.profit
+        self.price_open = pos.price_open
+        self.price_sl = pos.sl
+        self.price_tp = pos.tp
+        self.price_current = pos.price_current
+        self.swap = pos.swap
+
+    def get_json(self):
+        data = {
+            "id": self.id,
+            "time": self.time,
+            "type": self.type,
+            "magic": self.magic,
+            "identifier": self.identifier,
+            "reason": self.reason,
+            "comment": self.comment,
+            "symbol": self.symbol,
+            "profit": self.profit,
+            "price_open": self.price_open,
+            "price_sl": self.price_sl,
+            "price_tp": self.price_tp,
+            "price": self.price_current,
+            "swap": self.swap
+        }
+        return data
+
+    def get_info_header():
+        return OpenPosition.HEADER
+
+    def get_info(self):
+        data = []
+        data.append(self.id)
+        data.append(self.time)
+        data.append(self.type)
+        data.append(self.magic)
+        data.append(self.identifier)
+        data.append(self.reason)
+        data.append(self.comment)
+        data.append(self.symbol)
+        data.append(self.profit)
+        data.append(self.price_open)
+        data.append(self.price_sl)
+        data.append(self.price_tp)
+        data.append(self.price_current)
+        data.append(self.swap)
+        return data
+
+
 class Position:
     DEAL_TYPES = {0: "BUY", 1: "SELL"}
 
@@ -31,8 +112,6 @@ class Position:
 
         self.sell_or_buy = ""
 
-        self.timestart = 0
-        self.timestop = 0
         self.period = ""
         self.rates = []
 

@@ -12,7 +12,7 @@ function App() {
   // usestate for setting a javascript
   // object for storing and using data
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0 } });
-  const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: [] });
+  const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: [], open_positions: [] });
   const [positionData, setPositionData] = React.useState([]);
   const theme = "clsStyle";
 
@@ -34,6 +34,7 @@ function App() {
  */
   const fetchTerminalData = () => {
     fetch("/update").then((res) =>
+
       res.json().then((receivedTerminalData) => {
 
         /* Partial update */
@@ -41,7 +42,8 @@ function App() {
           date: receivedTerminalData.date,
           account: receivedTerminalData.account,
           headers: receivedTerminalData.headers,
-          instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments }
+          instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments },
+          open_positions: receivedTerminalData.open_positions
         })
         )
       })
