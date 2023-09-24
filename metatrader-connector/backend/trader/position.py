@@ -1,0 +1,222 @@
+from helpers import log
+from datetime import datetime
+
+
+class Position:
+    DEAL_TYPES = {0: "BUY", 1: "SELL"}
+
+    def __init__(self, pos_id):
+        self.id = pos_id
+
+        # calculated vars
+        self.volume_total = 0.0
+        self.swap_total = 0.0
+        self.profit_total = 0.0
+
+        self.opening_volume = 0.0
+        self.closing_volume = 0.0
+
+        self.opening_deals = []
+        self.closing_deals = []
+
+        self.price_open_avg = 0.0
+        self.price_close_avg = 0.0
+        self.price_sl = 0.0
+        self.price_tp = 0.0
+
+        self.pips_sl = 0.0
+        self.pips_tp = 0.0
+        self.pips_movement = 0.0
+
+        self.sell_or_buy = ""
+
+        self.timestart = 0
+        self.timestop = 0
+        self.period = ""
+        self.rates = []
+
+    def add_rates(self, rates, period):
+        '''Rates and period
+        '''
+        self.period = period
+        self.rates = rates
+
+    def add_deal(self, deal):
+        '''Add deal to position
+        '''
+        self.swap_total = self.swap_total + deal.swap
+        self.profit_total = self.profit_total + deal.profit
+        self.volume_total += deal.volume
+        # IN or OUT
+
+        if deal.entry == 0:
+            self.opening_volume += deal.volume
+            self.price_open_avg += deal.price * deal.volume
+            self.opening_deals.append(deal)
+
+        elif deal.entry == 1:
+            self.closing_volume += deal.volume
+            self.price_close_avg += deal.price * deal.volume
+            self.closing_deals.append(deal)
+
+        diff_volume = self.opening_volume - self.closing_volume
+
+    def add_orders(self, orders):
+        '''Add orders to position
+        '''
+        # Check if stop loss has been set, if not set it to a value by parsing other orders regarding this position
+        # Problem some data doesn't have stop loss or take profit data in the database, although it is set in metatrader. Don't know why
+        if orders != None:
+            for order in orders:
+                if order.sl > 0.0:
+                    self.price_sl = order.sl
+
+                if order.tp > 0.0:
+                    self.price_tp = order.tp
+
+    def set_symbol_info(self, sym):
+        '''Add symbol info to position
+        '''
+        self.symbol_info = sym
+
+    def get_symbol_name(self):
+        '''Gets
+        '''
+        return self.opening_deals[0].symbol
+
+    def get_id(self):
+        return self.id
+
+    def get_start_msc(self):
+        return self.opening_deals[0].time_msc
+
+    def get_end_msc(self):
+        return self.closing_deals[len(self.closing_deals)-1].time_msc
+
+    def get_rates(self):
+        return self.rates, self.period
+
+    def is_fully_closed(self):
+        diff_volume = self.opening_volume - self.closing_volume
+        return abs(diff_volume) < 0.01 and self.closing_volume > 0.0
+
+    def get_limits(self):
+        return self.price_sl, self.price_tp
+
+    def get_deals(self):
+        def filter(d):
+            return [Position.DEAL_TYPES[d.type], d.time, d.price]
+        result = map(filter, self.opening_deals + self.closing_deals)
+        return result
+
+    def calculate(self):
+        '''Calculate
+        '''
+        # closed only if difference is less than 0.01
+        self.price_open_avg = self.price_open_avg/self.opening_volume
+        self.price_close_avg = self.price_close_avg/self.closing_volume
+
+        try:
+            digits = self.symbol_info.digits
+            value_per_point = 1000
+            if digits == 3:
+                value_per_point /= 100.0
+
+            # Buy
+            if self.opening_deals[0].type == 0:
+                self.pips_sl = abs((self.price_open_avg)-self.price_sl)*value_per_point
+                self.pips_tp = abs(self.price_tp-self.price_open_avg)*value_per_point
+            # Sell
+            else:
+                self.pips_sl = abs(self.price_sl-self.price_open_avg)*value_per_point
+                self.pips_tp = abs((self.price_open_avg)-self.price_tp)*value_per_point
+
+            self.pip_movement = abs(self.price_open_avg-self.price_close_avg)*value_per_point
+        except Exception as e:
+            log("Symbol not found %s" % self.opening_deals[0].symbol)
+        #
+        if not self.price_sl > 0.0:
+            self.pips_sl = 0
+
+        if not self.price_tp > 0.0:
+            self.pips_tp = 0
+
+        # Type of order
+        self.sell_or_buy = Position.DEAL_TYPES[self.opening_deals[0].type]
+
+    def get_data_for_excel(self):
+        '''Create Data Set for Excel
+        '''
+        data = []
+
+        # 0
+        data.append(self.id)
+
+        # 1
+        opening_date = self.opening_deals[len(self.opening_deals)-1].time_msc
+        data.append(datetime.datetime.fromtimestamp(opening_date/1000.0).strftime('%Y-%m-%d %H:%M'))
+
+        # 2
+        closing_date = self.closing_deals[len(self.closing_deals)-1].time_msc
+        data.append(datetime.datetime.fromtimestamp(closing_date/1000.0).strftime('%Y-%m-%d %H:%M'))
+
+        # 3
+        data.append(self.opening_deals[0].symbol)
+
+        # 4
+        data.append(self.volume_total)
+
+        # 5
+        data.append(self.sell_or_buy)
+
+        # 6
+        data.append(self.price_open_avg)
+
+        # 7
+        data.append(self.price_close_avg)
+
+        # 8
+        data.append(self.swap_total)
+
+        data.append(self.pip_movement)
+
+        # 9
+        data.append(self.pips_sl)
+
+        # 10
+        data.append(self.pips_tp)
+
+        # 11
+        data.append(self.profit_total)
+
+        return data
+
+    def print_data(self):
+        '''
+        Print data
+        '''
+        log("## %s[%s] {%s} ###################" % (self.id, self.opening_deals[0].symbol, self.sell_or_buy))
+        log("\t%-20s %-2f" % ("{SL}:", self.price_sl))
+        log("\t%-20s %-2f" % ("{TP}:", self.price_tp))
+
+        log("\t%-20s %-2f" % ("{SL[pips]}:", self.pips_sl))
+        log("\t%-20s %-2f" % ("{TP[pips]}:", self.pips_tp))
+
+        log("\t%-20s %-2f" % ("{Average Open}:", self.price_open_avg))
+        log("\t%-20s %-2f" % ("{Average Close}:", self.price_close_avg))
+
+        log("\t%-20s %-2f" % ("{Total Volume}:", self.volume_total))
+        log("\t%-20s %-2f" % ("{Total Swap}:", self.swap_total))
+        log("\t%-20s %-2f" % ("{Total Profit}:", self.profit_total))
+
+        for d in self.opening_deals:
+            log("\t%-20s [%-s]" % ("**Opening Deal:", d.order))
+            log("\t%-20s [%-s]" % ("   Time:", datetime.datetime.fromtimestamp(d.time)))
+            log("\t%-20s [%-s]" % ("   Price:", d.price))
+            log("\t%-20s [%-s]" % ("   Volume:", d.volume))
+
+        for d in self.closing_deals:
+            log("\t%-20s [%-s]" % ("**Closing Deal:", d.order))
+            log("\t%-20s [%-s]" % ("   Time:", datetime.datetime.fromtimestamp(d.time)))
+            log("\t%-20s [%-s]" % ("   Price:", d.price))
+            log("\t%-20s [%-s]" % ("   Volume:", d.volume))

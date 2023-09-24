@@ -1,12 +1,13 @@
-from helpers import *
-from trader import Trader, AccountInfo, TradeRequest
-import tkinter as tk
-from tkinter import ttk
 import datetime
-from datetime import datetime
 from flask import Flask, request, render_template
+
 from commander import Commander
-import time
+from trader.trader import Trader
+from trader.request import TradeRequest
+from trader.accountinfo import AccountInfo
+from trader.position import Position
+from trader.symbol import Symbol
+from helpers import *
 
 
 APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -96,7 +97,7 @@ class App:
 
         syms = self.trader.get_updated_symbols_sorted()
         indices = range(len(syms))
-        date = datetime.utcnow() - datetime(1970, 1, 1)
+        date = datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
         epoch = date.total_seconds()  # + (2*60*60)
 
         for idx in indices:
@@ -125,7 +126,7 @@ class App:
 
 
 def get_current_date():
-    return datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    return datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 
 def convert_timestamp_to_string(timestamp_sec):
