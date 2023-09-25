@@ -2,7 +2,7 @@ class Symbol:
     def __init__(self, sym):
         self.time = sym.time
         self.step = sym.trade_tick_size
-        self.spread = sym.spread * self.step
+        self.spread = sym.spread * sym.trade_tick_size
         self.digits = sym.digits
         self.name = sym.name
         self.volume_step = sym.volume_step

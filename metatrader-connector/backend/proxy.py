@@ -26,8 +26,8 @@ class App:
     COL_BID = 'BID'
     COL_SPREAD = 'SPREAD'
     COL_ATR = 'ATR'
-    COL_WEDGE = 'WEDGE[%]'
-    COL_AVAIL = 'AVAILABLE[%]'
+    COL_WEDGE = 'SPREAD:ATR[%]'
+    COL_AVAIL = 'ATR.RESERVED[%]'
     COL_UPDATE = 'UPDATE'
     COLUMNS = [COL_INSTRUMENT, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
 
@@ -143,9 +143,9 @@ class App:
                                     f"%2.{digits}f" % ask,
                                     f"%2.{digits}f" % bid,
                                     f"%2.{digits}f" % (spread),
-                                    "%-2.2f" % atr,
+                                    "%-2.4f" % atr,
                                     "%-2.2f" % (ratio),
-                                    "%-2.2f" % (atr_reserve),
+                                    "%-2.2f" % (abs(atr_reserve)),
                                     timer]
 
         return App.COLUMNS,  react_data

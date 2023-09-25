@@ -5,13 +5,13 @@ from helpers import log
 
 class OpenPosition:
     HEADER = ["ID",
+              "SYMBOL",
               "TIME",
               "TYPE",
               "MAGIC",
               "IDENTIFIER",
               "REASON",
               "COMMENT",
-              "SYMBOL",
               "PROFIT",
               "OPEN",
               "SL",
@@ -68,13 +68,13 @@ class OpenPosition:
     def get_info(self):
         data = []
         data.append(self.id)
+        data.append(self.symbol)
         data.append(self.time)
         data.append(self.type)
         data.append(self.magic)
         data.append(self.identifier)
         data.append(self.reason)
         data.append(self.comment)
-        data.append(self.symbol)
         data.append(self.profit)
         data.append(self.price_open)
         data.append(self.price_sl)

@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect, createRef } from "react";
-import TextInput from "./TextInput";
 import Trader from "./Trader";
 
 const TableHeads = (props) => {
