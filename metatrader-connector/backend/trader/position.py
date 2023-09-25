@@ -17,7 +17,8 @@ class OpenPosition:
               "SL",
               "TP",
               "PRICE",
-              "SWAP"
+              "SWAP",
+              "VOLUME"
               ]
 
     def __init__(self, pos):
@@ -30,6 +31,7 @@ class OpenPosition:
         self.comment = pos.comment
         self.symbol = pos.symbol
         self.profit = pos.profit
+        self.volume = pos.volume
         self.update(pos)
 
         self.updated = True
@@ -58,7 +60,8 @@ class OpenPosition:
             "price_sl": self.price_sl,
             "price_tp": self.price_tp,
             "price": self.price_current,
-            "swap": self.swap
+            "swap": self.swap,
+            "volume": self.volume
         }
         return data
 
@@ -81,6 +84,7 @@ class OpenPosition:
         data.append(self.price_tp)
         data.append(self.price_current)
         data.append(self.swap)
+        data.append(self.volume)
         return data
 
 

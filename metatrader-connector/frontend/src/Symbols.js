@@ -37,10 +37,18 @@ const TableRows = (props) => {
         let objs = [...props.data];
         if (props.sortConfig != null) {
             objs.sort((a, b) => {
-                if (a.items[props.sortConfig.key] < b.items[props.sortConfig.key]) {
+                var _a = a.items[props.sortConfig.key];
+                var _b = b.items[props.sortConfig.key];
+
+                if (!isNaN(_a)) {
+                    _a = parseFloat(_a);
+                    _b = parseFloat(_b);
+                }
+
+                if (_a < _b) {
                     return props.sortConfig.direction === 'ascending' ? -1 : 1;
                 }
-                if (a.items[props.sortConfig.key] > b.items[props.sortConfig.key]) {
+                if (_a > _b) {
                     return props.sortConfig.direction === 'ascending' ? 1 : -1;
                 }
                 return 0;
