@@ -62,14 +62,12 @@ const Calculator = (props) => {
                                 type="number"
                                 value={props.trade.riskVolume}
                                 variant="outlined"
-                                inputProps={{
-                                    step: props.trade.volume_step,
-                                }}
                                 InputLabelProps={{ shrink: true }}
                                 onChange={(e) => { props.handlervolume(e.target.value) }}
                                 label="Risk Volume"
                                 InputProps={{
                                     startAdornment: <InputAdornment position="start">LOT</InputAdornment>,
+                                    step: props.trade.volume_step,
                                 }}
                             />
                         </td>
@@ -92,14 +90,12 @@ const Calculator = (props) => {
                                 type="number"
                                 value={props.trade.risk}
                                 variant="outlined"
-                                inputProps={{
-                                    step: props.trade.risk_step
-                                }}
                                 InputLabelProps={{ shrink: true }}
                                 onChange={(e) => { props.handlerrisk(e.target.value) }}
                                 label="Risk"
                                 InputProps={{
                                     startAdornment: <InputAdornment position="start">%</InputAdornment>,
+                                    step: props.trade.risk_step
                                 }}
                             />
                         </td>
@@ -121,13 +117,11 @@ const Calculator = (props) => {
                                 type="number"
                                 value={props.trade.ratio}
                                 variant="outlined"
-                                inputProps={{
-                                    step: props.trade.ratio_step
-                                }}
                                 InputLabelProps={{ shrink: true }}
                                 label="Risk Ratio"
                                 InputProps={{
                                     startAdornment: <InputAdornment position="start">%</InputAdornment>,
+                                    step: props.trade.ratio_step
                                 }}
                             />
                         </td>
@@ -139,8 +133,9 @@ const Calculator = (props) => {
                             <TextField
                                 id="trade-ask"
                                 label="Ask"
+                                type="number"
                                 value={props.trade.ask}
-                                helperText=""
+                                variant="outlined"
                                 InputProps={{
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                                 }}
@@ -164,6 +159,7 @@ const Calculator = (props) => {
                             <TextField
                                 id="trade-bid"
                                 label="Bid"
+                                type="number"
                                 value={props.trade.bid}
                                 helperText=""
                                 InputProps={{
