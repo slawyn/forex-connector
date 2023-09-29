@@ -48,14 +48,6 @@ class Trader:
     def get_account_info(self):
         return self.account_info
 
-    def send_order(self, symbol, type, volume, price, sl, tp, stoplimit, comment=""):
-        try:
-            result = mt5.order_send(action=action, magic=magic, order=order, symbol=symbol,  volume=volume, price=price, stoplimit=stoplimit, sl=sl, tp=tp, deviation=deviation,
-                                    type=type, type_filling=type_filling, type_time=type_time, expiration=expiration, comment=comment, position=position, position_by=position_by)
-        except Exception as e:
-            log(e)
-        pass
-
     def _filter_currency(self, sym):
         return sym.currency_base == self.account_info.currency or sym.currency_profit == self.account_info.currency
 
