@@ -80,7 +80,7 @@ const Calculator = (props) => {
                                 value={props.trade.risk}
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                onChange={(e) => { props.handlerrisk(e.target.value) }}
+                                onChange={(e) => { props.handleRisk(e.target.value) }}
                                 label="Risk"
                                 inputProps={{
 
@@ -97,6 +97,7 @@ const Calculator = (props) => {
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
                                 label="Risk Ratio"
+                                onChange={(e) => { props.handleRatio(e.target.value) }}
                                 inputProps={{
                                     startAdornment: <InputAdornment position="start">%</InputAdornment>,
                                     step: props.trade.ratio_step
@@ -213,6 +214,18 @@ const Trader = (props) => {
         }));
     };
 
+    const handleRatioChange = (value) => {
+        setTrade((previousTrade) => ({
+            ...previousTrade,
+            ratio: value,
+            points: calculatePoints(
+                trade.risk * 0.01 * trade.balance,
+                trade.contract_size,
+                trade.point_value,
+                trade.riskVolume)
+        }));
+    };
+
     const handleCommentChange = (value) => {
         setTrade((previousTrade) => ({
             ...previousTrade,
@@ -238,13 +251,20 @@ const Trader = (props) => {
 
     const generateComment = (risk, text) => {
 
-        var comment = `Risk: ${risk} ` + text;
+        var comment = `[Risk: ${risk}% ]` + text;
         return comment;
     };
 
     return (
         <>
-            <Calculator customClass={props.customClass} trade={trade} handlertrade={handleTrade} handlervolume={handleVolumeChange} handlerrisk={handleRiskChange} handlercomment={handleCommentChange} />
+            <Calculator
+                customClass={props.customClass}
+                trade={trade}
+                handlertrade={handleTrade}
+                handlervolume={handleVolumeChange}
+                handleRisk={handleRiskChange}
+                handleRatio={handleRatioChange}
+                handlercomment={handleCommentChange} />
 
         </>
     )

@@ -241,6 +241,7 @@ class Position:
         # Type of order
         self.sell_or_buy = Position.DEAL_TYPES[self.opening_deals[0].type]
         self.symbol = self.opening_deals[0].symbol
+        self.comment = self.opening_deals[0].comment
 
     def get_data_for_excel(self):
         '''Create Data Set for Excel

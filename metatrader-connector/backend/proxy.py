@@ -77,7 +77,7 @@ class App:
             action = ACTIONS[type]
             tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3], comment)
             log(tr.get_request())
-            self.trader.trade(tr)
+            # self.trader.trade(tr)
         except Exception as e:
             print("Exception", e)
         return True
