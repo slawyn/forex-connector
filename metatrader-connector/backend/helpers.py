@@ -15,42 +15,35 @@ MINUTES30 = DAY_MSC/48
 MINUTES15 = DAY_MSC/96
 MINUTES3 = HOURS1/20
 
-'''
-Date conversion function
-'''
-
 
 def convert_string_to_date(date):
+    '''
+    Date conversion function
+    '''
     return datetime.datetime.fromisoformat(date)
 
 
-'''
-Log function
-'''
-
-
 def log(s):
+    '''
+    Log function
+    '''
     print("%s ## %s" % (datetime.datetime.now().time(), s))
 
 
-'''
-Load Json config
-'''
-
-
 def load_config(filename):
+    '''
+    Load Json config
+    '''
     f = open(filename, "r")
     config = json.load(f)
     f.close()
     return config
 
 
-'''
-Find min and max for price and volume
-'''
-
-
 def get_min_max(rates):
+    '''
+    Find min and max for price and volume
+    '''
 
     # Find highest and lowest
     price_max = 0
@@ -73,6 +66,10 @@ def get_min_max(rates):
             volume_min = rate[5]
 
     return price_max, price_min, volume_max, volume_min
+
+
+def get_current_date():
+    return datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 
 def time_go_back_n_weeks(date_msc, n):

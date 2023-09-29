@@ -10,12 +10,11 @@ from trader.position import Position, OpenPosition
 from trader.symbol import Symbol
 from helpers import *
 
-
-APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEMPLATE_PATH = os.path.join(APP_PATH, 'html/')
-
-
+# Configurable values
 CONFIG_NAME = "config/config.txt"
+CONFIG_ENABLE_TRADING = True
+
+# Flask variables
 flask = Flask(__name__)
 app = None
 
@@ -77,7 +76,10 @@ class App:
             action = ACTIONS[type]
             tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3], comment)
             log(tr.get_request())
-            # self.trader.trade(tr)
+
+            # Trade is executed here
+            if CONFIG_ENABLE_TRADING:
+                self.trader.trade(tr)
         except Exception as e:
             print("Exception", e)
         return True
@@ -96,6 +98,8 @@ class App:
         return []
 
     def _get_history_positions(self):
+        '''Gets closed positions from history
+        '''
         start_date = convert_string_to_date(self.config["date"])
         positions = self.trader.get_history_positions(start_date, onlyfinished=False)
         json_positions = [positions[p].get_info() for p in positions]
@@ -158,10 +162,6 @@ class App:
                                     timer]
 
         return App.COLUMNS,  react_data
-
-
-def get_current_date():
-    return datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 
 def convert_timestamp_to_string(timestamp_sec):
