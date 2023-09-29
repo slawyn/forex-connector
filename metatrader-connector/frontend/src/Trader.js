@@ -49,11 +49,13 @@ const Calculator = (props) => {
     return (
         <ThemeProvider theme={darkTheme}>
             <CssBaseline />
-            <table >
+            <table className="">
                 <tbody>
                     <tr>
                         <td>Symbol: {props.trade.name}</td>
-
+                        <td>Contract Size: {props.trade.contract_size}</td>
+                        <td>Point Value: {props.trade.point_value}</td>
+                        <td>Volume Step: {props.trade.volume_step}</td>
                     </tr>
                     <tr>
                         <td>
@@ -65,25 +67,12 @@ const Calculator = (props) => {
                                 InputLabelProps={{ shrink: true }}
                                 onChange={(e) => { props.handlervolume(e.target.value) }}
                                 label="Risk Volume"
-                                InputProps={{
+                                inputProps={{
                                     startAdornment: <InputAdornment position="start">LOT</InputAdornment>,
                                     step: props.trade.volume_step,
                                 }}
                             />
                         </td>
-                        <td>
-                            <TextField
-                                id="outlined-read-only-input"
-                                label="Point Value"
-                                value={props.trade.point_value}
-                                InputProps={{
-                                    readOnly: true,
-                                }}
-                            />
-                        </td>
-
-                    </tr>
-                    <tr>
                         <td>
                             <TextField
                                 id="trade-risk"
@@ -93,24 +82,13 @@ const Calculator = (props) => {
                                 InputLabelProps={{ shrink: true }}
                                 onChange={(e) => { props.handlerrisk(e.target.value) }}
                                 label="Risk"
-                                InputProps={{
+                                inputProps={{
+
                                     startAdornment: <InputAdornment position="start">%</InputAdornment>,
                                     step: props.trade.risk_step
                                 }}
                             />
                         </td>
-                        <td>
-                            <TextField
-                                id="outlined-read-only-input"
-                                label="Contract Size"
-                                value={props.trade.contract_size}
-                                InputProps={{
-                                    readOnly: true,
-                                }}
-                            />
-                        </td>
-                    </tr>
-                    <tr>
                         <td>
                             <TextField
                                 id="trade-ratio"
@@ -119,7 +97,7 @@ const Calculator = (props) => {
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
                                 label="Risk Ratio"
-                                InputProps={{
+                                inputProps={{
                                     startAdornment: <InputAdornment position="start">%</InputAdornment>,
                                     step: props.trade.ratio_step
                                 }}
@@ -136,7 +114,7 @@ const Calculator = (props) => {
                                 type="number"
                                 value={props.trade.ask}
                                 variant="outlined"
-                                InputProps={{
+                                inputProps={{
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                                 }}
                             />
@@ -149,12 +127,20 @@ const Calculator = (props) => {
                                 id="outlined-read-only-input"
                                 label="Price Points"
                                 value={props.trade.points}
-                                InputProps={{
+                                inputProps={{
                                     readOnly: true,
                                     startAdornment: <InputAdornment position="start">PP</InputAdornment>,
                                 }}
                             />
+                            <TextField
+                                id="outlined-helperText"
+                                label="Comment"
+                                value={props.trade.comment}
+                                onChange={(e) => { props.handlercomment(e.target.value) }}
+                                helperText="Strategy tracking"
+                            />
                         </td>
+
                         <td>
                             <TextField
                                 id="trade-bid"
@@ -162,7 +148,7 @@ const Calculator = (props) => {
                                 type="number"
                                 value={props.trade.bid}
                                 helperText=""
-                                InputProps={{
+                                inputProps={{
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                                 }}
                             />
@@ -172,6 +158,7 @@ const Calculator = (props) => {
                         </td>
 
                     </tr>
+
                 </tbody>
             </table>
         </ThemeProvider>
@@ -226,6 +213,13 @@ const Trader = (props) => {
         }));
     };
 
+    const handleCommentChange = (value) => {
+        setTrade((previousTrade) => ({
+            ...previousTrade,
+            comment: value
+        }));
+    };
+
     const handleTrade = (type) => {
         var request = {
             symbol: trade.name,
@@ -236,14 +230,22 @@ const Trader = (props) => {
             stoploss_sell: trade.ask + trade.points,
             stoploss_buy: trade.bid - trade.points,
             takeprofit_buy: trade.bid + (trade.points) * trade.ratio,
-            takeprofit_sell: trade.ask + (trade.points) * trade.ratio
+            takeprofit_sell: trade.ask + (trade.points) * trade.ratio,
+            comment: generateComment(trade.risk, trade.comment)
         }
         props.handletrade(request);
     };
 
+    const generateComment = (risk, text) => {
+
+        var comment = `Risk: ${risk} ` + text;
+        return comment;
+    };
+
     return (
         <>
-            <Calculator customClass={props.customClass} trade={trade} handlertrade={handleTrade} handlervolume={handleVolumeChange} handlerrisk={handleRiskChange} />
+            <Calculator customClass={props.customClass} trade={trade} handlertrade={handleTrade} handlervolume={handleVolumeChange} handlerrisk={handleRiskChange} handlercomment={handleCommentChange} />
+
         </>
     )
 

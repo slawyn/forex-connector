@@ -68,12 +68,17 @@ class OpenPosition:
     def get_info_header():
         return OpenPosition.HEADER
 
-    def get_info(self):
+    def get_info(self, types_map={}):
         data = []
+
+        type = self.type
+        if type in types_map:
+            type = types_map[type]
+
         data.append(self.id)
         data.append(self.symbol)
         data.append(self.time)
-        data.append(self.type)
+        data.append(type)
         data.append(self.magic)
         data.append(self.identifier)
         data.append(self.reason)
@@ -90,6 +95,13 @@ class OpenPosition:
 
 class Position:
     DEAL_TYPES = {0: "BUY", 1: "SELL"}
+    HEADER = ["ID",
+              "SYMBOL",
+              "VOLUME",
+              "PROFIT",
+              "TYPE",
+              "COMMENT"
+              ]
 
     def __init__(self, pos_id):
         self.id = pos_id
@@ -104,7 +116,6 @@ class Position:
 
         self.opening_deals = []
         self.closing_deals = []
-
         self.price_open_avg = 0.0
         self.price_close_avg = 0.0
         self.price_sl = 0.0
@@ -118,6 +129,8 @@ class Position:
 
         self.period = ""
         self.rates = []
+        self.symbol = ""
+        self.comment = ""
 
     def add_rates(self, rates, period):
         '''Rates and period
@@ -227,6 +240,7 @@ class Position:
 
         # Type of order
         self.sell_or_buy = Position.DEAL_TYPES[self.opening_deals[0].type]
+        self.symbol = self.opening_deals[0].symbol
 
     def get_data_for_excel(self):
         '''Create Data Set for Excel
@@ -245,7 +259,7 @@ class Position:
         data.append(datetime.datetime.fromtimestamp(closing_date/1000.0).strftime('%Y-%m-%d %H:%M'))
 
         # 3
-        data.append(self.opening_deals[0].symbol)
+        data.append(self.symbol)
 
         # 4
         data.append(self.volume_total)
@@ -279,7 +293,7 @@ class Position:
         '''
         Print data
         '''
-        log("## %s[%s] {%s} ###################" % (self.id, self.opening_deals[0].symbol, self.sell_or_buy))
+        log("## %s[%s] {%s} ###################" % (self.id, self.symbol, self.sell_or_buy))
         log("\t%-20s %-2f" % ("{SL}:", self.price_sl))
         log("\t%-20s %-2f" % ("{TP}:", self.price_tp))
 
@@ -304,6 +318,21 @@ class Position:
             log("\t%-20s [%-s]" % ("   Time:", datetime.datetime.fromtimestamp(d.time)))
             log("\t%-20s [%-s]" % ("   Price:", d.price))
             log("\t%-20s [%-s]" % ("   Volume:", d.volume))
+
+    def get_info_header():
+        return Position.HEADER
+
+    def get_info(self):
+        data = []
+
+        data.append(self.id)
+        data.append(self.symbol)
+        data.append(self.volume_total)
+        data.append(self.profit_total)
+        data.append(self.sell_or_buy)
+        data.append(self.comment)
+
+        return data
 
     def get_json(self):
         data = {"id": self.id,

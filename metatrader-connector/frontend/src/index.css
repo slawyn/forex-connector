@@ -34,6 +34,7 @@ button {
   background-color: red;
 }
 
+
 .clsBluebutton {
   background-color: rgb(0, 187, 255);
 }
@@ -107,7 +108,9 @@ th {
   border: #1974ca;
   border-style: solid;
   border-width: 2pt;
-  margin: 10px
+  margin: 10px;
+  border-radius: 2%;
+
 }
 
 .clsPositionsTable {

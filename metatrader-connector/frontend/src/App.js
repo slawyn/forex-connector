@@ -4,6 +4,7 @@ import "./App.css";
 import Symbols from "./Symbols";
 import Trader from "./Trader";
 import Orders from "./Orders";
+import History from "./History";
 
 
 
@@ -20,7 +21,7 @@ function App() {
     op_headers: [],
     open: {}
   });
-  const [positionData, setPositionData] = React.useState([]);
+  const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
   const theme = "clsStyle";
 
   /**
@@ -181,8 +182,15 @@ function App() {
               <Orders customClass={theme}
                 headers={terminalData.op_headers}
                 data={mapTerminalData(terminalData.open)}
+              />
+            </div>
+            <div className="clsPositionsTable">
+              <History customClass={theme}
+                updateall={fetchAllPositions}
                 saveall={transmitSavePositions}
-                updateall={fetchAllPositions} />
+                headers={positionData.headers}
+                data={positionData.positions}
+              />
             </div>
           </div>
         </div>

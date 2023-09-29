@@ -5,10 +5,13 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import InputAdornment from '@mui/material/InputAdornment';
 
+const History = (props) => {
 
-const Orders = (props) => {
     return (
         <>
+            <button onClick={props.saveall} className={"clsOrangebutton"} >{"Save to Google"}</button>
+            <button onClick={props.updateall}>Fetch All Positions</button>
+
             <table className={props.customClass} >
                 <thead>
                     <tr>
@@ -21,24 +24,22 @@ const Orders = (props) => {
                 </thead>
                 <tbody>
                     {
-                        props.data.map((row) => {
-
+                        props.data.map((entry) => {
                             return <tr>
                                 {
                                     /** Map row line */
-                                    row.items.map((cellData) => {
+                                    entry.map((cellData) => {
                                         return <td>{cellData}</td>
                                     })
                                 }
-
-
                             </tr>
                         })
                     }
                 </tbody>
-            </table >
+            </table>
         </>
     );
 };
 
-export { Orders as default };
+
+export { History as default };

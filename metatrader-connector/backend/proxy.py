@@ -63,7 +63,7 @@ class App:
         s = self.trader.get_symbol(sym)
         return s
 
-    def _trade(self, symbol,  lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell):
+    def _trade(self, symbol,  lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment):
         ACTIONS = {
             "market_buy":  [TradeRequest.get_type_market_buy(), entry_buy, stoploss_buy, takeprofit_buy],
             "limit_buy":   [TradeRequest.get_type_limit_buy(), entry_buy, stoploss_buy, takeprofit_buy],
@@ -75,7 +75,7 @@ class App:
 
         try:
             action = ACTIONS[type]
-            tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3])
+            tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3], comment)
             log(tr.get_request())
             self.trader.trade(tr)
         except Exception as e:
@@ -98,18 +98,27 @@ class App:
     def _get_history_positions(self):
         start_date = convert_string_to_date(self.config["date"])
         positions = self.trader.get_history_positions(start_date, onlyfinished=False)
-        json_positions = [positions[p].get_json() for p in positions]
-        return json_positions
+        json_positions = [positions[p].get_info() for p in positions]
+        return Position.get_info_header(), json_positions
 
     def _get_open_positions(self):
         '''Open Positions
         '''
+        TYPES = {
+            TradeRequest.get_type_market_buy(): "market_buy",
+            TradeRequest.get_type_limit_buy(): "limit_buy",
+            TradeRequest.get_type_stop_buy(): "stop_buy",
+            TradeRequest.get_type_market_sell(): "market_sell",
+            TradeRequest.get_type_limit_sell(): "limit_sell",
+            TradeRequest.get_type_stop_sell(): "stop_sell",
+        }
+
         positions = self.trader.get_open_positions()
         diff_positions = {}
         for p in positions:
             pos = positions[p]
             if pos.updated or True:
-                diff_positions[pos.id] = pos.get_info()
+                diff_positions[pos.id] = pos.get_info(types_map=TYPES)
 
         return OpenPosition.get_info_header(), diff_positions
 
@@ -197,8 +206,8 @@ def update():
 
 @flask.route('/get-positions', methods=['GET'])
 def get_positions():
-    json_positions = app._get_history_positions()
-    return {"positions": json_positions}
+    headers, positions = app._get_history_positions()
+    return {"positions": positions, "headers": headers}
 
 
 @flask.route('/update-all', methods=['GET'])
@@ -224,7 +233,8 @@ def trade():
     stoploss_sell = data.get("stoploss_sell")
     takeprofit_buy = data.get("takeprofit_buy")
     takeprofit_sell = data.get("takeprofit_sell")
-    app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell)
+    comment = data.get("comment")
+    app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment)
     return {"id": 0}
 
 

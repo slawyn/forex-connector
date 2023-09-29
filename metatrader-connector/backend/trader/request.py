@@ -7,7 +7,7 @@ class TradeRequest:
     ORDER_TYPES = [mt5.ORDER_TYPE_BUY, mt5.ORDER_TYPE_BUY_LIMIT, mt5.ORDER_TYPE_BUY_STOP,
                    mt5.ORDER_TYPE_SELL, mt5.ORDER_TYPE_SELL_LIMIT, mt5.ORDER_TYPE_SELL_STOP, ]
 
-    def __init__(self, symbol, lot, order_type, price, stoploss, takeprofit):
+    def __init__(self, symbol, lot, order_type, price, stoploss, takeprofit, comment="TEST TRADE"):
         order_type = TradeRequest.ORDER_TYPES[order_type]
         self.request = {
             "action": mt5.TRADE_ACTION_DEAL,
@@ -19,7 +19,7 @@ class TradeRequest:
             "tp": takeprofit,
             "deviation": 1,
             "magic": TradeRequest.MAGIC,
-            "comment": TradeRequest.COMMENT,
+            "comment": comment,
             "type_time": mt5.ORDER_TIME_GTC,
             "type_filling": mt5.ORDER_FILLING_IOC
         }
