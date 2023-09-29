@@ -23,3 +23,9 @@ https://www.mql5.com/en/blogs/post/706665
 
 - Generate *sercretsfile.json* and place into *config* folder  
 https://developers.google.com/sheets/api/quickstart/go
+
+
+**TRIVIA**  
+Backtesting of the strategies
+https://github.com/mkhushi/MQL5-Python-Backtesting
+
