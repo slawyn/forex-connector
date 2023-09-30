@@ -24,13 +24,7 @@ function App() {
   const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
   const theme = "clsStyle";
 
-  /**
-   * 
-   * @param {Trading Symbol} symbol 
-   */
-  const selectInstrument = (symbol) => {
-    transmitTerminalSymbol(symbol);
-  };
+
 
   const mapTerminalData = (data) => {
     return Object.entries(data).map(([key, value]) => { return { id: key, items: value } });
@@ -65,9 +59,12 @@ function App() {
 
         /* Partial update */
         setTerminalData((previousstate) => ({
+          date: receivedTerminalData.date,
           account: receivedTerminalData.account,
           headers: receivedTerminalData.headers,
-          instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments }
+          instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments },
+          op_headers: receivedTerminalData.op_headers,
+          open: receivedTerminalData.open
         })
         )
       })
@@ -82,12 +79,24 @@ function App() {
     );
   };
 
+  /**
+   * 
+   * @param {Trading Symbol} symbol 
+   */
+  const ttcSelectInstrument = (symbol) => {
+    transmitTerminalCommand(JSON.stringify({ 'instrument': symbol }));
+  };
 
   /**
- * 
- * @param {Selected Symbol} symbol 
- */
-  const transmitTerminalSymbol = (symbol) => {
+   * 
+   * @param {Stop loss price} sl 
+   * @param {Take profit price} tp 
+   */
+  const ttcDrawPreview = (sl, tp) => {
+    transmitTerminalCommand(JSON.stringify({ 'preview': { 'sl': sl, 'tp': tp } }));
+  };
+
+  const transmitTerminalCommand = (command) => {
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -95,7 +104,7 @@ function App() {
         'Authorization': 'Bearer my-token',
 
       },
-      body: JSON.stringify({ 'instrument': symbol })
+      body: command
     };
     fetch('/command', requestOptions)
       .then(response => response.json())
@@ -165,7 +174,7 @@ function App() {
               account={terminalData.account}
               headers={terminalData.headers}
               data={mapTerminalData(terminalData.instruments)}
-              instrument={symbolData.info.name} selector={selectInstrument} updateall={fetchTerminalDataForce} />
+              instrument={symbolData.info.name} selector={ttcSelectInstrument} updateall={fetchTerminalDataForce} />
           </div>
 
           {/* Right block*/}
@@ -176,7 +185,8 @@ function App() {
                 account={terminalData.account}
                 data={terminalData.instruments}
                 symbolData={symbolData.info}
-                handletrade={transmitTradeRequest} />
+                handletrade={transmitTradeRequest}
+                handlepreview={ttcDrawPreview} />
             </div>
             <div className="clsPositionsTable">
               <Orders customClass={theme}

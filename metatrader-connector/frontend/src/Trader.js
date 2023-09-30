@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect, createRef } from "react";
 import { TextField } from '@mui/material';
 import Button from '@mui/material/Button';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -106,14 +108,13 @@ const Calculator = (props) => {
                         </td>
                     </tr>
                     <tr>
-                    </tr>
-                    <tr>
                         <td>
                             <TextField
                                 id="trade-ask"
                                 label="Ask"
                                 type="number"
                                 value={props.trade.ask}
+                                onChange={(e) => { props.handleAsk(e.target.value) }}
                                 variant="outlined"
                                 inputProps={{
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
@@ -148,6 +149,7 @@ const Calculator = (props) => {
                                 label="Bid"
                                 type="number"
                                 value={props.trade.bid}
+                                onChange={(e) => { props.handleBid(e.target.value) }}
                                 helperText=""
                                 inputProps={{
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
@@ -160,6 +162,13 @@ const Calculator = (props) => {
 
                     </tr>
 
+                    <tr>
+                        <td>
+                            <FormControlLabel
+                                control={<Checkbox onChange={(e) => { props.handlePreview(e.target.value) }} />}
+                                label="Preview in MT5" />
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </ThemeProvider>
@@ -169,7 +178,7 @@ const Calculator = (props) => {
 
 
 const Trader = (props) => {
-    const [trade, setTrade] = useState({ name: "", risk: 1.00, ratio: 2.25, ratio_step: 0.25, bid: 0, ask: 0, riskVolume: 0, volume_step: 0, risk_step: 0.25, balance: 0, point_value: 0, contract_size: 0, points: 0 });
+    const [trade, setTrade] = useState({ name: "", preview: false, risk: 1.00, ratio: 2.25, ratio_step: 0.25, bid: 0, ask: 0, riskVolume: 0, volume_step: 0, risk_step: 0.25, balance: 0, point_value: 0, contract_size: 0, points: 0 });
 
     React.useEffect(() => {
         setTrade((previousTrade) => ({
@@ -233,6 +242,27 @@ const Trader = (props) => {
         }));
     };
 
+    const handleAskChange = (value) => {
+        setTrade((previousTrade) => ({
+            ...previousTrade,
+            ask: value
+        }));
+    };
+
+    const handleBidChange = (value) => {
+        setTrade((previousTrade) => ({
+            ...previousTrade,
+            bid: value
+        }));
+    };
+
+    const handlePreviewChange = (value) => {
+        setTrade((previousTrade) => ({
+            ...previousTrade,
+            preview: value
+        }));
+    };
+
     const handleTrade = (type) => {
         var request = {
             symbol: trade.name,
@@ -264,7 +294,10 @@ const Trader = (props) => {
                 handlervolume={handleVolumeChange}
                 handleRisk={handleRiskChange}
                 handleRatio={handleRatioChange}
-                handlercomment={handleCommentChange} />
+                handlercomment={handleCommentChange}
+                handleAsk={handleAskChange}
+                handleBid={handleBidChange}
+                handlePreview={handlePreviewChange} />
 
         </>
     )
