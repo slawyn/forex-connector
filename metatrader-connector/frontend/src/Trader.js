@@ -34,7 +34,6 @@ import InputAdornment from '@mui/material/InputAdornment';
  pointvalue = (tickvalue*pointsize)/ticksize  */
 
 const calculatePoints = (riskAmount, contractSize, pointValue, riskLot) => {
-    console.log(riskAmount, pointValue, riskLot);
     var points = (riskAmount / (contractSize * pointValue * riskLot));
     return points;
 };
@@ -165,7 +164,7 @@ const Calculator = (props) => {
                     <tr>
                         <td>
                             <FormControlLabel
-                                control={<Checkbox onChange={(e) => { props.handlePreview(e.target.value) }} />}
+                                control={<Checkbox onChange={(e) => { props.handlePreview(e.target.checked) }} />}
                                 label="Preview in MT5" />
                         </td>
                     </tr>
@@ -198,6 +197,16 @@ const Trader = (props) => {
                 props.symbolData.volume_step)
         }));
     }, [props.symbolData, props.account.balance]);
+
+
+    React.useEffect(() => {
+        console.log(trade.preview);
+        if (trade.preview) {
+            const sl = [trade.ask - trade.points, trade.bid + trade.points];
+            const tp = [trade.ask + (trade.points) * trade.ratio, trade.bid - (trade.points) * trade.ratio];
+            props.handlepreview(sl, tp);
+        }
+    }, [trade.preview, trade.points]);
 
     const handleVolumeChange = (value) => {
         setTrade((previousTrade) => ({
@@ -268,12 +277,12 @@ const Trader = (props) => {
             symbol: trade.name,
             lot: trade.riskVolume,
             type: type,
-            entry_buy: trade.bid,
-            entry_sell: trade.ask,
-            stoploss_sell: trade.ask + trade.points,
-            stoploss_buy: trade.bid - trade.points,
-            takeprofit_buy: trade.bid + (trade.points) * trade.ratio,
-            takeprofit_sell: trade.ask + (trade.points) * trade.ratio,
+            entry_buy: trade.ask,
+            entry_sell: trade.bid,
+            stoploss_sell: trade.bid + trade.points,
+            stoploss_buy: trade.ask - trade.points,
+            takeprofit_sell: trade.bid - (trade.points) * trade.ratio,
+            takeprofit_buy: trade.ask + (trade.points) * trade.ratio,
             comment: generateComment(trade.risk, trade.comment)
         }
         props.handletrade(request);

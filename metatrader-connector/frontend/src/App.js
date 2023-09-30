@@ -84,7 +84,21 @@ function App() {
    * @param {Trading Symbol} symbol 
    */
   const ttcSelectInstrument = (symbol) => {
-    transmitTerminalCommand(JSON.stringify({ 'instrument': symbol }));
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer my-token',
+
+      },
+      body: JSON.stringify({ 'command': 'instrument', 'instrument': symbol })
+    };
+
+    fetch('/command', requestOptions)
+      .then(response => response.json())
+      .then(((receivedSymbolData) => {
+        setSymbolData(receivedSymbolData)
+      }));
   };
 
   /**
@@ -93,10 +107,6 @@ function App() {
    * @param {Take profit price} tp 
    */
   const ttcDrawPreview = (sl, tp) => {
-    transmitTerminalCommand(JSON.stringify({ 'preview': { 'sl': sl, 'tp': tp } }));
-  };
-
-  const transmitTerminalCommand = (command) => {
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -104,14 +114,15 @@ function App() {
         'Authorization': 'Bearer my-token',
 
       },
-      body: command
+      body: JSON.stringify({ 'command': 'preview', 'preview': { 'sl': sl, 'tp': tp } })
     };
+
     fetch('/command', requestOptions)
       .then(response => response.json())
       .then(((receivedSymbolData) => {
-        setSymbolData(receivedSymbolData)
+
       }));
-  }
+  };
 
   const transmitSavePositions = (selected) => {
     selected = "";

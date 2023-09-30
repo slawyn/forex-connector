@@ -36,8 +36,11 @@ class App:
         self.commander = Commander()
         self._set_filter("currency")
 
-    def send_to_commander(self, data):
+    def select_instrument(self, data):
         data = self.commander.send_instrument(data)
+
+    def draw_preview(self, sl, tp):
+        data = self.commander.send_drawline(sl[0])
 
     def run(self):
         self.window.mainloop()
@@ -241,13 +244,20 @@ def trade():
 @flask.route('/command', methods=['POST'])
 def command():
     data = request.get_json()
-    instrument = data.get("instrument")
+    type = data.get("command")
+    if type == "instrument":
+        instrument = data.get("instrument")
+        status = app.select_instrument(instrument)
+        symbol = app._get_symbol(instrument)
+        updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size = symbol.get_info()
+        return {"info": {"name": name, "step": step, "ask": ask, "bid": bid, "volume_step": volume_step, "point_value": point_value, "contract_size": contract_size}}
 
-    status = app.send_to_commander(instrument)
-    symbol = app._get_symbol(instrument)
-
-    updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size = symbol.get_info()
-    return {"info": {"name": name, "step": step, "ask": ask, "bid": bid, "volume_step": volume_step, "point_value": point_value, "contract_size": contract_size}}
+    elif type == "preview":
+        preview = data.get("preview")
+        sl = preview.get("sl")
+        tp = preview.get("tp")
+        status = app.draw_preview(sl, tp)
+        return {"id": 0}
 
 
 if __name__ == "__main__":

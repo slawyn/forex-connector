@@ -93,11 +93,12 @@ enum CommanderState_e
 {
    CommanderStateInactive = 0,
    CommanderStateRemoveAllCharts,
-   CommanderStateSpawnNewCharts
+   CommanderStateSpawnNewCharts,
+   CommanderStateDrawLine
 };
 
 /* Local variables */
-string sInstrumentToShow = "";
+string sCommand = "";
 string sFullTemplatePath = TerminalInfoString(TERMINAL_DATA_PATH)+PATH_TEMPLATE+FILE_TEMPLATE;
 CommanderState_e eCommanderState = CommanderStateInactive;
 long lMainChartId = 0;
@@ -106,9 +107,34 @@ long lPeriods[PERIOD_COUNT] = {PERIOD_M5, PERIOD_H4, PERIOD_D1, PERIOD_MN1};
 /* Set Commander to execute */
 void CommanderSetCommand(string strInstr, int state)
 {
-   sInstrumentToShow = strInstr;
+   sCommand = strInstr;
    eCommanderState = state;
 }
+
+void CriarLinhaH(const long janela,
+                 const int subjanela,
+                 const string nome,
+                 double preco,
+                 color cor,
+                 const ENUM_LINE_STYLE estilo,
+                 const int tamanho,
+                 const bool oculto,
+                 const bool fundo,
+                 bool selecionavel,
+                 string dica_=NULL)
+  {
+    if (ObjectFind(janela,nome)==-1)
+    //{ObjectCreate(janela,nome,OBJ_HLINE,subjanela,0,preco);}
+    ObjectCreate(janela,nome,OBJ_HLINE,subjanela,0,preco);
+    ObjectSetDouble(janela,nome,OBJPROP_PRICE,preco);
+    ObjectSetInteger(janela,nome,OBJPROP_COLOR,cor);
+    ObjectSetInteger(janela,nome,OBJPROP_STYLE,estilo);
+    ObjectSetInteger(janela,nome,OBJPROP_WIDTH,tamanho);
+    ObjectSetInteger(janela,nome,OBJPROP_HIDDEN,oculto);
+    ObjectSetInteger(janela,nome,OBJPROP_BACK,fundo);
+    ObjectSetInteger(janela,nome,OBJPROP_SELECTABLE,selecionavel);
+    ObjectSetString(janela,nome,OBJPROP_TOOLTIP,dica_);
+  }
 
 void CommanderStateMachineRun()
 {  
@@ -116,10 +142,30 @@ void CommanderStateMachineRun()
    int iWindowHandle;
    bool bError;
    int i;
+   float dPrice;
    switch(eCommanderState)
    {  
       /* Wait for commands */
       case CommanderStateInactive:
+      break;
+      
+      /* Draw horizontal line */
+      case CommanderStateDrawLine:
+      Print(sCommand);
+      dPrice = StringToDouble(sCommand);
+      lChid = ChartFirst();
+      while(lChid > 0)
+      {  
+         long lNextID = ChartNext(lChid);
+         string sLineName = "LINE";
+         if(lChid != lMainChartId)
+         {
+           CriarLinhaH(lChid,0,sLineName,dPrice,clrOrange,STYLE_DOT,1,true,false,true,"Candle Open");
+           ChartNavigate(lChid,CHART_CURRENT_POS,0);
+         }
+         lChid = lNextID;
+      }
+      eCommanderState = CommanderStateInactive;
       break;
       
       /* Close old charts*/
@@ -137,13 +183,12 @@ void CommanderStateMachineRun()
       eCommanderState = CommanderStateSpawnNewCharts;
       break;
       
-      
       /* Open new charts*/
       case CommanderStateSpawnNewCharts:
       bError = false;
       for(i = 0; i < PERIOD_COUNT; ++i)
       {
-         long lChartId = ChartOpen(sInstrumentToShow, lPeriods[i]);
+         long lChartId = ChartOpen(sCommand, lPeriods[i]);
          if(lChartId > 0)
          {
              ChartApplyTemplate(lChartId, FILE_TEMPLATE);
@@ -306,51 +351,59 @@ void HandleSocketIncomingData(int idxClient)
    string strCommand;
    do {
       strCommand = pClient.Receive("\r\n"); 
-      if (strCommand == "QUOTE") {
-         pClient.Send(Symbol() + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_BID), 6) + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_ASK), 6) + "\r\n");
-
-      } else if (strCommand == "CLOSE") {
-         bForceClose = true;
-      } else if (StringFind(strCommand, "INSTRUMENT:") == 0) {
-         CommanderSetCommand(StringSubstr(strCommand, 11), CommanderStateRemoveAllCharts);
-         
-      } else if (StringFind(strCommand, "FILE:") == 0) {
-      
-         // Extract the base64 file data - the message minus the FILE: header
-         string strFileData = StringSubstr(strCommand, 5);
-         uchar arrBase64[];
-         StringToCharArray(strFileData, arrBase64, 0, StringLen(strFileData));
-         
-         // Do base64 decoding on the data, converting it to the zipped data 
-         uchar arrZipped[], dummyKey[];
-         if (CryptDecode(CRYPT_BASE64, arrBase64, dummyKey, arrZipped)) {
+      if(StringLen(strCommand)>0)
+      {  
+         /* Received command */
+         Print(strCommand);
+         if (strCommand == "QUOTE") {
+            pClient.Send(Symbol() + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_BID), 6) + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_ASK), 6) + "\r\n");
+   
+         } else if (strCommand == "CLOSE") {
+            bForceClose = true;
+         } else if (StringFind(strCommand, "DRAW:") == 0) {
+            CommanderSetCommand(StringSubstr(strCommand, 5), CommanderStateDrawLine);
+         } else if (StringFind(strCommand, "INSTRUMENT:") == 0) {
+            CommanderSetCommand(StringSubstr(strCommand, 11), CommanderStateRemoveAllCharts);
             
-            // Unzip the data 
-            uchar arrOriginal[];
-            if (CryptDecode(CRYPT_ARCH_ZIP, arrZipped, dummyKey, arrOriginal)) {
-
-               // Okay, we should now have the raw file 
-               int f = FileOpen("receive.dat", FILE_BIN | FILE_WRITE);
-               if (f == INVALID_HANDLE) {
-                  Print("SERVER:Unable to open receive.dat for writing");
+         } else if (StringFind(strCommand, "FILE:") == 0) {
+            
+            // Extract the base64 file data - the message minus the FILE: header
+            string strFileData = StringSubstr(strCommand, 5);
+            uchar arrBase64[];
+            StringToCharArray(strFileData, arrBase64, 0, StringLen(strFileData));
+            
+            // Do base64 decoding on the data, converting it to the zipped data 
+            uchar arrZipped[], dummyKey[];
+            if (CryptDecode(CRYPT_BASE64, arrBase64, dummyKey, arrZipped)) {
+               
+               // Unzip the data 
+               uchar arrOriginal[];
+               if (CryptDecode(CRYPT_ARCH_ZIP, arrZipped, dummyKey, arrOriginal)) {
+   
+                  // Okay, we should now have the raw file 
+                  int f = FileOpen("receive.dat", FILE_BIN | FILE_WRITE);
+                  if (f == INVALID_HANDLE) {
+                     Print("SERVER:Unable to open receive.dat for writing");
+                  } else {
+                     FileWriteArray(f, arrOriginal);
+                     FileClose(f);
+                     
+                     Print("SERVER:Created receive.dat file");
+                  }
                } else {
-                  FileWriteArray(f, arrOriginal);
-                  FileClose(f);
-                  
-                  Print("SERVER:Created receive.dat file");
+                  Print("SERVER:Unzipping of file data failed");               
                }
             } else {
-               Print("SERVER:Unzipping of file data failed");               
+               Print("SERVER:Decoding from base64 failed");
             }
-         } else {
-            Print("SERVER:Decoding from base64 failed");
+            
+         } else 
+         {
+            // Potentially handle other commands etc here.
+            // For example purposes, we'll simply print messages to the Experts log
+            Print("SERVER:UNKNOWN COMMAND ", strCommand);
          }
-         
-      } else if (strCommand != "") {
-         // Potentially handle other commands etc here.
-         // For example purposes, we'll simply print messages to the Experts log
-         Print("SERVER:<- ", strCommand);
-      }
+       }
    } while (strCommand != "");
 
    // If the socket has been closed, or the client has sent a close message,
