@@ -24,4 +24,4 @@ class Config:
         return self.dictionary["google"]["date"]
 
     def get_export_folder(self):
-        return self.dictionary["local"]["trades"]
+        return self.dictionary["local"]["dir"]

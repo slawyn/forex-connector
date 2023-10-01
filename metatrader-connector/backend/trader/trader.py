@@ -5,7 +5,7 @@ import time
 
 from chart import Chart
 from trader.accountinfo import AccountInfo
-from trader.position import Position, OpenPosition
+from trader.position import Position, OpenPosition, Rate
 from trader.symbol import Symbol
 from trader.request import TradeRequest
 from helpers import *
@@ -70,7 +70,7 @@ class Trader:
         stop_msc = info.time_msc
         start_msc = time_go_back_n_weeks(stop_msc, 2)
         rates = mt5.copy_rates_range(sym.name, mt5.TIMEFRAME_D1, start_msc/1000, stop_msc/1000)
-        atr = calculate_average_true_range(rates)
+        atr = Rate.calculate_average_true_range(rates)
 
         return atr
 

@@ -40,67 +40,12 @@ def load_json(filename):
     return config
 
 
-def get_min_max(rates):
-    '''
-    Find min and max for price and volume
-    '''
-
-    # Find highest and lowest
-    price_max = 0
-    price_min = 0xFFFFFFFF
-    volume_max = 0
-    volume_min = 0xFFFFFFFF
-
-    # time-0 open-1 high-2 low-3 close-4 tickvolume-5 spread-6 realvolume-7
-    for rate in rates:
-        if rate[2] > price_max:
-            price_max = rate[2]
-
-        if rate[3] < price_min:
-            price_min = rate[3]
-
-        if rate[5] > volume_max:
-            volume_max = rate[5]
-
-        if rate[5] < volume_min:
-            volume_min = rate[5]
-
-    return price_max, price_min, volume_max, volume_min
-
-
 def get_current_date():
     return datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 
 def time_go_back_n_weeks(date_msc, n):
     return date_msc - (n*WEEK)
-
-
-def calculate_average_true_range(rates):
-    atr = 0.0001
-    IDX_TIME = 0
-    IDX_OPEN = 1
-    IDX_HIGH = 2
-    IDX_LOW = 3
-    IDX_CLOSE = 4
-    try:
-        count = len(rates)-1
-        H = rates[0][IDX_HIGH]
-        L = rates[0][IDX_LOW]
-        Cp = rates[0][IDX_CLOSE]
-        trs = []
-        for idx in range(1, count):
-            H = rates[idx][IDX_HIGH]
-            L = rates[idx][IDX_LOW]
-            tr = max([(H-L), abs(H-Cp), abs(L-Cp)])
-            trs.append(tr)
-            Cp = rates[idx][IDX_CLOSE]
-
-        if len(trs) != 0:
-            atr = sum(trs)/(len(trs))
-    except Exception as e:
-        log(e)
-    return atr
 
 
 def calculate_plot_range(start_msc, end_msc):
