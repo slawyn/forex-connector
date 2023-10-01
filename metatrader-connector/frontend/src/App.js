@@ -106,7 +106,7 @@ function App() {
    * @param {Stop loss price} sl 
    * @param {Take profit price} tp 
    */
-  const ttcDrawPreview = (sl, tp) => {
+  const ttcDrawPreview = (ask, bid, sl, tp) => {
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -114,7 +114,7 @@ function App() {
         'Authorization': 'Bearer my-token',
 
       },
-      body: JSON.stringify({ 'command': 'preview', 'preview': { 'sl': sl, 'tp': tp } })
+      body: JSON.stringify({ 'command': 'preview', 'preview': { 'ask': ask, 'bid': bid, 'sl': sl, 'tp': tp } })
     };
 
     fetch('/command', requestOptions)

@@ -45,10 +45,12 @@ class Commander():
             error = self.connect()
         return error
 
-    def send_drawline(self, price):
+    def send_drawlines(self, prices):
         rdata = []
+
+        command_separated = ",".join(prices)
         if not self.ping():
-            rdata, error = self.send_receive(f"DRAW:{price}\r\n")
+            rdata, error = self.send_receive(f"DRAW:{command_separated}\r\n")
         return rdata
 
     def send_instrument(self, instrument):

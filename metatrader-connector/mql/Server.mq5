@@ -94,22 +94,40 @@ enum CommanderState_e
    CommanderStateInactive = 0,
    CommanderStateRemoveAllCharts,
    CommanderStateSpawnNewCharts,
-   CommanderStateDrawLine
+   CommanderStateDrawLine,
+   CommanderStateClearLines
 };
 
 /* Local variables */
-string sCommand = "";
+
+#define MAX_DATA_COUNT	(6)
+string rsCommandData[MAX_DATA_COUNT] =  {"\0","\0","\0","\0","\0","\0"};
 string sFullTemplatePath = TerminalInfoString(TERMINAL_DATA_PATH)+PATH_TEMPLATE+FILE_TEMPLATE;
 CommanderState_e eCommanderState = CommanderStateInactive;
 long lMainChartId = 0;
-long lPeriods[PERIOD_COUNT] = {PERIOD_M5, PERIOD_H4, PERIOD_D1, PERIOD_MN1}; 
+long   lPeriods[PERIOD_COUNT] = {PERIOD_M5, PERIOD_H4, PERIOD_D1, PERIOD_MN1}; 
+
+#define LINE_COUNT  (6)
+
+string sDrawlinePrefix = "line";
+string sDrawlines[LINE_COUNT] = {"Entry_BUY","Entry_SELL", "Stoploss_BUY","Stoploss_SELL","Takeprofit_BUY","Takeprofit_SELL"}; 
+int riColors[LINE_COUNT] = {clrGreen,clrGreen,clrOrange,clrOrange,clrDodgerBlue,clrDodgerBlue};
+
+
+void CommanderSetData(int idx, string sData)
+{
+	if(idx>=0 && (idx<MAX_DATA_COUNT))
+	{
+		rsCommandData[idx] = sData;
+	}
+}
 
 /* Set Commander to execute */
-void CommanderSetCommand(string strInstr, int state)
+void CommanderSetState(CommanderState_e state)
 {
-   sCommand = strInstr;
    eCommanderState = state;
 }
+
 
 void CriarLinhaH(const long janela,
                  const int subjanela,
@@ -124,7 +142,6 @@ void CriarLinhaH(const long janela,
                  string dica_=NULL)
   {
     if (ObjectFind(janela,nome)==-1)
-    //{ObjectCreate(janela,nome,OBJ_HLINE,subjanela,0,preco);}
     ObjectCreate(janela,nome,OBJ_HLINE,subjanela,0,preco);
     ObjectSetDouble(janela,nome,OBJPROP_PRICE,preco);
     ObjectSetInteger(janela,nome,OBJPROP_COLOR,cor);
@@ -142,29 +159,63 @@ void CommanderStateMachineRun()
    int iWindowHandle;
    bool bError;
    int i;
-   float dPrice;
+   double dPrice;
    switch(eCommanderState)
    {  
       /* Wait for commands */
       case CommanderStateInactive:
       break;
       
-      /* Draw horizontal line */
-      case CommanderStateDrawLine:
-      Print(sCommand);
-      dPrice = StringToDouble(sCommand);
-      lChid = ChartFirst();
-      while(lChid > 0)
-      {  
+	  /* Clear all objects */
+      case CommanderStateClearLines:
+	  lChid = ChartFirst();
+	  while(lChid > 0)
+      { 
          long lNextID = ChartNext(lChid);
-         string sLineName = "LINE";
          if(lChid != lMainChartId)
          {
-           CriarLinhaH(lChid,0,sLineName,dPrice,clrOrange,STYLE_DOT,1,true,false,true,"Candle Open");
+           ObjectsDeleteAll(lChid);
            ChartNavigate(lChid,CHART_CURRENT_POS,0);
          }
          lChid = lNextID;
       }
+      break;
+      
+      /* Draw horizontal line */
+      case CommanderStateDrawLine:
+	  
+	  for(i = 0 ; i < LINE_COUNT; ++i)
+	  {	
+		  if(rsCommandData[i] == "\0")
+		  {
+			  break;
+		  }
+		  
+		  // Draw line for a price
+		  dPrice = StringToDouble(rsCommandData[i]);
+		  lChid = ChartFirst();
+		  while(lChid > 0)
+		  {  
+			 long lNextID = ChartNext(lChid);
+			 if(lChid != lMainChartId)
+			 {
+				// Just needs to be moved
+				if(ObjectFind(lChid, sDrawlines[i])>=0)
+				{
+					ObjectMove(lChid, sDrawlines[i], 0, 0,dPrice);
+				}
+				// Needs creating
+				else
+				{	
+					CriarLinhaH(lChid, 0, sDrawlines[i], dPrice,riColors[i],STYLE_DOT,1,true,false,true, sDrawlines[i]);
+				}
+				ChartNavigate(lChid,CHART_CURRENT_POS,0);
+
+			 }
+			 lChid = lNextID;
+		  }
+	  }
+      
       eCommanderState = CommanderStateInactive;
       break;
       
@@ -188,7 +239,7 @@ void CommanderStateMachineRun()
       bError = false;
       for(i = 0; i < PERIOD_COUNT; ++i)
       {
-         long lChartId = ChartOpen(sCommand, lPeriods[i]);
+         long lChartId = ChartOpen(rsCommandData[0], lPeriods[i]);
          if(lChartId > 0)
          {
              ChartApplyTemplate(lChartId, FILE_TEMPLATE);
@@ -196,6 +247,7 @@ void CommanderStateMachineRun()
          else
          {
             bError = true;
+			   Print("ERROR: Chart " + IntegerToString(i) +  " wasn't created", GetLastError());
          }
       }
 
@@ -208,10 +260,7 @@ void CommanderStateMachineRun()
          iWindowHandle = GetParent(GetParent(iWindowHandle));
          SendMessageA(iWindowHandle, WM_MDITILE, 0, 0);
       }
-      else
-      {
-         Print("ERROR: Charts wasn't created" + i);
-      }
+
       
       eCommanderState = CommanderStateInactive;
       break;
@@ -348,6 +397,9 @@ void HandleSocketIncomingData(int idxClient)
    // Keep reading CRLF-terminated lines of input from the client
    // until we run out of new data
    bool bForceClose = false; 
+   int k = 0;
+   int i;
+   string strSplits[];
    string strCommand;
    do {
       strCommand = pClient.Receive("\r\n"); 
@@ -360,11 +412,24 @@ void HandleSocketIncomingData(int idxClient)
    
          } else if (strCommand == "CLOSE") {
             bForceClose = true;
+			
+         } else if (StringFind(strCommand, "CLEAR:") == 0) {
+			CommanderSetState(CommanderStateClearLines);
+			
          } else if (StringFind(strCommand, "DRAW:") == 0) {
-            CommanderSetCommand(StringSubstr(strCommand, 5), CommanderStateDrawLine);
+   			int k = StringSplit(StringSubstr(strCommand, 5),',',strSplits);
+   			if(k>0)
+   			{
+      			for(i=0;i<k;++i)
+      			{  
+      				CommanderSetData(i, strSplits[i]);
+      			}
+      			CommanderSetState(CommanderStateDrawLine);
+   			}
          } else if (StringFind(strCommand, "INSTRUMENT:") == 0) {
-            CommanderSetCommand(StringSubstr(strCommand, 11), CommanderStateRemoveAllCharts);
-            
+            CommanderSetData(0, StringSubstr(strCommand, 11));
+            CommanderSetState(CommanderStateRemoveAllCharts);
+			
          } else if (StringFind(strCommand, "FILE:") == 0) {
             
             // Extract the base64 file data - the message minus the FILE: header

@@ -1,6 +1,5 @@
-import React, { useRef, useState, useEffect, createRef } from "react";
+import React, { useState } from "react";
 import { TextField } from '@mui/material';
-import Button from '@mui/material/Button';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -204,9 +203,9 @@ const Trader = (props) => {
         if (trade.preview) {
             const sl = [trade.ask - trade.points, trade.bid + trade.points];
             const tp = [trade.ask + (trade.points) * trade.ratio, trade.bid - (trade.points) * trade.ratio];
-            props.handlepreview(sl, tp);
+            props.handlepreview(trade.ask, trade.bid, sl, tp);
         }
-    }, [trade.preview, trade.points]);
+    }, [trade.preview, trade.points, trade.ask, trade.bid]);
 
     const handleVolumeChange = (value) => {
         setTrade((previousTrade) => ({

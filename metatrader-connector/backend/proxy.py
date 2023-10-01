@@ -39,8 +39,9 @@ class App:
     def select_instrument(self, data):
         data = self.commander.send_instrument(data)
 
-    def draw_preview(self, sl, tp):
-        data = self.commander.send_drawline(sl[0])
+    def draw_preview(self, ask, bid, sl, tp):
+        drawlines = [str(ask), str(bid), str(sl[0]), str(sl[1]), str(tp[0]), str(tp[1])]
+        data = self.commander.send_drawlines(drawlines)
 
     def run(self):
         self.window.mainloop()
@@ -256,7 +257,9 @@ def command():
         preview = data.get("preview")
         sl = preview.get("sl")
         tp = preview.get("tp")
-        status = app.draw_preview(sl, tp)
+        ask = preview.get("ask")
+        bid = preview.get("bid")
+        status = app.draw_preview(ask, bid, sl, tp)
         return {"id": 0}
 
 
