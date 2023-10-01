@@ -20,10 +20,9 @@ class Trader:
         description: Used for communicating over the connector with mt5
     '''
 
-    def __init__(self, config):
+    def __init__(self):
         # 1. Establish connection to the MetaTrader 5 terminal
         if self.reinit():
-            self.config = config
             self.ratio = 1
             self.risk = 2
             self.symbols = {}
@@ -169,6 +168,24 @@ class Trader:
             if wildcard in s:
                 syms.append(s)
         return syms
+
+    def get_rates_for_symbol(self, symbol_name, frame=mt5.TIMEFRAME_D1):
+        data = []
+        if symbol_name in self.symbols:
+            info = mt5.symbol_info_tick(symbol_name)
+            stop_msc = info.time_msc
+            data = mt5.copy_rates_range(symbol_name, frame, 0, stop_msc/1000)
+
+        return data
+
+    def get_ticks_for_symbol(self, symbol_name, frame=mt5.TIMEFRAME_D1):
+        data = []
+        if symbol_name in self.symbols:
+            info = mt5.symbol_info_tick(symbol_name)
+            stop_msc = info.time_msc
+            data = mt5.copy_ticks_range(symbol_name, frame, stop_msc/1000, mt5.COPY_TICKS_ALL)
+
+        return data
 
     def calculate_stoploss(self,  sym):
         loss_profit = self.balance*(self.risk/100)

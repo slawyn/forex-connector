@@ -8,10 +8,10 @@ from trader.request import TradeRequest
 from trader.accountinfo import AccountInfo
 from trader.position import Position, OpenPosition
 from trader.symbol import Symbol
+from config import Config
 from helpers import *
 
 # Configurable values
-CONFIG_NAME = "config/config.txt"
 CONFIG_ENABLE_TRADING = True
 
 # Flask variables
@@ -30,9 +30,9 @@ class App:
     COL_UPDATE = 'UPDATE'
     COLUMNS = [COL_INSTRUMENT, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
 
-    def __init__(self):
-        self.config = load_config(CONFIG_NAME)
-        self.trader = Trader(self.config)
+    def __init__(self, config):
+        self.config = config
+        self.trader = Trader()
         self.commander = Commander()
         self._set_filter("currency")
 
@@ -91,12 +91,12 @@ class App:
     def _save_to_google(self):
         ''' Collect Information '''
         # Get Positions of closed deals and add them to excel sheet
-        drive_handle = DriveFileController(self.config["secretsfile"],
-                                           self.config["folderid"],
-                                           self.config["spreadsheet"],
-                                           self.config["worksheet"],
-                                           self.config["dir"])
-        start_date = convert_string_to_date(self.config["date"])
+        drive_handle = DriveFileController(self.config.get_google_secrets_file(),
+                                           self.config.get_google_folder_id(),
+                                           self.config.get_google_spreadsheet(),
+                                           self.config.get_google_worksheet(),
+                                           self.config.get_export_folder())
+        start_date = convert_string_to_date(self.config.get_google_startdate())
         positions = self.trader.get_closed_positions(start_date)
         drive_handle.update_google_sheet(positions)
         return []
@@ -104,7 +104,7 @@ class App:
     def _get_history_positions(self):
         '''Gets closed positions from history
         '''
-        start_date = convert_string_to_date(self.config["date"])
+        start_date = convert_string_to_date(self.config.get_google_startdate())
         positions = self.trader.get_history_positions(start_date, onlyfinished=False)
         json_positions = [positions[p].get_info() for p in positions]
         return Position.get_info_header(), json_positions
@@ -177,7 +177,7 @@ def convert_timestamp_to_string(timestamp_sec):
 
 def make_pretty(styler):
     '''Sets up a pretty styler
-        styler: styler object
+       styler: styler object
     '''
     styler.format_index(lambda v: v.strftime("%A"))
     styler.background_gradient(axis=None, vmin=1, vmax=5, cmap="YlGnBu")
@@ -265,8 +265,8 @@ def command():
 
 if __name__ == "__main__":
     try:
-
-        app = App()
+        CONFIG_NAME = "config/config.json"
+        app = App(Config(CONFIG_NAME))
         flask.run(debug=True)
     except Exception as e:
         log(e)

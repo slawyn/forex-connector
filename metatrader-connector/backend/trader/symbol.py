@@ -1,3 +1,6 @@
+import MetaTrader5 as mt5
+
+
 class Symbol:
     def __init__(self, sym):
         self.time = sym.time
@@ -25,3 +28,12 @@ class Symbol:
 
     def is_updated(self):
         return self.updated
+
+    def get_frame_type_m1():
+        return mt5.TIMEFRAME_M1
+
+    def get_frame_type_h1():
+        return mt5.TIMEFRAME_H1
+
+    def get_frame_type_d1():
+        return mt5.TIMEFRAME_D1

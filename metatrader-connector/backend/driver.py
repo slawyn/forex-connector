@@ -47,12 +47,12 @@ class DriveFileController:
             images_dic[k["title"].split(".")[0]] = k["id"]
         return images_dic
 
-    def delete_uploaded_images():
+    def delete_uploaded_images(self):
         request_template = "'root' in parents and trashed=false"
-        file_lst = drive.ListFile({'q': request_template}).GetList()
+        file_lst = self.drive.ListFile({'q': request_template}).GetList()
         for folder in file_lst:
             log(folder['title'])
-            file1 = drive.CreateFile({'id': folder["id"]})
+            file1 = self.drive.CreateFile({'id': folder["id"]})
             file1.Delete()
 
     def update_google_sheet(self, positions):

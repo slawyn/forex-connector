@@ -30,13 +30,13 @@ def log(s):
     print("%s ## %s" % (datetime.datetime.now().time(), s))
 
 
-def load_config(filename):
+def load_json(filename):
     '''
     Load Json config
     '''
-    f = open(filename, "r")
-    config = json.load(f)
-    f.close()
+    with open(filename, "r") as f:
+        config = json.load(f)
+
     return config
 
 
