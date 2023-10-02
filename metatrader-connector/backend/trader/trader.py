@@ -179,22 +179,24 @@ class Trader:
                 syms.append(s)
         return syms
 
-    def get_rates_for_symbol(self, symbol_name, frame=mt5.TIMEFRAME_D1):
+    def get_rates_for_symbol(self, symbol_name, start_msc, stop_msc, frame=mt5.TIMEFRAME_D1):
         data = []
-        if symbol_name in self.symbols:
-            info = mt5.symbol_info_tick(symbol_name)
-            stop_msc = info.time_msc
+        try:
+            #info = mt5.symbol_info_tick(symbol_name)
+            #stop_msc = info.time_msc
             data = mt5.copy_rates_range(symbol_name, frame, 0, stop_msc/1000)
-
+        except Exception as e:
+            log("ERROR: Unknown symbol to get rates for")
         return data
 
-    def get_ticks_for_symbol(self, symbol_name, frame=mt5.TIMEFRAME_D1):
+    def get_ticks_for_symbol(self, symbol_name, start_msc, stop_msc):
         data = []
-        if symbol_name in self.symbols:
-            info = mt5.symbol_info_tick(symbol_name)
-            stop_msc = info.time_msc
-            data = mt5.copy_ticks_range(symbol_name, frame, stop_msc/1000, mt5.COPY_TICKS_ALL)
-
+        try:
+            #info = mt5.symbol_info_tick(symbol_name)
+            #stop_msc = info.time_msc
+            data = mt5.copy_ticks_range(symbol_name, start_msc/1000, stop_msc/1000, mt5.COPY_TICKS_ALL)
+        except Exception as e:
+            log("ERROR: Unknown symbol to get ticks for")
         return data
 
     def calculate_stoploss(self,  sym):

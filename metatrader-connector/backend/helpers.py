@@ -44,6 +44,13 @@ def get_current_date():
     return datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 
+def get_millisecond_timestamp_for_date(arg_date):
+    date = arg_date - datetime.datetime(1970, 1, 1)
+    seconds = (date.total_seconds())
+    milliseconds = round(seconds*1000)
+    return milliseconds
+
+
 def time_go_back_n_weeks(date_msc, n):
     return date_msc - (n*WEEK)
 
