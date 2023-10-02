@@ -109,7 +109,19 @@ class Trader:
             for period in reversed(range(len(Trader.TIMEFRAMES))):
                 time_frame = Trader.MT_TIMEFRAMES[period]
                 rates = mt5.copy_rates_range(pd.get_symbol_name(), time_frame, time_start, time_stop)
-                if len(rates) > 80 or time_frame == Trader.MT_TIMEFRAMES[0]:
+
+                # Too big
+                if len(rates) > 110:
+                    period += 1
+                    if period > len(Trader.MT_TIMEFRAMES):
+                        log("ERROR: Plotting not possible, no bigger time frame available")
+                    else:
+                        rates = mt5.copy_rates_range(pd.get_symbol_name(), Trader.MT_TIMEFRAMES[period], time_start, time_stop)
+                        pd.add_rates(rates, Trader.TIMEFRAMES[period])
+                    break
+
+                # Optimal
+                elif len(rates) > 70 or time_frame == Trader.MT_TIMEFRAMES[0]:
                     pd.add_rates(rates, Trader.TIMEFRAMES[period])
                     break
 

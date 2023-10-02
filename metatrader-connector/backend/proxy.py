@@ -21,6 +21,7 @@ app = None
 
 class App:
     COL_INSTRUMENT = 'INSTRUMENT'
+    COL_DESCRIPTION = 'DESCRIPTION'
     COL_ASK = 'ASK'
     COL_BID = 'BID'
     COL_SPREAD = 'SPREAD'
@@ -28,7 +29,7 @@ class App:
     COL_WEDGE = 'SPREAD:ATR[%]'
     COL_AVAIL = 'ATR.RESERVED[%]'
     COL_UPDATE = 'UPDATE'
-    COLUMNS = [COL_INSTRUMENT, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
+    COLUMNS = [COL_INSTRUMENT, COL_DESCRIPTION, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
 
     def __init__(self, config):
         self.config = config
@@ -146,7 +147,7 @@ class App:
         for idx in indices:
             sym = syms[idx]
             atr = self.trader.get_atr(sym)
-            updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size = sym.get_info()
+            updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description = sym.get_info()
 
             # additional calcs
             ratio = (spread/atr)*100
@@ -157,6 +158,7 @@ class App:
             timer = get_current_date()
             if updated or not filter_updated:
                 react_data[name] = [name,
+                                    description,
                                     f"%2.{digits}f" % ask,
                                     f"%2.{digits}f" % bid,
                                     f"%2.{digits}f" % (spread),
