@@ -12,6 +12,9 @@ class Symbol:
         self.point_value = (sym.trade_tick_value*sym.point)/sym.trade_tick_size
         self.contract_size = sym.trade_contract_size
 
+        if self.digits == 3:
+            self.point_value /= 100.0
+
         # updatable: first creation sets the updated flag
         self.update(sym)
         self.updated = True

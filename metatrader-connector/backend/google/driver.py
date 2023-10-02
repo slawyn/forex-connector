@@ -11,8 +11,8 @@ import time
 from pydrive.drive import GoogleDrive
 from pydrive.auth import GoogleAuth
 
+from google.chart import Chart
 from helpers import *
-from chart import Chart
 
 
 class DriveFileController:

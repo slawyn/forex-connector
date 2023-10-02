@@ -2,8 +2,6 @@ import datetime
 import MetaTrader5 as mt5
 import time
 
-
-from chart import Chart
 from trader.accountinfo import AccountInfo
 from trader.position import Position, OpenPosition, Rate
 from trader.symbol import Symbol

@@ -8,9 +8,13 @@ body {
 
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+input {
+  line-height: 6ex;
+  color: white;
+  background-color: #effff000;
+  border-width: 0px #effff000 none;
+  width: 60%;
+  text-align: left;
 }
 
 button {
@@ -34,7 +38,6 @@ button {
   background-color: red;
 }
 
-
 .clsBluebutton {
   background-color: rgb(0, 187, 255);
 }
@@ -50,16 +53,13 @@ button {
   border: 1px solid silver;
   text-align: left;
   width: fit-content;
-
 }
 
 .clsStyle input {
-
   color: azure;
 }
 
-.clsStyle td,
-th {
+.clsStyle td {
   padding: 5px;
   border: 1px solid silver;
 }
@@ -74,6 +74,8 @@ th {
 }
 
 .clsStyle th {
+  padding: 5px;
+  border: 1px solid silver;
   font-style: italic;
   font-weight: bold;
   background-color: blueviolet;
@@ -92,6 +94,7 @@ th {
 .clsSymbolsContainer {
   display: inline-block;
   vertical-align: top;
+  align-self: start;
   width: 50%
 }
 
@@ -122,7 +125,6 @@ th {
   margin: 10px
 }
 
-
 .clsTraderTable td {
   padding: 10px;
 }
@@ -133,15 +135,6 @@ th {
   border: 1px solid gray;
   border-radius: 2px;
   display: flex;
-}
-
-input {
-  line-height: 6ex;
-  color: white;
-  background-color: #effff000;
-  border-width: 0px #effff000 none;
-  width: 60%;
-  text-align: left;
 }
 
 .orangeTag {

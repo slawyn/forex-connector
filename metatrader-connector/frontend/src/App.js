@@ -180,7 +180,7 @@ function App() {
 
           {/* Left block*/}
           <div className="clsSymbolsContainer">
-            <Symbols key={"1"}
+            <Symbols
               customClass={theme}
               account={terminalData.account}
               headers={terminalData.headers}
@@ -191,7 +191,7 @@ function App() {
           {/* Right block*/}
           <div className="clsTraderContainer">
             <div className="clsTraderTable">
-              <Trader key={"2"}
+              <Trader
                 customClass={theme}
                 account={terminalData.account}
                 data={terminalData.instruments}

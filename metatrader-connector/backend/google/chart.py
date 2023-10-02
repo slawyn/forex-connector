@@ -148,60 +148,60 @@ class Chart():
         rates, period = data[0], data[1]
         sl, tp = limits[0], limits[1]
         bar_count = len(rates)
+        if bar_count > 0:
+            price_max, price_min, volume_max, volume_min = Rate.get_min_max(rates)
 
-        price_max, price_min, volume_max, volume_min = Rate.get_min_max(rates)
+            self.bar_width = (Chart.CHART_AREA_X - Chart.SPACE_BETWEEN_BARS*bar_count)/(bar_count)
+            self.bar_scale = (Chart.CHART_AREA_Y)/(price_max-price_min)
+            self.volume_scale = (Chart.CHART_OFFSET_BOTTOMY)/(volume_max)
 
-        self.bar_width = (Chart.CHART_AREA_X - Chart.SPACE_BETWEEN_BARS*bar_count)/(bar_count+0)
-        self.bar_scale = (Chart.CHART_AREA_Y)/(price_max-price_min)
-        self.volume_scale = (Chart.CHART_OFFSET_BOTTOMY)/(volume_max)
+            log("%s [%s]" % (symbol, chartname))
+            if self.bar_width < Chart.SPACE_BETWEEN_BARS:
+                log("log:Error: Timeframe is too big for the PERIOD[%s] SYMBOL[%s] BARS[%d]. Try selecting another period or a smaller timeframe" % (period, symbol, bar_count))
 
-        log("%s [%s]" % (symbol, chartname))
-        if self.bar_width < Chart.SPACE_BETWEEN_BARS:
-            log("log:Error: Timeframe is too big for the PERIOD[%s] SYMBOL[%s] BARS[%d]. Try selecting another period or a smaller timeframe" % (period, symbol, bar_count))
+            log("bars:: Low: %f High: %f Scale: %f Max:%f Count:%d" % (price_min, price_max, self.bar_scale, (price_max-price_min)*self.bar_scale+Chart.CHART_OFFSET_BOTTOMY, bar_count))
+            log("Volumes:: Low: %f High: %f bar Scale: %f Max:%f " % (volume_min, volume_max, self.volume_scale, (volume_max-volume_min)*self.volume_scale))
+            separator = Chart.TIMEFRAME_SEPARATORS[period]
 
-        log("bars:: Low: %f High: %f Scale: %f Max:%f Count:%d" % (price_min, price_max, self.bar_scale, (price_max-price_min)*self.bar_scale+Chart.CHART_OFFSET_BOTTOMY, bar_count))
-        log("Volumes:: Low: %f High: %f bar Scale: %f Max:%f " % (volume_min, volume_max, self.volume_scale, (volume_max-volume_min)*self.volume_scale))
-        separator = Chart.TIMEFRAME_SEPARATORS[period]
+            # Draw bars and Volume
+            baridx = 0
+            idx = 0
+            offsetx = Chart.SPACE_BETWEEN_BARS
+            for rate in rates:
+                open = self.calculate_bar_y_coordinate(rate.open-price_min)
+                close = self.calculate_bar_y_coordinate(rate.close-price_min)
+                high = self.calculate_bar_y_coordinate(rate.high-price_min)
+                low = self.calculate_bar_y_coordinate(rate.low-price_min)
+                volume = self.calculate_volume_y_coordinate(rate.volume)
+                timestamp = pd.to_datetime(rate.time, unit='s')
 
-        # Draw bars and Volume
-        baridx = 0
-        idx = 0
-        offsetx = Chart.SPACE_BETWEEN_BARS
-        for rate in rates:
-            open = self.calculate_bar_y_coordinate(rate.open-price_min)
-            close = self.calculate_bar_y_coordinate(rate.close-price_min)
-            high = self.calculate_bar_y_coordinate(rate.high-price_min)
-            low = self.calculate_bar_y_coordinate(rate.low-price_min)
-            volume = self.calculate_volume_y_coordinate(rate.volume)
-            timestamp = pd.to_datetime(rate.time, unit='s')
+                # Draw separators and dates
+                if baridx == 0:
+                    offsetx = Chart.SPACE_BETWEEN_BARS + (self.bar_width + Chart.SPACE_BETWEEN_BARS)*(idx)
+                    self.draw.text((offsetx+5, 3), str(timestamp), font=self.font_date, fill=Chart.COLOR_PRICES)
+                    self.draw.line([(offsetx, 0), (offsetx, Chart.CHART_SIZEY)], fill=Chart.COLOR_VOLUME)
 
-            # Draw separators and dates
-            if baridx == 0:
-                offsetx = Chart.SPACE_BETWEEN_BARS + (self.bar_width + Chart.SPACE_BETWEEN_BARS)*(idx)
-                self.draw.text((offsetx+5, 3), str(timestamp), font=self.font_date, fill=Chart.COLOR_PRICES)
-                self.draw.line([(offsetx, 0), (offsetx, Chart.CHART_SIZEY)], fill=Chart.COLOR_VOLUME)
+                baridx = (baridx + 1) % separator
 
-            baridx = (baridx + 1) % separator
+                # Bull bar
+                if close < open:
+                    self.draw_bar(idx, open, close, high, low, Chart.COLOR_BAR_UP)
+                # Bear bar
+                else:
+                    self.draw_bar(idx, open, close, high, low, Chart.COLOR_BAR_DOWN)
 
-            # Bull bar
-            if close < open:
-                self.draw_bar(idx, open, close, high, low, Chart.COLOR_BAR_UP)
-            # Bear bar
-            else:
-                self.draw_bar(idx, open, close, high, low, Chart.COLOR_BAR_DOWN)
+                # Draw Volume
+                self.draw_volume(idx, volume, Chart.COLOR_VOLUME)
+                idx = idx + 1
 
-            # Draw Volume
-            self.draw_volume(idx, volume, Chart.COLOR_VOLUME)
-            idx = idx + 1
+            # Draw Stop Loss and Take Profit
+            self.draw_trade(sl, tp, rates, deals, price_max, price_min)
 
-        # Draw Stop Loss and Take Profit
-        self.draw_trade(sl, tp, rates, deals, price_max, price_min)
+            # Draw other data
+            self.draw_prices(price_max, price_min)
 
-        # Draw other data
-        self.draw_prices(price_max, price_min)
-
-        # Draw frame
-        self.draw_frame(symbol, bar_count, period)
+            # Draw frame
+            self.draw_frame(symbol, bar_count, period)
 
         # Save
         self.image.save(os.path.join(os.path.abspath(dir), chartname))
