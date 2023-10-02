@@ -100,23 +100,6 @@ const Symbols = (props) => {
     return (
         <div>
             <table className={props.customClass}>
-                <tbody>
-                    <tr>
-                        <td className={props.customClass}>Company:{props.account.company}</td>
-                        <td className={props.customClass}>Balance:{props.account.balance}{props.account.currency}</td>
-                        <td className={props.customClass}>{props.account.login}</td>
-                    </tr>
-                    <tr>
-                        <td className={props.customClass}>Server:{props.account.server}</td>
-                        <td className={props.customClass}>Profit:{props.account.profit}</td>
-                        <td className={props.customClass}>Leverage:{props.account.leverage}</td>
-                        <td className={props.customClass}>
-                            <button className={"clsBluebutton"} onClick={props.updateall}>Get All</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <table className={props.customClass}>
                 <TableHeads data={props.headers} className={props.customClass} sorter={requestSort} />
                 <TableRows data={props.data} sortConfig={sortConfig} className={props.customClass} selector={props.selector} />
             </table>

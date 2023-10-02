@@ -30,8 +30,6 @@ const Orders = (props) => {
                                         return <td>{cellData}</td>
                                     })
                                 }
-
-
                             </tr>
                         })
                     }
