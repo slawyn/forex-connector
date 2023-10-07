@@ -85,8 +85,6 @@ class DriveFileController:
             # add only if image was not uploaded
             if pid not in images_lis.keys():
                 try:
-                    img_name = Chart().generate_chart(self.dir, pd.get_id(), pd.get_rates(), pd.get_limits(), pd.get_symbol_name(), pd.get_deals())
-
                     log(" Uploading %s" % img_name)
                     file = self.drive.CreateFile({'title': img_name, 'parents': [{'id': self.folderid}]})
                     file.SetContentFile(os.path.join(self.dir, img_name))

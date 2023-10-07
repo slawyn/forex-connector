@@ -147,7 +147,7 @@ class App:
         for idx in indices:
             sym = syms[idx]
             atr = self.trader.get_atr(sym)
-            updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description = sym.get_info()
+            updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = sym.get_info()
 
             # additional calcs
             ratio = (spread/atr)*100
@@ -252,8 +252,18 @@ def command():
         instrument = data.get("instrument")
         status = app.select_instrument(instrument)
         symbol = app._get_symbol(instrument)
-        updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size = symbol.get_info()
-        return {"info": {"name": name, "step": step, "ask": ask, "bid": bid, "volume_step": volume_step, "point_value": point_value, "contract_size": contract_size}}
+        updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = symbol.get_info()
+        return {"info": {"name": name,
+                         "step": step,
+                         "ask": ask,
+                         "bid": bid,
+                         "volume_step": volume_step,
+                         "point_value": point_value,
+                         "contract_size": contract_size,
+                         "digits": digits,
+                         "tick_size": step,
+                         "tick_value": tick_value
+                         }}
 
     elif type == "preview":
         preview = data.get("preview")

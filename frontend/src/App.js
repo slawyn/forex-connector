@@ -12,7 +12,7 @@ import History from "./History";
 function App() {
   // usestate for setting a javascript
   // object for storing and using data
-  const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0 } });
+  const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
   const [terminalData, setTerminalData] = React.useState({
     date: "",
     account: [],

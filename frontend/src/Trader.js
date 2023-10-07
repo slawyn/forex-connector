@@ -32,9 +32,17 @@ import InputAdornment from '@mui/material/InputAdornment';
  
  pointvalue = (tickvalue*pointsize)/ticksize  */
 
-const calculatePoints = (riskAmount, contractSize, pointValue, riskLot) => {
+function round(number, digits) {
+    const d = Math.pow(10, digits);
+    return Math.round((number + Number.EPSILON) * d) / d;
+}
+
+const calculatePoints = (riskAmount, contractSize, pointValue, riskLot, digits) => {
+    var iPipMult = [1, 10, 1, 10, 1, 10, 100];
+
+    var power = Math.pow(10, digits);
     var points = (riskAmount / (contractSize * pointValue * riskLot));
-    return points;
+    return points.toFixed(digits);
 };
 
 const darkTheme = createTheme({
@@ -56,13 +64,16 @@ const Calculator = (props) => {
                         <td>Contract Size: {props.trade.contract_size}</td>
                         <td>Point Value: {props.trade.point_value}</td>
                         <td>Volume Step: {props.trade.volume_step}</td>
+                        <td>Digits: {props.trade.digits}</td>
+                        <td>Tick Size: {props.trade.tick_size}</td>
+                        <td>Tick Value: {props.trade.tick_value}</td>
                     </tr>
                     <tr>
                         <td>
                             <TextField
                                 id="trade-volume"
                                 type="number"
-                                value={props.trade.riskVolume}
+                                value={props.trade.risk_volume}
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
                                 onChange={(e) => { props.handlervolume(e.target.value) }}
@@ -176,7 +187,25 @@ const Calculator = (props) => {
 
 
 const Trader = (props) => {
-    const [trade, setTrade] = useState({ name: "", preview: false, risk: 1.00, ratio: 2.25, ratio_step: 0.25, bid: 0, ask: 0, riskVolume: 0, volume_step: 0, risk_step: 0.25, balance: 0, point_value: 0, contract_size: 0, points: 0 });
+    const [trade, setTrade] = useState({
+        name: "",
+        preview: false,
+        risk: 1.00,
+        ratio: 2.25,
+        ratio_step: 0.25,
+        bid: 0,
+        ask: 0,
+        risk_volume: 0.0,
+        volume_step: 0,
+        risk_step: 0.25,
+        balance: 0,
+        point_value: 0,
+        contract_size: 0,
+        points: 0,
+        digits: 0,
+        tick_size: 0,
+        tick_value: 0
+    });
 
     React.useEffect(() => {
         setTrade((previousTrade) => ({
@@ -184,16 +213,20 @@ const Trader = (props) => {
             name: props.symbolData.name,
             bid: props.symbolData.bid,
             ask: props.symbolData.ask,
-            riskVolume: props.symbolData.volume_step,
+            risk_volume: props.symbolData.volume_step,
             volume_step: props.symbolData.volume_step,
             balance: props.account.balance,
             point_value: props.symbolData.point_value,
             contract_size: props.symbolData.contract_size,
+            digits: props.symbolData.digits,
+            tick_size: props.symbolData.tick_size,
+            tick_value: props.symbolData.tick_value,
             points: calculatePoints(
                 previousTrade.risk * 0.01 * props.account.balance,
                 props.symbolData.contract_size,
                 props.symbolData.point_value,
-                props.symbolData.volume_step)
+                props.symbolData.volume_step,
+                props.symbolData.digits)
         }));
     }, [props.symbolData, props.account.balance]);
 
@@ -210,24 +243,26 @@ const Trader = (props) => {
     const handleVolumeChange = (value) => {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            riskVolume: value,
+            risk_volume: parseFloat(value),
             points: calculatePoints(
                 trade.risk * 0.01 * trade.balance,
                 trade.contract_size,
                 trade.point_value,
-                value)
+                value,
+                props.symbolData.digits)
         }));
     };
 
     const handleRiskChange = (value) => {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            risk: value,
+            risk: parseFloat(value),
             points: calculatePoints(
                 value * 0.01 * trade.balance,
                 trade.contract_size,
                 trade.point_value,
-                trade.riskVolume)
+                trade.risk_volume,
+                props.symbolData.digits)
         }));
     };
 
@@ -239,7 +274,8 @@ const Trader = (props) => {
                 trade.risk * 0.01 * trade.balance,
                 trade.contract_size,
                 trade.point_value,
-                trade.riskVolume)
+                trade.risk_volume,
+                props.symbolData.digits)
         }));
     };
 
@@ -274,14 +310,14 @@ const Trader = (props) => {
     const handleTrade = (type) => {
         var request = {
             symbol: trade.name,
-            lot: trade.riskVolume,
+            lot: trade.risk_volume,
             type: type,
             entry_buy: trade.ask,
             entry_sell: trade.bid,
-            stoploss_sell: trade.bid + trade.points,
-            stoploss_buy: trade.ask - trade.points,
-            takeprofit_sell: trade.bid - (trade.points) * trade.ratio,
-            takeprofit_buy: trade.ask + (trade.points) * trade.ratio,
+            stoploss_sell: round(trade.bid + trade.points, trade.digits),
+            stoploss_buy: round(trade.ask - trade.points, trade.digits),
+            takeprofit_sell: round(trade.bid - (trade.points) * trade.ratio, trade.digits),
+            takeprofit_buy: round(trade.ask + (trade.points) * trade.ratio, trade.digits),
             comment: generateComment(trade.risk, trade.comment)
         }
         props.handletrade(request);

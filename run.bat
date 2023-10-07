@@ -14,7 +14,7 @@ if "%ERRORLEVEL%"=="0" (
     REM taskkill /IM "WindowsTerminal.exe" /F
 ) else (
     echo  %WINDOW_NAME% " starting!"
-    start %WINDOW_NAME% python ./backend/proxy.py
+    start %WINDOW_NAME% python ./backend/proxy.py 
 )
 
 
