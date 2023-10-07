@@ -76,13 +76,20 @@ class Trader:
         positions = mt5.positions_get()
 
         # Add to open positions
+        all_available = []
         for pos in positions:
             notFound = False
+            all_available.append(pos.ticket)
             try:
                 open_position = self.open_positions[pos.ticket]
                 open_position.update(pos)
             except:
                 self.open_positions[pos.ticket] = OpenPosition(pos)
+
+        # Remove positions which are not open anymore
+        for k in list(self.open_positions.keys()):
+            if k not in all_available:
+                del self.open_positions[k]
 
         return self.open_positions
 
