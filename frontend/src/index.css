@@ -47,7 +47,7 @@ button {
 }
 
 .clsStyle {
-  font-size: 11pt;
+  font-size: 10pt;
   font-family: Arial;
   border-collapse: collapse;
   border: 1px solid silver;
@@ -101,13 +101,13 @@ button {
 .clsTraderContainer {
   display: inline-block;
   vertical-align: top;
-  font-size: 14pt;
+  font-size: 13pt;
   width: 50%;
 }
 
 .clsTraderTable {
   vertical-align: top;
-  font-size: 14pt;
+  font-size: 13pt;
   border: #1974ca;
   border-style: solid;
   border-width: 2pt;
@@ -118,7 +118,7 @@ button {
 
 .clsPositionsTable {
   vertical-align: top;
-  font-size: 14pt;
+  font-size: 13pt;
   border: #ff5100;
   border-style: solid;
   border-width: 2pt;

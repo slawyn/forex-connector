@@ -52,7 +52,7 @@ class Trader:
         if filter == "currency":
             self.filter_function = self._filter_currency
         else:
-            self.filter_function = lambda self, sym: True
+            self.filter_function = lambda sym: True
 
     def get_orders(self):
         ''' Get Orders '''
@@ -170,7 +170,7 @@ class Trader:
                 pass
             finally:
                 if exported_symbol == None:
-                    exported_symbol = Symbol(sym)
+                    exported_symbol = Symbol(sym, conversion=(sym.currency_profit != self.account_info.currency))
                     self.symbols[sym.name] = exported_symbol
 
             if self.get_tick(sym) != None and self.filter_function(sym):
@@ -234,8 +234,6 @@ class Trader:
         return [buy_stoploss, buy_takeprofit, sell_stoploss, sell_takeprofit]
 
     def get_history_positions(self, start_date, onlyfinished=True):
-
-        # get history_deals for symbols whose names contain "GBP" within a specified interval
         history_deals = mt5.history_deals_get(start_date, datetime.datetime.now())
 
         pos_temporary = {}

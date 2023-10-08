@@ -21,6 +21,7 @@ app = None
 
 class App:
     COL_INSTRUMENT = 'INSTRUMENT'
+    COL_BASE = 'CURRENCY'
     COL_DESCRIPTION = 'DESCRIPTION'
     COL_ASK = 'ASK'
     COL_BID = 'BID'
@@ -29,7 +30,7 @@ class App:
     COL_WEDGE = 'SPREAD:ATR[%]'
     COL_AVAIL = 'ATR.RESERVED[%]'
     COL_UPDATE = 'UPDATE'
-    COLUMNS = [COL_INSTRUMENT, COL_DESCRIPTION, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
+    COLUMNS = [COL_INSTRUMENT, COL_BASE, COL_DESCRIPTION, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
 
     def __init__(self, config):
         self.config = config
@@ -148,6 +149,7 @@ class App:
             sym = syms[idx]
             atr = self.trader.get_atr(sym)
             updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = sym.get_info()
+            currency = sym.get_currency()
 
             # additional calcs
             ratio = (spread/atr)*100
@@ -158,6 +160,7 @@ class App:
             timer = get_current_date()
             if updated or not filter_updated:
                 react_data[name] = [name,
+                                    currency,
                                     description,
                                     f"%2.{digits}f" % ask,
                                     f"%2.{digits}f" % bid,
@@ -253,6 +256,7 @@ def command():
         status = app.select_instrument(instrument)
         symbol = app._get_symbol(instrument)
         updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = symbol.get_info()
+        conversion = symbol.get_conversion()
         return {"info": {"name": name,
                          "step": step,
                          "ask": ask,
@@ -262,7 +266,8 @@ def command():
                          "contract_size": contract_size,
                          "digits": digits,
                          "tick_size": step,
-                         "tick_value": tick_value
+                         "tick_value": tick_value,
+                         "conversion": conversion
                          }}
 
     elif type == "preview":

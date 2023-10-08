@@ -37,10 +37,12 @@ function round(number, digits) {
     return Math.round((number + Number.EPSILON) * d) / d;
 }
 
-const calculatePoints = (riskAmount, contractSize, pointValue, riskLot, digits) => {
-    var iPipMult = [1, 10, 1, 10, 1, 10, 100];
+const calculatePoints = (ask, riskAmount, contractSize, pointValue, riskLot, digits, conversion) => {
+    var tickValue = 1 / ask;
 
-    var power = Math.pow(10, digits);
+    if (conversion) {
+        pointValue = tickValue;
+    }
     var points = (riskAmount / (contractSize * pointValue * riskLot));
     return points.toFixed(digits);
 };
@@ -204,7 +206,8 @@ const Trader = (props) => {
         points: 0,
         digits: 0,
         tick_size: 0,
-        tick_value: 0
+        tick_value: 0,
+        conversion: false
     });
 
     React.useEffect(() => {
@@ -221,12 +224,15 @@ const Trader = (props) => {
             digits: props.symbolData.digits,
             tick_size: props.symbolData.tick_size,
             tick_value: props.symbolData.tick_value,
+            conversion: props.symbolData.conversion,
             points: calculatePoints(
+                props.symbolData.ask,
                 previousTrade.risk * 0.01 * props.account.balance,
                 props.symbolData.contract_size,
                 props.symbolData.point_value,
                 props.symbolData.volume_step,
-                props.symbolData.digits)
+                props.symbolData.digits,
+                props.symbolData.conversion)
         }));
     }, [props.symbolData, props.account.balance]);
 
@@ -245,11 +251,13 @@ const Trader = (props) => {
             ...previousTrade,
             risk_volume: parseFloat(value),
             points: calculatePoints(
+                trade.ask,
                 trade.risk * 0.01 * trade.balance,
                 trade.contract_size,
                 trade.point_value,
                 value,
-                props.symbolData.digits)
+                props.symbolData.digits,
+                props.symbolData.conversion)
         }));
     };
 
@@ -258,11 +266,13 @@ const Trader = (props) => {
             ...previousTrade,
             risk: parseFloat(value),
             points: calculatePoints(
+                trade.ask,
                 value * 0.01 * trade.balance,
                 trade.contract_size,
                 trade.point_value,
                 trade.risk_volume,
-                props.symbolData.digits)
+                props.symbolData.digits,
+                props.symbolData.conversion)
         }));
     };
 
@@ -271,11 +281,13 @@ const Trader = (props) => {
             ...previousTrade,
             ratio: value,
             points: calculatePoints(
+                trade.ask,
                 trade.risk * 0.01 * trade.balance,
                 trade.contract_size,
                 trade.point_value,
                 trade.risk_volume,
-                props.symbolData.digits)
+                props.symbolData.digits,
+                props.symbolData.conversion)
         }));
     };
 
