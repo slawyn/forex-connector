@@ -22,8 +22,8 @@ function App() {
     open: {}
   });
   const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
+  const [errorData, setErrorData] = React.useState({ error: 0 });
   const theme = "clsStyle";
-
 
 
   const mapTerminalData = (data) => {
@@ -154,8 +154,14 @@ function App() {
     };
     fetch('/trade', requestOptions)
       .then(response => response.json())
-      .then(((receivedSymbolData) => {
+      .then(((idResponse) => {
+        if (idResponse.error !== 0) {
 
+          throw new Error("Error code from metatrader:" + idResponse.error);
+        }
+        setErrorData({
+          error: idResponse.error
+        });
       }));
   };
 
@@ -196,6 +202,7 @@ function App() {
             <td className={theme}>{terminalData.account.profit}</td>
             <td className={theme}>{terminalData.account.leverage}</td>
             <td className={theme}>{terminalData.date}</td>
+            <td className={theme}>Last Error:{errorData.error}</td>
           </tr>
         </tbody>
       </table>

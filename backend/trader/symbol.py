@@ -12,13 +12,12 @@ class Symbol:
     def __init__(self, sym, conversion=False):
         self.time = sym.time
         self.step = sym.trade_tick_size
-        self.spread = sym.spread * sym.trade_tick_size
         self.digits = sym.digits
         self.name = sym.name
         self.description = sym.description
         self.volume_step = sym.volume_step
         self.contract_size = sym.trade_contract_size
-        self.currency = sym.currency_base + '->' + sym.currency_profit
+        self.currency = f"{sym.currency_base}/{sym.currency_profit}"
 
         self.conversion = conversion
 
@@ -32,6 +31,7 @@ class Symbol:
         self.bid = sym.bid
         self.time = sym.time
         self.session_open = sym.session_open
+        self.spread = sym.spread * sym.trade_tick_size
 
         # Fix broker problem with the tick value
         self.trade_tick_value = sym.trade_tick_value  # (self.contract_size*self.step)

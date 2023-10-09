@@ -55,10 +55,11 @@ class App:
         self.trader.set_filter(filter)
 
     def _get_account_info(self):
+        self.trader.update_account_info()
         info = self.trader.get_account_info()
         return {"balance": info.balance,
                 "currency": info.currency,
-                "profit": info.profit,
+                "profit": "%2.2f" % info.profit,
                 "leverage": info.leverage,
                 "company": info.company,
                 "server": info.server,
@@ -69,6 +70,7 @@ class App:
         return s
 
     def _trade(self, symbol,  lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment):
+        ret_code = -1
         ACTIONS = {
             "market_buy":  [TradeRequest.get_type_market_buy(), entry_buy, stoploss_buy, takeprofit_buy],
             "limit_buy":   [TradeRequest.get_type_limit_buy(), entry_buy, stoploss_buy, takeprofit_buy],
@@ -85,10 +87,10 @@ class App:
 
             # Trade is executed here
             if CONFIG_ENABLE_TRADING:
-                self.trader.trade(tr)
+                ret_code = self.trader.trade(tr)
         except Exception as e:
             print("Exception", e)
-        return True
+        return ret_code
 
     def _save_to_google(self):
         ''' Collect Information '''
@@ -243,8 +245,8 @@ def trade():
     takeprofit_buy = data.get("takeprofit_buy")
     takeprofit_sell = data.get("takeprofit_sell")
     comment = data.get("comment")
-    app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment)
-    return {"id": 0}
+    code = app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment)
+    return {"error": code}
 
 
 @flask.route('/command', methods=['POST'])

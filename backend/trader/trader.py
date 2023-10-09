@@ -278,7 +278,11 @@ class Trader:
     def trade(self, tradeRequest):
         request = tradeRequest.get_request()
         result = mt5.order_send(request)
+        error = 0
         if result != None:
-            log(result.retcode)
+            error = result.retcode
         else:
-            log(mt5.last_error())
+            error = mt5.last_error()
+
+        log(error)
+        return error
