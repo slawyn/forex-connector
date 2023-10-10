@@ -240,11 +240,13 @@ const Trader = (props) => {
     React.useEffect(() => {
         console.log(trade.preview);
         if (trade.preview) {
-            const sl = [trade.ask - trade.points, trade.bid + trade.points];
-            const tp = [trade.ask + (trade.points) * trade.ratio, trade.bid - (trade.points) * trade.ratio];
-            props.handlepreview(trade.ask, trade.bid, sl, tp);
+            const ask = parseFloat(trade.ask);
+            const bid = parseFloat(trade.bid);
+            const sl = [parseFloat(ask - trade.points), parseFloat(bid + trade.points)];
+            const tp = [ask + (trade.points) * trade.ratio, bid - (trade.points) * trade.ratio];
+            props.handlepreview(ask, bid, sl, tp);
         }
-    }, [trade.preview, trade.points, trade.ask, trade.bid]);
+    }, [trade.ratio, trade.preview, trade.points, trade.ask, trade.bid]);
 
     const handleVolumeChange = (value) => {
         setTrade((previousTrade) => ({
