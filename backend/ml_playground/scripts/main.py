@@ -9,21 +9,22 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import RobustScaler
 
 # Self-written libraries
-from helpers import split_data_into_sequences, downsample_time_series, simple_moving_average, train_model, post_process_predictions
+from helpers import split_data_into_sequences, downsample_time_series, simple_moving_average, train_model, predict_post_process
 from helpers_mt import fetch_ticks
-from models import RNN_warmup_multilayer
+from models import RNN_warmup_multilayer, RNN_warmup_singlelayer
+choosen_model = "RNN_warmup_singlelayer"
 
 
 # Define the time range for gold tick data
 start_time = datetime(2023, 10, 6, 15, 0, 0)
 # end_time = start_time + timedelta(hours=1)  # Extend to 2 hours for prediction
-end_time = datetime(2023, 10, 6, 15, 0, 50)
+end_time = datetime(2023, 10, 6, 15, 15, 0)
 down_sample_unit = 's'  # Use 's' for seconds, 'h' for hours, etc.
 
 symbol = "GOLD"
 # symbol = "BITCOIN"
 
-sequence_length = 5
+sequence_length = 10
 prediction_horizon = 100
 num_features = 1
 split_ratio = 0.8
@@ -63,12 +64,21 @@ def retrieve_data(symbol, start_date, end_date):
     return timestamps_array, prices_scaled
 
 
-feedback_model = RNN_warmup_multilayer(prediction_horizon, num_features)  # You can adjust units as needed
-feedback_model.build(input_shape=(None, sequence_length, num_features))  # Build the model with an input shape
+use_case = "case1"  # Replace with your actual use case
+
+if choosen_model == "RNN_warmup_multilayer":
+    model = RNN_warmup_multilayer(prediction_horizon, num_features)
+elif choosen_model == "RNN_warmup_singlelayer":
+    model = RNN_warmup_singlelayer(prediction_horizon, num_features)
+else:
+    model = RNN_warmup_singlelayer(prediction_horizon, num_features)
+
+
+model.build(input_shape=(None, sequence_length, num_features))
 # Print the model summary
-feedback_model.summary()
+model.summary()
 # Compile the model
-feedback_model.compile(optimizer='adam', loss='mean_squared_error')
+model.compile(optimizer='adam', loss='mean_squared_error')
 
 timesteps, data = retrieve_data(symbol, start_time, end_time)
 target_frequency = np.timedelta64(1, down_sample_unit)  # Use 's' for seconds, 'h' for hours, etc.
@@ -88,12 +98,12 @@ if do_show_original_plot:
 X_train, X_test, y_train, y_test = split_data_into_sequences(data, timesteps, sequence_length, split_ratio, num_features)
 # Train the model
 if do_overwrite_weight or not os.path.exists('model_weights.h5'):
-    train_model(feedback_model, X_train, y_train, X_test, y_test, epochs=epochs)
+    train_model(model, X_train, y_train, X_test, y_test, epochs=epochs)
 else:
     # Load the pre-trained weights
-    feedback_model.load_weights('model_weights.h5')
+    model.load_weights('model_weights.h5')
     print("Loaded pre-trained weights.")
 
 # Call the function to visualize predictions
-post_process_predictions(feedback_model, X_train, y_train, X_test, y_test,
-                         timesteps, sequence_length, num_features, prediction_horizon)
+predict_post_process(model, X_train, y_train, X_test, y_test, timesteps, sequence_length, num_features,
+                     prediction_horizon)

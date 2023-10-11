@@ -107,11 +107,11 @@ def visualize_loss(history, title):
     plt.show()
 
 
-def post_process_predictions(feedback_model, X_train, y_train, X_test, y_test,
+def predict_post_process(model, X_train, y_train, X_test, y_test,
                              timesteps, sequence_length, num_features, prediction_horizon):
     # Make predictions for the next prediction_horizon time steps
     input_sequence = X_train[-1].reshape(1, sequence_length, num_features)
-    predictions = feedback_model.predict(input_sequence).reshape(-1)
+    predictions = model.predict(input_sequence).reshape(-1)
 
     plt.figure(figsize=(12, 6))
     plt.plot(timesteps[:len(y_train)], y_train, 'b-', label='Training Data')
