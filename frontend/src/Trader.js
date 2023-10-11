@@ -44,7 +44,7 @@ const calculatePoints = (ask, riskAmount, contractSize, pointValue, riskLot, dig
         pointValue = tickValue;
     }
     var points = (riskAmount / (contractSize * pointValue * riskLot));
-    return points.toFixed(digits);
+    return points;
 };
 
 const darkTheme = createTheme({
@@ -240,11 +240,9 @@ const Trader = (props) => {
     React.useEffect(() => {
         console.log(trade.preview);
         if (trade.preview) {
-            const ask = parseFloat(trade.ask);
-            const bid = parseFloat(trade.bid);
-            const sl = [parseFloat(ask - trade.points), parseFloat(bid + trade.points)];
-            const tp = [ask + (trade.points) * trade.ratio, bid - (trade.points) * trade.ratio];
-            props.handlepreview(ask, bid, sl, tp);
+            const sl = [trade.ask - trade.points, trade.bid + trade.points];
+            const tp = [trade.ask + (trade.points * trade.ratio), trade.bid - (trade.points * trade.ratio)];
+            props.handlepreview(trade.ask, trade.bid, sl, tp);
         }
     }, [trade.ratio, trade.preview, trade.points, trade.ask, trade.bid]);
 
@@ -281,7 +279,7 @@ const Trader = (props) => {
     const handleRatioChange = (value) => {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            ratio: value,
+            ratio: parseFloat(value),
             points: calculatePoints(
                 trade.ask,
                 trade.risk * 0.01 * trade.balance,
@@ -303,14 +301,14 @@ const Trader = (props) => {
     const handleAskChange = (value) => {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            ask: value
+            ask: parseFloat(value)
         }));
     };
 
     const handleBidChange = (value) => {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            bid: value
+            bid: parseFloat(value)
         }));
     };
 
@@ -338,7 +336,6 @@ const Trader = (props) => {
     };
 
     const generateComment = (risk, text) => {
-
         var comment = `[Risk: ${risk}% ]` + text;
         return comment;
     };
