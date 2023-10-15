@@ -98,6 +98,15 @@ button {
   width: 50%
 }
 
+.clsHistoryContainer {
+  display: inline-block;
+  vertical-align: top;
+  align-self: start;
+  width: 50%;
+  margin: 0px;
+  padding: 0px;
+}
+
 .clsTraderContainer {
   display: inline-block;
   vertical-align: top;

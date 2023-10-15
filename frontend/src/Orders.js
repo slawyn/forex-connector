@@ -9,7 +9,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 const Orders = (props) => {
     return (
         <>
-            <table className={props.customClass} >
+            <table className={props.customClass} style={{ width: "100%" }}>
                 <thead>
                     <tr>
                         {props.headers.map((header, index) => {
