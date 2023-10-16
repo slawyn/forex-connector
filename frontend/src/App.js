@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import Symbols from "./Symbols";
 import Trader from "./Trader";
-import Orders from "./Orders";
 import History from "./History";
 
 
@@ -226,17 +225,14 @@ function App() {
               account={terminalData.account}
               data={terminalData.instruments}
               symbolData={symbolData.info}
+              openHeaders={terminalData.op_headers}
+              openData={mapTerminalData(terminalData.open)}
               handletrade={transmitTradeRequest}
               handlepreview={ttcDrawPreview} />
           </div>
           <div className="clsPositionsTable">
-            <Orders customClass={theme}
-              headers={terminalData.op_headers}
-              data={mapTerminalData(terminalData.open)}
-            />
-          </div>
-          <div className="clsPositionsTable">
-            <History customClass={theme}
+            <History
+              customClass={theme}
               updateall={fetchAllPositions}
               saveall={transmitSavePositions}
               headers={positionData.headers}
@@ -245,8 +241,7 @@ function App() {
           </div>
         </div>
       </div>
-
-    </div >
+    </div>
 
   );
 

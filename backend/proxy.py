@@ -69,7 +69,7 @@ class App:
         s = self.trader.get_symbol(sym)
         return s
 
-    def _trade(self, symbol,  lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment):
+    def _trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
         ret_code = -1
         ACTIONS = {
             "market_buy":  [TradeRequest.get_type_market_buy(), entry_buy, stoploss_buy, takeprofit_buy],
@@ -77,12 +77,13 @@ class App:
             "stop_buy":    [TradeRequest.get_type_stop_buy(), entry_buy, stoploss_buy, takeprofit_buy],
             "market_sell": [TradeRequest.get_type_market_sell(), entry_sell, stoploss_sell, takeprofit_sell],
             "limit_sell":  [TradeRequest.get_type_limit_sell(), entry_sell, stoploss_sell, takeprofit_sell],
-            "stop_sell":   [TradeRequest.get_type_stop_sell(), entry_sell, stoploss_sell, takeprofit_sell]
+            "stop_sell":   [TradeRequest.get_type_stop_sell(), entry_sell, stoploss_sell, takeprofit_sell],
+            "close":       [TradeRequest.get_type_close(), entry_sell, stoploss_sell, takeprofit_sell]
         }
 
         try:
             action = ACTIONS[type]
-            tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3], comment)
+            tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3], position, comment)
             log(tr.get_request())
 
             # Trade is executed here
@@ -236,6 +237,7 @@ def save():
 def trade():
     data = request.get_json()
     symbol = data.get("symbol")
+    position = data.get("position")
     lot = data.get("lot")
     type = data.get("type")
     entry_buy = data.get("entry_buy")
@@ -245,7 +247,7 @@ def trade():
     takeprofit_buy = data.get("takeprofit_buy")
     takeprofit_sell = data.get("takeprofit_sell")
     comment = data.get("comment")
-    code = app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment)
+    code = app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
     return {"error": code}
 
 
