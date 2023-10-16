@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import matplotlib.pyplot as plt
 import MetaTrader5 as mt5
 
-from trader.position import Rate
+from trader.rate import Rate
 from helpers import *
 
 # Draw Chart

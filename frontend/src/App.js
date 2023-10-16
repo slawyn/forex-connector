@@ -21,7 +21,7 @@ function App() {
     open: {}
   });
   const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
-  const [errorData, setErrorData] = React.useState({ error: 0 });
+  const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
   const theme = "clsStyle";
 
 
@@ -154,12 +154,13 @@ function App() {
     fetch('/trade', requestOptions)
       .then(response => response.json())
       .then(((idResponse) => {
-        if (idResponse.error !== 0) {
+        if (idResponse.error !== 10009) {
 
-          throw new Error("Error code from metatrader:" + idResponse.error);
+          throw new Error(`Result: [${idResponse.error}] ${idResponse.text} `);
         }
         setErrorData({
-          error: idResponse.error
+          error: idResponse.error,
+          text: idResponse.text
         });
       }));
   };

@@ -3,9 +3,11 @@ import MetaTrader5 as mt5
 import time
 
 from trader.accountinfo import AccountInfo
-from trader.position import Position, OpenPosition, Rate
+from trader.position import ClosedPosition, OpenPosition
+from trader.rate import Rate
 from trader.symbol import Symbol
 from trader.request import TradeRequest
+from trader.trade_codes import ERROR_CODES
 from helpers import *
 
 
@@ -244,7 +246,7 @@ class Trader:
             # add deals to position
             pos_id = str(deal.position_id)
             if pos_id not in pos_temporary:
-                pos_temporary[pos_id] = Position(pos_id)
+                pos_temporary[pos_id] = ClosedPosition(pos_id)
                 pos_temporary[pos_id].add_deal(deal)
             else:
                 pos_temporary[pos_id].add_deal(deal)
@@ -275,14 +277,16 @@ class Trader:
         else:
             return pos_temporary
 
-    def trade(self, tradeRequest):
+    def trade(self, tradeRequest, trade=False):
         request = tradeRequest.get_request()
-        result = mt5.order_send(request)
-        error = 0
-        if result != None:
-            error = result.retcode
+        if not trade:
+            id, text = {0, ""}
         else:
-            error = mt5.last_error()
+            log(request)
+            result = mt5.order_send(request)
+            if result != None:
+                id, text = {result.retcode, ERROR_CODES[result.retcode]}
+            else:
+                id, text = {result.retcode, ERROR_CODES[result.retcode]}
 
-        log(error)
-        return error
+        return id, text

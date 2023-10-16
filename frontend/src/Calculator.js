@@ -11,6 +11,16 @@ const darkTheme = createTheme({
     },
 });
 
+const getCorrespondingClosingType = (type) => {
+    var close_type = ""
+    if (type.includes("buy")) {
+        close_type = "close_buy";
+    } else {
+        close_type = "close_sell";
+    }
+
+    return close_type;
+};
 
 const Calculator = (props) => {
 
@@ -146,4 +156,4 @@ const Calculator = (props) => {
     );
 };
 
-export { Calculator as default };
+export { Calculator, getCorrespondingClosingType };

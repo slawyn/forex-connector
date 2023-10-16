@@ -6,7 +6,7 @@ from commander import Commander
 from trader.trader import Trader
 from trader.request import TradeRequest
 from trader.accountinfo import AccountInfo
-from trader.position import Position, OpenPosition
+from trader.position import ClosedPosition, OpenPosition
 from trader.symbol import Symbol
 from config import Config
 from helpers import *
@@ -70,7 +70,6 @@ class App:
         return s
 
     def _trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
-        ret_code = -1
         ACTIONS = {
             "market_buy":  [TradeRequest.get_type_market_buy(), entry_buy, stoploss_buy, takeprofit_buy],
             "limit_buy":   [TradeRequest.get_type_limit_buy(), entry_buy, stoploss_buy, takeprofit_buy],
@@ -78,20 +77,17 @@ class App:
             "market_sell": [TradeRequest.get_type_market_sell(), entry_sell, stoploss_sell, takeprofit_sell],
             "limit_sell":  [TradeRequest.get_type_limit_sell(), entry_sell, stoploss_sell, takeprofit_sell],
             "stop_sell":   [TradeRequest.get_type_stop_sell(), entry_sell, stoploss_sell, takeprofit_sell],
-            "close":       [TradeRequest.get_type_close(), entry_sell, stoploss_sell, takeprofit_sell]
+            "close_sell":  [TradeRequest.get_type_market_buy(), entry_buy, None, None],
+            "close_buy":  [TradeRequest.get_type_market_sell(), entry_sell, None, None]
         }
 
         try:
             action = ACTIONS[type]
             tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3], position, comment)
-            log(tr.get_request())
-
-            # Trade is executed here
-            if CONFIG_ENABLE_TRADING:
-                ret_code = self.trader.trade(tr)
+            return_info = self.trader.trade(tr, CONFIG_ENABLE_TRADING)
         except Exception as e:
             print("Exception", e)
-        return ret_code
+        return return_info
 
     def _save_to_google(self):
         ''' Collect Information '''
@@ -247,8 +243,9 @@ def trade():
     takeprofit_buy = data.get("takeprofit_buy")
     takeprofit_sell = data.get("takeprofit_sell")
     comment = data.get("comment")
-    code = app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
-    return {"error": code}
+    result = app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
+
+    return {"error": result[0], "text": result[1]}
 
 
 @flask.route('/command', methods=['POST'])

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Orders from "./Orders";
-import Calculator from "./Calculator";
+import { Calculator, getCorrespondingClosingType } from "./Calculator";
 
 function round(number, digits) {
     const d = Math.pow(10, digits);
@@ -69,7 +69,6 @@ const Trader = (props) => {
 
 
     React.useEffect(() => {
-        console.log(trade.preview);
         if (trade.preview) {
             const sl = [trade.ask - trade.points, trade.bid + trade.points];
             const tp = [trade.ask + (trade.points * trade.ratio), trade.bid - (trade.points * trade.ratio)];
@@ -172,13 +171,17 @@ const Trader = (props) => {
         return comment;
     };
 
-    const handleCloseTrade = (name, position, volume) => {
+    const handleCloseTrade = (type, name, position, volume, ask, bid) => {
+
+        var close_type = getCorrespondingClosingType(type);
         var request = {
             symbol: name,
             position: position,
             lot: volume,
-            type: "close"
-        }
+            type: close_type,
+            entry_buy: ask,
+            entry_sell: bid
+        };
 
         props.handletrade(request);
     };

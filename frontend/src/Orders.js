@@ -10,7 +10,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 
 const Orders = (props) => {
-    const [dialogData, setDiagloData] = React.useState({ state: false, id: 0, name: "", volume: 0 });
+    const [dialogData, setDiagloData] = React.useState({ type: "", state: false, id: 0, name: "", volume: 0, ask: 0, bid: 0 });
 
 
     const handleCloseConfirmed = () => {
@@ -18,7 +18,7 @@ const Orders = (props) => {
             ...previousTrade,
             state: false
         }));
-        props.handleClose(dialogData.name, dialogData.id, dialogData.volume);
+        props.handleClose(dialogData.type, dialogData.name, dialogData.id, dialogData.volume, dialogData.ask, dialogData.bid);
     };
 
     const handleCloseRejected = () => {
@@ -28,12 +28,16 @@ const Orders = (props) => {
         }));
     };
 
-    const handleOpenDialog = (name, id, volume) => {
+    const handleOpenDialog = (name, id, volume, type, ask, bid) => {
+
         setDiagloData((previousTrade) => ({
             id: id,
             name: name,
             volume: volume,
-            state: true
+            state: true,
+            ask: ask,
+            bid: bid,
+            type: type
         }));
     };
 
@@ -74,7 +78,7 @@ const Orders = (props) => {
                     {
                         props.data.map((row) => {
 
-                            return <tr onClick={() => handleOpenDialog(row.items[1], row.items[0], row.items[row.items.length - 1])}>
+                            return <tr onClick={() => handleOpenDialog(row.items[1], row.items[0], row.items[row.items.length - 1], row.items[3], row.items[8], row.items[9])}>
                                 {
                                     /** Map row line */
                                     row.items.map((cellData) => {

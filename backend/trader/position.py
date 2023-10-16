@@ -3,79 +3,12 @@ import datetime
 from helpers import log
 
 
-class Rate:
-    IDX_TIME = 0
-    IDX_OPEN = 1
-    IDX_HIGH = 2
-    IDX_LOW = 3
-    IDX_CLOSE = 4
-    IDX_VOLUME = 5
-
-    def __init__(self, rate):
-        self.time = rate[Rate.IDX_TIME]
-        self.open = rate[Rate.IDX_OPEN]
-        self.high = rate[Rate.IDX_HIGH]
-        self.low = rate[Rate.IDX_LOW]
-        self.close = rate[Rate.IDX_CLOSE]
-        self.volume = rate[Rate.IDX_VOLUME]
-
-    def get_min_max(rates):
-        '''
-        Find min and max for price and volume
-        '''
-
-        # Find highest and lowest
-        price_max = 0
-        price_min = 0xFFFFFFFF
-        volume_max = 0
-        volume_min = 0xFFFFFFFF
-
-        # time-0 open-1 high-2 low-3 close-4 tickvolume-5 spread-6 realvolume-7
-        for rate in rates:
-            if rate.high > price_max:
-                price_max = rate.high
-
-            if rate.low < price_min:
-                price_min = rate.low
-
-            if rate.volume > volume_max:
-                volume_max = rate.volume
-
-            if rate.volume < volume_min:
-                volume_min = rate.volume
-
-        return price_max, price_min, volume_max, volume_min
-
-    def calculate_average_true_range(rates):
-        atr = 0.0001
-        try:
-            count = len(rates)-1
-            H = rates[0][Rate.IDX_HIGH]
-            L = rates[0][Rate.IDX_LOW]
-            Cp = rates[0][Rate.IDX_CLOSE]
-            trs = []
-            for idx in range(1, count):
-                H = rates[idx][Rate.IDX_HIGH]
-                L = rates[idx][Rate.IDX_LOW]
-                tr = max([(H-L), abs(H-Cp), abs(L-Cp)])
-                trs.append(tr)
-                Cp = rates[idx][Rate.IDX_CLOSE]
-
-            if len(trs) != 0:
-                atr = sum(trs)/(len(trs))
-        except Exception as e:
-            log(e)
-        return atr
-
-
 class OpenPosition:
     HEADER = ["ID",
               "SYMBOL",
               "TIME",
               "TYPE",
               "MAGIC",
-              "IDENTIFIER",
-              "REASON",
               "COMMENT",
               "PROFIT",
               "OPEN",
@@ -116,11 +49,9 @@ class OpenPosition:
             "time": self.time,
             "type": self.type,
             "magic": self.magic,
-            "identifier": self.identifier,
-            "reason": self.reason,
             "comment": self.comment,
             "symbol": self.symbol,
-            "profit": self.profit,
+            "profit": f"{self.profit:.2f}",
             "price_open": self.price_open,
             "price_sl": self.price_sl,
             "price_tp": self.price_tp,
@@ -145,10 +76,8 @@ class OpenPosition:
         data.append(self.time)
         data.append(type)
         data.append(self.magic)
-        data.append(self.identifier)
-        data.append(self.reason)
         data.append(self.comment)
-        data.append(self.profit)
+        data.append(f"{self.profit:.2f}")
         data.append(self.price_open)
         data.append(self.price_sl)
         data.append(self.price_tp)
@@ -158,7 +87,7 @@ class OpenPosition:
         return data
 
 
-class Position:
+class ClosedPosition:
     DEAL_TYPES = {0: "BUY", 1: "SELL"}
     HEADER = ["ID",
               "SYMBOL",
@@ -267,7 +196,7 @@ class Position:
 
     def get_deals(self):
         def filter(d):
-            return [Position.DEAL_TYPES[d.type], d.time, d.price]
+            return [ClosedPosition.DEAL_TYPES[d.type], d.time, d.price]
         result = map(filter, self.opening_deals + self.closing_deals)
         return result
 
@@ -304,7 +233,7 @@ class Position:
             self.pips_tp = 0
 
         # Type of order
-        self.sell_or_buy = Position.DEAL_TYPES[self.opening_deals[0].type]
+        self.sell_or_buy = ClosedPosition.DEAL_TYPES[self.opening_deals[0].type]
         self.symbol = self.opening_deals[0].symbol
         self.comment = self.opening_deals[0].comment
 
@@ -386,7 +315,7 @@ class Position:
             log("\t%-20s [%-s]" % ("   Volume:", d.volume))
 
     def get_info_header():
-        return Position.HEADER
+        return ClosedPosition.HEADER
 
     def get_info(self):
         data = []
