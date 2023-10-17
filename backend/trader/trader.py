@@ -16,6 +16,8 @@ class Trader:
     MT_TIMEFRAMES = [mt5.TIMEFRAME_M1, mt5.TIMEFRAME_M2, mt5.TIMEFRAME_M3, mt5.TIMEFRAME_M4, mt5.TIMEFRAME_M5, mt5.TIMEFRAME_M6, mt5.TIMEFRAME_M10, mt5.TIMEFRAME_M12, mt5.TIMEFRAME_M20, mt5.TIMEFRAME_M30,
                      mt5.TIMEFRAME_H1, mt5.TIMEFRAME_H2, mt5.TIMEFRAME_H3, mt5.TIMEFRAME_H4, mt5.TIMEFRAME_H6, mt5.TIMEFRAME_H8, mt5.TIMEFRAME_H12, mt5.TIMEFRAME_D1, mt5.TIMEFRAME_W1, mt5.TIMEFRAME_MN1]
 
+    MAX_BARS_COUNT = 110
+    OPTIMAL_BAR_COUNT = 70
     '''
         description: Used for communicating over the connector with mt5
     '''
@@ -120,7 +122,7 @@ class Trader:
                 rates = mt5.copy_rates_range(pd.get_symbol_name(), time_frame, time_start, time_stop)
 
                 # Too big
-                if len(rates) > 110:
+                if len(rates) > Trader.MAX_BARS:
                     period += 1
                     if period > len(Trader.MT_TIMEFRAMES):
                         log("ERROR: Plotting not possible, no bigger time frame available")
@@ -130,21 +132,21 @@ class Trader:
                     break
 
                 # Optimal
-                elif len(rates) > 70 or time_frame == Trader.MT_TIMEFRAMES[0]:
+                elif len(rates) > Trader.OPTIMAL_BAR_COUNT or time_frame == Trader.MT_TIMEFRAMES[0]:
                     pd.add_rates(rates, Trader.TIMEFRAMES[period])
                     break
-
-            # start, end, period = calculate_plot_range(pd.get_start_msc(), pd.get_end_msc())
-            # rates = mt5.copy_rates_range(pd.get_symbol_name(), Trader.TIMEFRAMES[period], start, end)
 
         return positions
 
     def get_tick(self, sym):
-        if sym != None:
+        ''' Gets tick for the symbol
+            sym: Symbol name 
+        '''
+        if sym == None:
+            raise ValueError("ERROR: Symbol cannot be None")
+        else:
             tick = mt5.symbol_info_tick(sym.name)
             return tick
-        else:
-            raise ValueError("ERROR: Symbol cannot be None")
 
     def get_symbols(self):
         ''' Collect Symbols '''
@@ -189,51 +191,30 @@ class Trader:
         return syms
 
     def get_rates_for_symbol(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_D1):
-        data = []
+        data = None
         try:
             #info = mt5.symbol_info_tick(symbol_name)
             #stop_msc = info.time_msc
             data = mt5.copy_rates_range(symbol_name, frame, utc_from, utc_to)
-            if data == None:
-                raise Exception()
+            code = mt5.last_error()[0]
+            if code != 1:
+                raise Exception(f"ERROR: During fetching of rates {mt5.last_error()}")
         except Exception as e:
-            log(f"ERROR: Unknown symbol to get rates for {mt5.last_error()}")
+            log(e)
         return data
 
     def get_ticks_for_symbol(self, symbol_name, utc_from, utc_to):
-        data = []
+        data = None
         try:
             #info = mt5.symbol_info_tick(symbol_name)
             data = mt5.copy_ticks_range(symbol_name, utc_from, utc_to, mt5.COPY_TICKS_ALL)
-            if data == None:
-                raise Exception()
+            code = mt5.last_error()[0]
+            if code != 1:
+                raise Exception(f"ERROR: During fetching of ticks {mt5.last_error()}")
         except Exception as e:
-            log(f"ERROR: Unknown symbol to get ticks for {mt5.last_error()}")
+            log(e)
+
         return data
-
-    def calculate_stoploss(self,  sym):
-        loss_profit = self.balance*(self.risk/100)
-        lot_min = sym.volume_min
-        lot_step = sym.volume_step
-        contractsforlot = sym.trade_contract_size
-        lots = lot_min
-        # lots * contracts per lot * pricediff = loss_profit
-
-        value_per_point = sym.trade_tick_value * sym.point/sym.trade_tick_size
-
-        if sym.digits == 3:
-            value_per_point /= 100.0
-
-        points = loss_profit/(contractsforlot * lots * value_per_point)
-
-        buy_stoploss = sym.bid - points
-        buy_takeprofit = sym.bid + self.ratio * points
-        sell_stoploss = sym.ask + points
-        sell_takeprofit = sym.ask - self.ratio * points
-
-        log("%s:[A:%f B:%f] %s %s %s %s" % (s.name, sym.ask, sym.bid, str(buy_stoploss), str(buy_takeprofit), str(sell_stoploss), str(sell_takeprofit)))
-        log("\tRisk: %f Diff: %f tickval=%f point=%f ticksize=%f" % (loss_profit, points, sym.trade_tick_value, sym.point, sym.trade_tick_size))
-        return [buy_stoploss, buy_takeprofit, sell_stoploss, sell_takeprofit]
 
     def get_history_positions(self, start_date, onlyfinished=True):
         history_deals = mt5.history_deals_get(start_date, datetime.datetime.now())

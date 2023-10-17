@@ -66,3 +66,13 @@ class Symbol:
 
     def get_frame_type_d1():
         return mt5.TIMEFRAME_D1
+
+    def calculate_stoploss(self, risk_amount, risk_lot):
+        point_value = self.point_value
+        if self.conversion:
+            point_value = 1/self.ask
+        points = (risk_amount / (self.contract_size * point_value * risk_lot))
+
+        sl_sell = self.ask + points
+        sl_buy = self.bid - points
+        return [points, sl_sell, sl_buy]
