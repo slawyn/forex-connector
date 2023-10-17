@@ -108,7 +108,7 @@ class App:
         start_date = convert_string_to_date(self.config.get_google_startdate())
         positions = self.trader.get_history_positions(start_date, onlyfinished=False)
         json_positions = [positions[p].get_info() for p in positions]
-        return Position.get_info_header(), json_positions
+        return ClosedPosition.get_info_header(), json_positions
 
     def _get_open_positions(self):
         '''Open Positions

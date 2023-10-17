@@ -287,6 +287,7 @@ class Trader:
             if result != None:
                 id, text = {result.retcode, ERROR_CODES[result.retcode]}
             else:
-                id, text = {result.retcode, ERROR_CODES[result.retcode]}
+                retcode = mt5.last_error()
+                id, text = {retcode[0], retcode[1]}
 
         return id, text
