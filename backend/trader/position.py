@@ -1,6 +1,7 @@
 import datetime
 
 from helpers import log
+from trader.rate import Rate
 
 
 class OpenPosition:

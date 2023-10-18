@@ -122,7 +122,7 @@ class Trader:
                 rates = mt5.copy_rates_range(pd.get_symbol_name(), time_frame, time_start, time_stop)
 
                 # Too big
-                if len(rates) > Trader.MAX_BARS:
+                if len(rates) > Trader.MAX_BARS_COUNT:
                     period += 1
                     if period > len(Trader.MT_TIMEFRAMES):
                         log("ERROR: Plotting not possible, no bigger time frame available")
