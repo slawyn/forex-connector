@@ -272,17 +272,20 @@ class ClosedPosition:
         # 8
         data.append(self.swap_total)
 
+        # 9
         data.append(self.pip_movement)
 
-        # 9
+        # 10
         data.append(self.pips_sl)
 
-        # 10
+        # 11
         data.append(self.pips_tp)
 
-        # 11
+        # 12
         data.append(self.profit_total)
 
+        # 13
+        data.append(self.comment)
         return data
 
     def print_data(self):
