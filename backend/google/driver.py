@@ -72,7 +72,7 @@ class DriveFileController:
 
         # Update rows and images
         # if position is not in the already saved list
-        images_lis = self.get_uploaded_images()
+        uploaded_images = self.get_uploaded_images()
         for pid in positions:
             pd = positions[pid]
 
@@ -83,9 +83,14 @@ class DriveFileController:
                 self.next_free_idx += 1
                 self.worksheet.update(f'{DriveFileController.FIRST_COLUMN}{self.next_free_idx}:{DriveFileController.LAST_COLUMN}{ self.next_free_idx}', [entry])
 
+            # Generate only if the image does not exist
+            img_name = Chart.get_name(pd.get_id())
+            chartpath = os.path.join(os.path.abspath(self.dir), img_name )
+            if not os.path.exists(chartpath):
+                Chart().generate_chart(chartpath, pd.get_id(), pd.get_rates(), pd.get_limits(), pd.get_symbol_name(), pd.get_deals())
+
             # Add only if image was not uploaded
-            img_name = Chart().generate_chart(self.dir, pd.get_id(), pd.get_rates(), pd.get_limits(), pd.get_symbol_name(), pd.get_deals())
-            if pid not in images_lis.keys():
+            if pid not in uploaded_images.keys():
                 try:
                     log(f" Uploading {img_name}")
                     file = self.drive.CreateFile({'title': img_name, 'parents': [{'id': self.folderid}]})
@@ -93,7 +98,7 @@ class DriveFileController:
                     file.Upload()
 
                     # Add to the array
-                    images_lis[pid] = file["id"]
+                    uploaded_images[pid] = file["id"]
 
                     # Change Permissions so anyone with the link can view it
                     permission = file.InsertPermission({
@@ -113,8 +118,8 @@ class DriveFileController:
             if link == "":
                 value = 'none'
                 pid = str(row[0])
-                if pid in images_lis:
-                    file = self.drive.CreateFile({'id': images_lis[pid], 'parents': [{'id': self.folderid}]})
+                if pid in uploaded_images:
+                    file = self.drive.CreateFile({'id': uploaded_images[pid], 'parents': [{'id': self.folderid}]})
                     file.FetchMetadata(fetch_all=True)
                     link = file['alternateLink']
 

@@ -1,12 +1,19 @@
 // Importing modules
 import React, { useState, useEffect } from "react";
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import 'react-tabs/style/react-tabs.css';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import "./App.css";
 import Symbols from "./Symbols";
 import Trader from "./Trader";
 import History from "./History";
 
-
-
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
 
 function App() {
   // usestate for setting a javascript
@@ -177,61 +184,68 @@ function App() {
   return (
 
     <div className="App">
-      <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+      <ThemeProvider theme={darkTheme}>
+        <CssBaseline />
+        <Tabs>
+          <TabList>
+            <Tab>Trading</Tab>
+            <Tab>History</Tab>
+          </TabList>
+          <TabPanel>
+            <div>
+              <table className={theme}>
+                <tbody>
+                  <tr>
+                    <td className={theme}>Company</td>
+                    <td className={theme}>Balance</td>
+                    <td className={theme}>Login</td>
+                    <td className={theme}>Server</td>
+                    <td className={theme}>Profit</td>
+                    <td className={theme}>Leverage</td>
+                    <td className={theme}>Date</td>
+                    <td className={theme}>
+                      <button className={"clsBluebutton"} onClick={fetchTerminalDataForce}>Get Symbols</button>
+                    </td>
 
-      {/* Calling a data from setdata for showing */}
-      <table className={theme}>
-        <tbody>
-          <tr>
-            <td className={theme}>Company</td>
-            <td className={theme}>Balance</td>
-            <td className={theme}>Login</td>
-            <td className={theme}>Server</td>
-            <td className={theme}>Profit</td>
-            <td className={theme}>Leverage</td>
-            <td className={theme}>Date</td>
-            <td className={theme}>
-              <button className={"clsBluebutton"} onClick={fetchTerminalDataForce}>Get Symbols</button>
-            </td>
-          </tr>
-          <tr>
-            <td className={theme}>{terminalData.account.company}</td>
-            <td className={theme}>{terminalData.account.balance}{terminalData.account.currency}</td>
-            <td className={theme}>{terminalData.account.login}</td>
-            <td className={theme}>{terminalData.account.server}</td>
-            <td className={theme}>{terminalData.account.profit}</td>
-            <td className={theme}>{terminalData.account.leverage}</td>
-            <td className={theme}>{terminalData.date}</td>
-            <td className={theme}>Last Error:{errorData.error}</td>
-          </tr>
-        </tbody>
-      </table>
-      <div className="clsGlobalContainer">
-
-        {/* Left block*/}
-        <div className="clsSymbolsContainer">
-          <Symbols
-            customClass={theme}
-            account={terminalData.account}
-            headers={terminalData.headers}
-            data={mapTerminalData(terminalData.instruments)}
-            instrument={symbolData.info.name} selector={ttcSelectInstrument} updateall={fetchTerminalDataForce} />
-        </div>
-
-        {/* Right block*/}
-        <div className="clsTraderContainer">
-          <div className="clsTraderTable">
-            <Trader
-              customClass={theme}
-              account={terminalData.account}
-              data={terminalData.instruments}
-              symbolData={symbolData.info}
-              openHeaders={terminalData.op_headers}
-              openData={mapTerminalData(terminalData.open)}
-              handletrade={transmitTradeRequest}
-              handlepreview={ttcDrawPreview} />
-          </div>
-          <div className="clsPositionsTable">
+                  </tr>
+                  <tr>
+                    <td className={theme}>{terminalData.account.company}</td>
+                    <td className={theme}>{terminalData.account.balance}{terminalData.account.currency}</td>
+                    <td className={theme}>{terminalData.account.login}</td>
+                    <td className={theme}>{terminalData.account.server}</td>
+                    <td className={theme}>{terminalData.account.profit}</td>
+                    <td className={theme}>{terminalData.account.leverage}</td>
+                    <td className={theme}>{terminalData.date}</td>
+                    <td className={theme}>Last Error:{errorData.error}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div className="clsGlobalContainer">
+                <div className="clsSymbolsContainer">
+                  <Symbols
+                    customClass={theme}
+                    account={terminalData.account}
+                    headers={terminalData.headers}
+                    data={mapTerminalData(terminalData.instruments)}
+                    instrument={symbolData.info.name} selector={ttcSelectInstrument} updateall={fetchTerminalDataForce} />
+                </div>
+                <div className="clsTraderContainer">
+                  <div className="clsTraderTable">
+                    <Trader
+                      customClass={theme}
+                      account={terminalData.account}
+                      data={terminalData.instruments}
+                      symbolData={symbolData.info}
+                      openHeaders={terminalData.op_headers}
+                      openData={mapTerminalData(terminalData.open)}
+                      handletrade={transmitTradeRequest}
+                      handlepreview={ttcDrawPreview} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabPanel>
+          <TabPanel>
             <History
               customClass={theme}
               updateall={fetchAllPositions}
@@ -239,13 +253,11 @@ function App() {
               headers={positionData.headers}
               data={positionData.positions}
             />
-          </div>
-        </div>
-      </div>
+          </TabPanel>
+        </Tabs>
+      </ThemeProvider>
     </div>
-
   );
-
 }
 
 export default App;

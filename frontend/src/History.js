@@ -1,9 +1,4 @@
-import React, { useRef, useState, useEffect, createRef } from "react";
-import { TextField } from '@mui/material';
-import Button from '@mui/material/Button';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import InputAdornment from '@mui/material/InputAdornment';
+import React, { } from "react";
 
 const History = (props) => {
 
@@ -11,9 +6,8 @@ const History = (props) => {
 
     return (
         <>
-            <button onClick={props.saveall} className={"clsOrangebutton"} >{"Save to Google"}</button>
-            <button onClick={props.updateall}>Fetch All Positions</button>
-
+            <button onClick={props.saveall} className={"clsOrangebutton"} style={{ width: "fit-content" }}>Upload to Google</button>
+            <button onClick={props.updateall} className={"clsBluebutton"} style={{ width: "fit-content" }}>Fetch Trades</button>
             <div className="clsGlobalContainer" >
                 <div className="clsHistoryContainer" >
                     <table className={props.customClass} >
@@ -44,10 +38,10 @@ const History = (props) => {
                         </tbody>
                     </table>
                 </div>
-                <div className="clsHistoryContainer" >
-                    <img src={`trades/${imgData}.png`} style={{ width: "500px" }}></img>
+                <div className="clsImageContainer" >
+                    <img src={`trades/${imgData}.png`} ></img>
                 </div>
-            </div >
+            </div>
         </>
     );
 };

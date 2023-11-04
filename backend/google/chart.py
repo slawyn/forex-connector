@@ -1,9 +1,5 @@
 
-import os
 from PIL import Image, ImageDraw, ImageFont
-import matplotlib.pyplot as plt
-import MetaTrader5 as mt5
-
 from trader.rate import Rate
 from helpers import *
 
@@ -142,8 +138,11 @@ class Chart():
         mappedy = Chart.CHART_SIZEY-((posy*self.volume_scale))
         return mappedy
 
-    def generate_chart(self, dir, id, data, limits, symbol, deals):
-        chartname = "%s.png" % id
+    def get_name(id):
+        return "%s.png" % id
+    
+    def generate_chart(self, chartpath, id, data, limits, symbol, deals):
+        chartname = Chart.get_name(id)
 
         rates, period = data[0], data[1]
         sl, tp = limits[0], limits[1]
@@ -204,5 +203,4 @@ class Chart():
             self.draw_frame(symbol, bar_count, period)
 
         # Save
-        self.image.save(os.path.join(os.path.abspath(dir), chartname))
-        return chartname
+        self.image.save(chartpath)

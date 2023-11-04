@@ -101,8 +101,14 @@ button {
 .clsHistoryContainer {
   display: inline-block;
   vertical-align: top;
-  align-self: start;
-  width: 50%;
+  margin: 0px;
+  padding: 0px;
+  overflow-y: auto;
+}
+
+.clsImageContainer {
+  display: inline-block;
+  vertical-align: top;
   margin: 0px;
   padding: 0px;
 }
