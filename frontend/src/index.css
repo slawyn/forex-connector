@@ -95,7 +95,7 @@ button {
   display: inline-block;
   vertical-align: top;
   align-self: start;
-  width: 50%
+  width: 60%
 }
 
 .clsHistoryContainer {
@@ -117,7 +117,7 @@ button {
   display: inline-block;
   vertical-align: top;
   font-size: 13pt;
-  width: 50%;
+  width: 40%;
 }
 
 .clsTraderTable {

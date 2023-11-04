@@ -28,9 +28,10 @@ class App:
     COL_SPREAD = 'SPREAD'
     COL_ATR = 'ATR'
     COL_WEDGE = 'SPREAD:ATR[%]'
-    COL_AVAIL = 'ATR.RESERVED[%]'
+    COL_AVAIL = 'ATR.LEFT[%]'
+    COL_SIGNAL = 'SIGNAL[%]'
     COL_UPDATE = 'UPDATE'
-    COLUMNS = [COL_INSTRUMENT, COL_BASE, COL_DESCRIPTION, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_UPDATE]
+    COLUMNS = [COL_INSTRUMENT, COL_BASE, COL_DESCRIPTION, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_SIGNAL, COL_UPDATE]
 
     def __init__(self, config):
         self.config = config
@@ -153,6 +154,7 @@ class App:
             # additional calcs
             ratio = (spread/atr)*100
             atr_reserve = ((session_open-bid)/atr)*100
+            signal = (ratio/atr_reserve)*100
 
             # Create data set
             #timer = convert_timestamp_to_string(epoch - sym.time)
@@ -167,6 +169,7 @@ class App:
                                     "%-2.4f" % atr,
                                     "%-2.2f" % (ratio),
                                     "%-2.2f" % (abs(atr_reserve)),
+                                    "%-2.2f" % (abs(signal)),
                                     timer]
 
         return App.COLUMNS,  react_data
