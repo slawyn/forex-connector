@@ -104,6 +104,7 @@ button {
   margin: 0px;
   padding: 0px;
   overflow-y: auto;
+  width: fit-content;
 }
 
 .clsImageContainer {
@@ -111,6 +112,7 @@ button {
   vertical-align: top;
   margin: 0px;
   padding: 0px;
+  width: 70%;
 }
 
 .clsTraderContainer {
