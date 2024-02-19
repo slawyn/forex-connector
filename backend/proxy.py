@@ -67,8 +67,7 @@ class App:
                 "login": info.login}
 
     def _get_symbol(self, sym):
-        s = self.trader.get_symbol(sym)
-        return s
+        return self.trader.get_symbol(sym)
 
     def _trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
         ACTIONS = {
@@ -261,6 +260,8 @@ def command():
         symbol = app._get_symbol(instrument)
         updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = symbol.get_info()
         conversion = symbol.get_conversion()
+
+
         return {"info": {"name": name,
                          "step": step,
                          "ask": ask,

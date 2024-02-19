@@ -60,5 +60,5 @@ class Rate:
             if len(trs) != 0:
                 atr = sum(trs)/(len(trs))
         except Exception as e:
-            log(e)
+            print(e)
         return atr

@@ -167,7 +167,7 @@ const Trader = (props) => {
     };
 
     const generateComment = (risk, text) => {
-        var comment = `[Risk: ${risk}% ]` + text;
+        var comment = `[R:${risk}%, ]` + text;
         return comment;
     };
 

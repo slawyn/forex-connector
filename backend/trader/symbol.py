@@ -1,15 +1,17 @@
 import MetaTrader5 as mt5
-
+import datetime
 
 def app(text):
     with open("test.txt", "a") as myfile:
         myfile.write(str(text) + "\n\n")
 
 
+RATES_TIMESTAMP = 0
 class Symbol:
     EXCEPTED_FIXED = "JPY"
 
     def __init__(self, sym, conversion=False):
+        self.rates = []
         self.time = sym.time
         self.step = sym.trade_tick_size
         self.digits = sym.digits
@@ -24,6 +26,23 @@ class Symbol:
         # updatable: first creation sets the updated flag
         self.update(sym)
         self.updated = True
+
+    def add_rates(self, rates):
+        '''Extend the rates
+        '''
+        if len(rates)>0:
+            _timestamp = rates[0][RATES_TIMESTAMP]
+
+            # if the first new element has the same timestamp
+            if len(self.rates)>0 and self.rates[-1][RATES_TIMESTAMP] == _timestamp:
+                self.rates.extend(rates[1:])
+            else:
+                self.rates.extend(rates)
+
+    def get_last_timestamp(self):
+        if len(self.rates)>0:
+            return self.rates[-1][RATES_TIMESTAMP]
+        return datetime.datetime.utcnow()- datetime.timedelta(days=14)
 
     def update(self, sym):
         self.updated = (self.time != sym.time)

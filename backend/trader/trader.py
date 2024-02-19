@@ -159,6 +159,11 @@ class Trader:
 
     def get_symbol(self, sym_name):
         exported_symbol = self.symbols[sym_name]
+        time_stamp = exported_symbol.get_last_timestamp()
+        rates = self.get_rates_for_symbol(exported_symbol.name, time_stamp, datetime.datetime.utcnow())
+
+        # Update rates
+        exported_symbol.add_rates(rates)
         return exported_symbol
 
     def get_updated_symbols_sorted(self):
@@ -173,7 +178,7 @@ class Trader:
             except:
                 pass
             finally:
-                if exported_symbol == None:
+                if exported_symbol is None:
                     exported_symbol = Symbol(sym, conversion=(sym.currency_profit != self.account_info.currency))
                     self.symbols[sym.name] = exported_symbol
 
@@ -185,32 +190,32 @@ class Trader:
 
     def get_symbols_by_wildcard(self, wildcard):
         syms = []
-        for s in self.get_symbols():
-            if wildcard in s:
-                syms.append(s)
+        for _sym in self.get_symbols():
+            if wildcard in _sym:
+                syms.append(_sym)
         return syms
 
-    def get_rates_for_symbol(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_D1):
-        data = None
+    def get_rates_for_symbol(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_H1):
         try:
             #info = mt5.symbol_info_tick(symbol_name)
             #stop_msc = info.time_msc
             data = mt5.copy_rates_range(symbol_name, frame, utc_from, utc_to)
             code = mt5.last_error()[0]
             if code != 1:
-                raise Exception(f"ERROR: During fetching of rates {mt5.last_error()}")
+                data = []
+                raise Exception(f"ERROR: During fetching of rates {symbol_name} {mt5.last_error()}")
         except Exception as e:
             log(e)
         return data
 
     def get_ticks_for_symbol(self, symbol_name, utc_from, utc_to):
-        data = None
         try:
             #info = mt5.symbol_info_tick(symbol_name)
             data = mt5.copy_ticks_range(symbol_name, utc_from, utc_to, mt5.COPY_TICKS_ALL)
             code = mt5.last_error()[0]
             if code != 1:
-                raise Exception(f"ERROR: During fetching of ticks {mt5.last_error()}")
+                data = []
+                raise Exception(f"ERROR: During fetching of ticks {symbol_name} {mt5.last_error()}")
         except Exception as e:
             log(e)
 
