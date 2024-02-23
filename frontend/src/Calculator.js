@@ -3,8 +3,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import InputAdornment from '@mui/material/InputAdornment';
 
-const getCorrespondingClosingType = (type) => {
-    var close_type = ""
+function getCorrespondingClosingType (type) {
+    let close_type = ""
     if (type.includes("buy")) {
         close_type = "close_buy";
     } else {
@@ -14,34 +14,34 @@ const getCorrespondingClosingType = (type) => {
     return close_type;
 };
 
-const Calculator = (props) => {
+const Calculator = ({customClass, trade, handlers}) => {
 
     return (
         <>
             <table className="">
                 <tbody>
                     <tr>
-                        <td>Symbol: {props.trade.name}</td>
-                        <td>Contract Size: {props.trade.contract_size}</td>
-                        <td>Point Value: {props.trade.point_value}</td>
-                        <td>Volume Step: {props.trade.volume_step}</td>
-                        <td>Digits: {props.trade.digits}</td>
-                        <td>Tick Size: {props.trade.tick_size}</td>
-                        <td>Tick Value: {props.trade.tick_value}</td>
+                        <td>Symbol: {trade.name}</td>
+                        <td>Contract Size: {trade.contract_size}</td>
+                        <td>Point Value: {trade.point_value}</td>
+                        <td>Volume Step: {trade.volume_step}</td>
+                        <td>Digits: {trade.digits}</td>
+                        <td>Tick Size: {trade.tick_size}</td>
+                        <td>Tick Value: {trade.tick_value}</td>
                     </tr>
                     <tr>
                         <td>
                             <TextField
                                 id="trade-volume"
                                 type="number"
-                                value={props.trade.risk_volume}
+                                value={trade.risk_volume}
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                onChange={(e) => { props.handlervolume(e.target.value) }}
+                                onChange={(e) => { handlers.handleVolumeChange(e.target.value) }}
                                 label="Risk Volume"
                                 inputProps={{
                                     startAdornment: <InputAdornment position="start">LOT</InputAdornment>,
-                                    step: props.trade.volume_step,
+                                    step: trade.volume_step,
                                 }}
                             />
                         </td>
@@ -49,15 +49,15 @@ const Calculator = (props) => {
                             <TextField
                                 id="trade-risk"
                                 type="number"
-                                value={props.trade.risk}
+                                value={trade.risk}
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
-                                onChange={(e) => { props.handleRisk(e.target.value) }}
+                                onChange={(e) => { handlers.handleRiskChange(e.target.value) }}
                                 label="Risk"
                                 inputProps={{
 
                                     startAdornment: <InputAdornment position="start">%</InputAdornment>,
-                                    step: props.trade.risk_step
+                                    step: trade.risk_step
                                 }}
                             />
                         </td>
@@ -65,14 +65,14 @@ const Calculator = (props) => {
                             <TextField
                                 id="trade-ratio"
                                 type="number"
-                                value={props.trade.ratio}
+                                value={trade.ratio}
                                 variant="outlined"
                                 InputLabelProps={{ shrink: true }}
                                 label="Risk Ratio"
-                                onChange={(e) => { props.handleRatio(e.target.value) }}
+                                onChange={(e) => { handlers.handleRatioChange(e.target.value) }}
                                 inputProps={{
                                     startAdornment: <InputAdornment position="start">%</InputAdornment>,
-                                    step: props.trade.ratio_step
+                                    step: trade.ratio_step
                                 }}
                             />
                         </td>
@@ -83,22 +83,22 @@ const Calculator = (props) => {
                                 id="trade-ask"
                                 label="Ask"
                                 type="number"
-                                value={props.trade.ask}
-                                onChange={(e) => { props.handleAsk(e.target.value) }}
+                                value={trade.ask}
+                                onChange={(e) => { handlers.handleAskChange(e.target.value) }}
                                 variant="outlined"
                                 inputProps={{
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                                 }}
                             />
-                            <button className={"clsBluebutton"} onClick={() => { props.handlertrade("market_buy") }}>{"Market.Buy"}</button>
-                            <button className={"clsBluebutton"} onClick={() => { props.handlertrade("limit_buy") }}>{"Limit.Buy"} </button>
-                            <button className={"clsBluebutton"} onClick={() => { props.handlertrade("stop_buy") }}  >{"Stop.Buy"}</button>
+                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("market_buy") }}>{"Market.Buy"}</button>
+                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("limit_buy") }}>{"Limit.Buy"} </button>
+                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("stop_buy") }}  >{"Stop.Buy"}</button>
                         </td>
                         <td>
                             <TextField
                                 id="outlined-read-only-input"
                                 label="Price Points"
-                                value={props.trade.points}
+                                value={trade.points}
                                 inputProps={{
                                     readOnly: true,
                                     startAdornment: <InputAdornment position="start">PP</InputAdornment>,
@@ -107,8 +107,8 @@ const Calculator = (props) => {
                             <TextField
                                 id="outlined-helperText"
                                 label="Comment"
-                                value={props.trade.comment}
-                                onChange={(e) => { props.handlercomment(e.target.value) }}
+                                value={trade.comment}
+                                onChange={(e) => { handlers.handleCommentChange(e.target.value) }}
                                 helperText="Strategy tracking"
                             />
                         </td>
@@ -118,16 +118,16 @@ const Calculator = (props) => {
                                 id="trade-bid"
                                 label="Bid"
                                 type="number"
-                                value={props.trade.bid}
-                                onChange={(e) => { props.handleBid(e.target.value) }}
+                                value={trade.bid}
+                                onChange={(e) => { handlers.handleBidChange(e.target.value) }}
                                 helperText=""
                                 inputProps={{
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                                 }}
                             />
-                            <button className={"clsRedbutton"} onClick={() => { props.handlertrade("market_sell") }}>{"Market.Sell"} </button>
-                            <button className={"clsRedbutton"} onClick={() => { props.handlertrade("limit_sell") }}>{"Limit.Sell"} </button>
-                            <button className={"clsRedbutton"} onClick={() => { props.handlertrade("stop_sell") }}  >{"Stop.Sell"}</button>
+                            <button className={"clsRedbutton"} onClick={() => { handlers.handleOpenTrade("market_sell") }}>{"Market.Sell"} </button>
+                            <button className={"clsRedbutton"} onClick={() => { handlers.handleOpenTrade("limit_sell") }}>{"Limit.Sell"} </button>
+                            <button className={"clsRedbutton"} onClick={() => { handlers.handleOpenTrade("stop_sell") }}  >{"Stop.Sell"}</button>
                         </td>
 
                     </tr>
@@ -135,7 +135,7 @@ const Calculator = (props) => {
                     <tr>
                         <td>
                             <FormControlLabel
-                                control={<Checkbox onChange={(e) => { props.handlePreview(e.target.checked) }} />}
+                                control={<Checkbox onChange={(e) => { handlers.handlePreviewChange(e.target.checked) }} />}
                                 label="Preview in MT5" />
                         </td>
                     </tr>

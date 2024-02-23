@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Orders from "./Orders";
 import { Calculator, getCorrespondingClosingType } from "./Calculator";
 
@@ -7,20 +7,19 @@ function round(number, digits) {
     return Math.round((number + Number.EPSILON) * d) / d;
 }
 
-const calculatePoints = (ask, riskAmount, contractSize, pointValue, riskLot, digits, conversion) => {
-    var tickValue = 1 / ask;
+function calculatePoints(ask, riskAmount, contractSize, pointValue, riskLot, digits, conversion) {
+    let tickValue = 1 / ask;
 
     if (conversion) {
         pointValue = tickValue;
     }
-    var points = (riskAmount / (contractSize * pointValue * riskLot));
-    return points;
+    return (riskAmount / (contractSize * pointValue * riskLot));
 };
 
 
 
-const Trader = (props) => {
-    const [trade, setTrade] = useState({
+const Trader = ({customClass, account, symbol, headers, data, handlers}) => {
+    const [trade, setTrade] = React.useState({
         name: "",
         preview: false,
         risk: 1.00,
@@ -44,39 +43,39 @@ const Trader = (props) => {
     React.useEffect(() => {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            name: props.symbolData.name,
-            bid: props.symbolData.bid,
-            ask: props.symbolData.ask,
-            risk_volume: props.symbolData.volume_step,
-            volume_step: props.symbolData.volume_step,
-            balance: props.account.balance,
-            point_value: props.symbolData.point_value,
-            contract_size: props.symbolData.contract_size,
-            digits: props.symbolData.digits,
-            tick_size: props.symbolData.tick_size,
-            tick_value: props.symbolData.tick_value,
-            conversion: props.symbolData.conversion,
+            name: symbol.name,
+            bid: symbol.bid,
+            ask: symbol.ask,
+            risk_volume: symbol.volume_step,
+            volume_step: symbol.volume_step,
+            balance: account.balance,
+            point_value: symbol.point_value,
+            contract_size: symbol.contract_size,
+            digits: symbol.digits,
+            tick_size: symbol.tick_size,
+            tick_value: symbol.tick_value,
+            conversion: symbol.conversion,
             points: calculatePoints(
-                props.symbolData.ask,
-                previousTrade.risk * 0.01 * props.account.balance,
-                props.symbolData.contract_size,
-                props.symbolData.point_value,
-                props.symbolData.volume_step,
-                props.symbolData.digits,
-                props.symbolData.conversion)
+                symbol.ask,
+                previousTrade.risk * 0.01 * account.balance,
+                symbol.contract_size,
+                symbol.point_value,
+                symbol.volume_step,
+                symbol.digits,
+                symbol.conversion)
         }));
-    }, [props.symbolData, props.account.balance]);
+    }, [symbol, account.balance]);
 
 
     React.useEffect(() => {
         if (trade.preview) {
             const sl = [trade.ask - trade.points, trade.bid + trade.points];
             const tp = [trade.ask + (trade.points * trade.ratio), trade.bid - (trade.points * trade.ratio)];
-            props.handlepreview(trade.ask, trade.bid, sl, tp);
+            handlers.commandDrawPreview(trade.ask, trade.bid, sl, tp);
         }
     }, [trade.ratio, trade.preview, trade.points, trade.ask, trade.bid]);
 
-    const handleVolumeChange = (value) => {
+    function handleVolumeChange (value) {
         setTrade((previousTrade) => ({
             ...previousTrade,
             risk_volume: parseFloat(value),
@@ -86,12 +85,12 @@ const Trader = (props) => {
                 trade.contract_size,
                 trade.point_value,
                 value,
-                props.symbolData.digits,
-                props.symbolData.conversion)
+                symbol.digits,
+                symbol.conversion)
         }));
     };
 
-    const handleRiskChange = (value) => {
+    function handleRiskChange (value)  {
         setTrade((previousTrade) => ({
             ...previousTrade,
             risk: parseFloat(value),
@@ -101,12 +100,12 @@ const Trader = (props) => {
                 trade.contract_size,
                 trade.point_value,
                 trade.risk_volume,
-                props.symbolData.digits,
-                props.symbolData.conversion)
+                symbol.digits,
+                symbol.conversion)
         }));
     };
 
-    const handleRatioChange = (value) => {
+    function handleRatioChange (value){
         setTrade((previousTrade) => ({
             ...previousTrade,
             ratio: parseFloat(value),
@@ -116,19 +115,19 @@ const Trader = (props) => {
                 trade.contract_size,
                 trade.point_value,
                 trade.risk_volume,
-                props.symbolData.digits,
-                props.symbolData.conversion)
+                symbol.digits,
+                symbol.conversion)
         }));
     };
 
-    const handleCommentChange = (value) => {
+    function handleCommentChange (value) {
         setTrade((previousTrade) => ({
             ...previousTrade,
             comment: value
         }));
     };
 
-    const handleAskChange = (value) => {
+    function handleAskChange (value)  {
         setTrade((previousTrade) => ({
             ...previousTrade,
             ask: parseFloat(value)
@@ -142,14 +141,14 @@ const Trader = (props) => {
         }));
     };
 
-    const handlePreviewChange = (value) => {
+    function handlePreviewChange (value)  {
         setTrade((previousTrade) => ({
             ...previousTrade,
             preview: value
         }));
     };
 
-    const handleTrade = (type) => {
+    function handleOpenTrade (type) {
         var request = {
             symbol: trade.name,
             position: 0,
@@ -163,18 +162,18 @@ const Trader = (props) => {
             takeprofit_buy: round(trade.ask + (trade.points) * trade.ratio, trade.digits),
             comment: generateComment(trade.risk, trade.comment)
         }
-        props.handletrade(request);
+        handlers.transmitTradeRequest(request);
     };
 
-    const generateComment = (risk, text) => {
+    function generateComment (risk, text) {
         var comment = `[R:${risk}%, ]` + text;
         return comment;
     };
 
-    const handleCloseTrade = (type, name, position, volume, ask, bid) => {
+    function handleCloseTrade (type, name, position, volume, ask, bid) {
 
-        var close_type = getCorrespondingClosingType(type);
-        var request = {
+        let close_type = getCorrespondingClosingType(type);
+        let request = {
             symbol: name,
             position: position,
             lot: volume,
@@ -183,27 +182,23 @@ const Trader = (props) => {
             entry_sell: bid
         };
 
-        props.handletrade(request);
+        handlers.transmitTradeRequest(request);
     };
 
+    const handlersCalculator = {handleOpenTrade, handleVolumeChange,handleRiskChange, handleRatioChange, handleCommentChange, handleAskChange, handleBidChange, handlePreviewChange};
+    const handlersOrders = {handleCloseTrade};
     return (
         <>
             <Calculator
-                customClass={props.customClass}
+                customClass={customClass}
                 trade={trade}
-                handlertrade={handleTrade}
-                handlervolume={handleVolumeChange}
-                handleRisk={handleRiskChange}
-                handleRatio={handleRatioChange}
-                handlercomment={handleCommentChange}
-                handleAsk={handleAskChange}
-                handleBid={handleBidChange}
-                handlePreview={handlePreviewChange} />
+                handlers = {handlersCalculator}
+              />
 
-            <Orders customClass={props.customClass}
-                headers={props.openHeaders}
-                data={props.openData}
-                handleClose={handleCloseTrade}
+            <Orders customClass={customClass}
+                headers={headers}
+                data={data}
+                handlers={handlersOrders}
             />
         </>
     )

@@ -1,5 +1,5 @@
 // Importing modules
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -89,7 +89,7 @@ function App() {
    * 
    * @param {Trading Symbol} symbol 
    */
-  const ttcSelectInstrument = (symbol) => {
+  const commandSelectInstrument = (symbol) => {
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -112,7 +112,7 @@ function App() {
    * @param {Stop loss price} sl 
    * @param {Take profit price} tp 
    */
-  const ttcDrawPreview = (ask, bid, sl, tp) => {
+  const commandDrawPreview = (ask, bid, sl, tp) => {
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -181,6 +181,9 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const handlersHistory = { fetchAllPositions, transmitSavePositions};
+  const handlersTrader ={ transmitTradeRequest, commandDrawPreview};
+  const handlersSymbols = {commandSelectInstrument, fetchTerminalDataForce};
   return (
 
     <div className="App">
@@ -227,19 +230,20 @@ function App() {
                     account={terminalData.account}
                     headers={terminalData.headers}
                     data={mapTerminalData(terminalData.instruments)}
-                    instrument={symbolData.info.name} selector={ttcSelectInstrument} updateall={fetchTerminalDataForce} />
+                    instrument={symbolData.info.name}
+                    handlers = {handlersSymbols}
+                  />
                 </div>
                 <div className="clsTraderContainer">
                   <div className="clsTraderTable">
                     <Trader
                       customClass={theme}
                       account={terminalData.account}
-                      data={terminalData.instruments}
-                      symbolData={symbolData.info}
-                      openHeaders={terminalData.op_headers}
-                      openData={mapTerminalData(terminalData.open)}
-                      handletrade={transmitTradeRequest}
-                      handlepreview={ttcDrawPreview} />
+                      symbol={symbolData.info}
+                      headers={terminalData.op_headers}
+                      data={mapTerminalData(terminalData.open)}
+                      handlers={handlersTrader}
+                      />
                   </div>
                 </div>
               </div>
@@ -248,8 +252,7 @@ function App() {
           <TabPanel>
             <History
               customClass={theme}
-              updateall={fetchAllPositions}
-              saveall={transmitSavePositions}
+              handlers ={handlersHistory}
               headers={positionData.headers}
               data={positionData.positions}
             />

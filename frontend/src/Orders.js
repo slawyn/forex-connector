@@ -9,26 +9,26 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 
 
-const Orders = (props) => {
+const Orders = ({customClass, headers, data, handlers}) => {
     const [dialogData, setDiagloData] = React.useState({ type: "", state: false, id: 0, name: "", volume: 0, ask: 0, bid: 0 });
 
 
-    const handleCloseConfirmed = () => {
+    function handleCloseConfirmed ()  {
         setDiagloData((previousTrade) => ({
             ...previousTrade,
             state: false
         }));
-        props.handleClose(dialogData.type, dialogData.name, dialogData.id, dialogData.volume, dialogData.ask, dialogData.bid);
+        handlers.handleClose(dialogData.type, dialogData.name, dialogData.id, dialogData.volume, dialogData.ask, dialogData.bid);
     };
 
-    const handleCloseRejected = () => {
+    function handleCloseRejected  () {
         setDiagloData((previousTrade) => ({
             ...previousTrade,
             state: false
         }));
     };
 
-    const handleOpenDialog = (name, id, volume, type, ask, bid) => {
+    function handleOpenDialog (name, id, volume, type, ask, bid) {
 
         setDiagloData((previousTrade) => ({
             id: id,
@@ -64,11 +64,11 @@ const Orders = (props) => {
                     </Button>
                 </DialogActions>
             </Dialog>
-            <table className={props.customClass} style={{ width: "100%" }}>
+            <table className={customClass} style={{ width: "100%" }}>
                 <thead>
                     <tr>
-                        {props.headers.map((header, index) => {
-                            return <th title={header} key={header} className={props.className}>
+                        {headers.map((header, index) => {
+                            return <th title={header} key={header} className={customClass}>
                                 {header}
                             </th>
                         })}
@@ -76,7 +76,7 @@ const Orders = (props) => {
                 </thead>
                 <tbody>
                     {
-                        props.data.map((row) => {
+                        data.map((row) => {
 
                             return <tr onClick={() => handleOpenDialog(row.items[1], row.items[0], row.items[row.items.length - 1], row.items[3], row.items[8], row.items[9])}>
                                 {
