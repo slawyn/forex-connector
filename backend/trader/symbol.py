@@ -1,4 +1,5 @@
 import MetaTrader5 as mt5
+from trader.rate import RatesContainer
 import datetime
 
 def app(text):
@@ -11,7 +12,7 @@ class Symbol:
     EXCEPTED_FIXED = "JPY"
 
     def __init__(self, sym, conversion=False):
-        self.rates = []
+        self.rates_container = RatesContainer()
         self.time = sym.time
         self.step = sym.trade_tick_size
         self.digits = sym.digits
@@ -27,22 +28,15 @@ class Symbol:
         self.update(sym)
         self.updated = True
 
-    def add_rates(self, rates):
-        '''Extend the rates
-        '''
-        if len(rates)>0:
-            _timestamp = rates[0][RATES_TIMESTAMP]
-
-            # if the first new element has the same timestamp
-            if len(self.rates)>0 and self.rates[-1][RATES_TIMESTAMP] == _timestamp:
-                self.rates.extend(rates[1:])
-            else:
-                self.rates.extend(rates)
-
     def get_last_timestamp(self):
-        if len(self.rates)>0:
-            return self.rates[-1][RATES_TIMESTAMP]
-        return datetime.datetime.utcnow()- datetime.timedelta(days=14)
+        return self.rates_container.get_last_timestamp()
+
+    def update_rates(self, rates, timeframe):
+        self.rates_container.add_rates(rates, timeframe)
+        rates_dict = self.rates_container.get_rates()
+        for key in rates_dict:
+            for rate in rates_dict[key]:
+                print(rate.get_timestamp())
 
     def update(self, sym):
         self.updated = (self.time != sym.time)

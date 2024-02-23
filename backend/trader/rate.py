@@ -1,4 +1,33 @@
 
+class RatesContainer:
+
+    def __init__(self):
+        self.rates = {}
+
+    def add_rates(self, rates, time_frame):
+        '''Extend the rates
+        '''
+        if len(rates)>0:
+            _timestamp = rates[0][Rate.IDX_TIME]
+            if time_frame not in self.rates:
+                self.rates[time_frame] = []
+
+            # if the first new element has the same timestamp that matches the old timestamp
+            if len(self.rates[time_frame]) > 0 and self.rates[time_frame][-1].get_timestamp() == _timestamp:
+                rates = rates[1:]
+
+            for rate in rates:
+                self.rates[time_frame].append(Rate(rate))
+
+    def get_rates(self):
+        return self.rates
+
+    def get_last_timestamp(self):
+        if len(self.rates)>0:
+            key = list(self.rates.keys())[-1]
+            return self.rates[key][-1].get_timestamp()
+        return 0
+    
 class Rate:
     IDX_TIME = 0
     IDX_OPEN = 1
@@ -14,6 +43,9 @@ class Rate:
         self.low = rate[Rate.IDX_LOW]
         self.close = rate[Rate.IDX_CLOSE]
         self.volume = rate[Rate.IDX_VOLUME]
+
+    def get_timestamp(self):
+        return self.time
 
     def get_min_max(rates):
         '''

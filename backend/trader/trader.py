@@ -159,12 +159,21 @@ class Trader:
 
     def get_symbol(self, sym_name):
         exported_symbol = self.symbols[sym_name]
-        time_stamp = exported_symbol.get_last_timestamp()
-        rates = self.get_rates_for_symbol(exported_symbol.name, time_stamp, datetime.datetime.utcnow())
 
         # Update rates
-        exported_symbol.add_rates(rates)
         return exported_symbol
+
+    def update_rates_for_symbol(self, symbol):
+        '''Add difference of rates to the symbol
+        '''
+        timestamp = symbol.get_last_timestamp()
+        if timestamp == 0:
+            timestamp = datetime.datetime.utcnow()- datetime.timedelta(days=14)
+
+        # Update rates
+        rates = self.get_rates_for_symbol(symbol.name, timestamp, datetime.datetime.utcnow())
+        symbol.update_rates(rates, mt5.TIMEFRAME_D1)
+
 
     def get_updated_symbols_sorted(self):
         syms = []

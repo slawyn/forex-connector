@@ -47,11 +47,10 @@ button {
 }
 
 .clsStyle {
-  font-size: 10pt;
-  font-family: Arial;
+  font-size:8pt;
+  font-family: 'Consolas';
   border-collapse: collapse;
   border: 1px solid silver;
-  text-align: left;
   width: fit-content;
 }
 
@@ -60,8 +59,14 @@ button {
 }
 
 .clsStyle td {
-  padding: 5px;
+  padding: 2px;
   border: 1px solid silver;
+}
+
+.clsStyle td:nth-child(1),
+.clsStyle td:nth-child(8),
+.clsStyle td:nth-child(9){
+  border: 3px solid rgb(25, 131, 81);
 }
 
 .clsStyle tr:nth-child(even) {
@@ -140,10 +145,6 @@ button {
   border-style: solid;
   border-width: 2pt;
   margin: 10px
-}
-
-.clsTraderTable td {
-  padding: 10px;
 }
 
 .input-wrapper {

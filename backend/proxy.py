@@ -67,8 +67,10 @@ class App:
                 "login": info.login}
 
     def _get_symbol(self, sym):
-        return self.trader.get_symbol(sym)
-
+        symbol= self.trader.get_symbol(sym)
+        self.trader.update_rates_for_symbol(symbol)
+        return symbol
+    
     def _trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
         ACTIONS = {
             "market_buy":  [TradeRequest.get_type_market_buy(), entry_buy, stoploss_buy, takeprofit_buy],
@@ -152,8 +154,18 @@ class App:
 
             # additional calcs
             ratio = (spread/atr)*100
-            atr_reserve = ((session_open-bid)/atr)*100
-            signal = (ratio/atr_reserve)*100
+            atr_reserve = (session_open-bid)/atr*100
+
+            signal = (abs(atr_reserve) - ratio)
+
+            if signal > 0:
+                if atr_reserve>0:
+                    direction = "[Sell]"
+                else:
+                    direction = "[Buy]"
+                formated_signal = "%-2.2f %s" % (signal, direction)
+            else:
+                formated_signal = ""
 
             # Create data set
             #timer = convert_timestamp_to_string(epoch - sym.time)
@@ -167,8 +179,8 @@ class App:
                                     f"%2.{digits}f" % (spread),
                                     "%-2.4f" % atr,
                                     "%-2.2f" % (ratio),
-                                    "%-2.2f" % (abs(atr_reserve)),
-                                    "%-2.2f" % (abs(signal)),
+                                    "%-2.2f" % abs(atr_reserve),
+                                    formated_signal,
                                     timer]
 
         return App.COLUMNS,  react_data
