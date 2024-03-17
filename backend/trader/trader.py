@@ -171,7 +171,7 @@ class Trader:
             timestamp = datetime.datetime.utcnow()- datetime.timedelta(days=14)
 
         # Update rates
-        rates = self.get_rates_for_symbol(symbol.name, timestamp, datetime.datetime.utcnow())
+        rates = self.get_rates_for_symbol(symbol.name, timestamp, datetime.datetime.now(datetime.timezone.utc))
         symbol.update_rates(rates, mt5.TIMEFRAME_D1)
 
 
@@ -206,8 +206,6 @@ class Trader:
 
     def get_rates_for_symbol(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_H1):
         try:
-            #info = mt5.symbol_info_tick(symbol_name)
-            #stop_msc = info.time_msc
             data = mt5.copy_rates_range(symbol_name, frame, utc_from, utc_to)
             code = mt5.last_error()[0]
             if code != 1:

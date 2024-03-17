@@ -1,6 +1,6 @@
 import React from "react";
-import TableRows from "./TableRows"
-import TableHeads from "./TableHeads"
+import TableRows from "./elements/TableRows"
+import TableHeads from "./elements/TableHeads"
 
 
 const Symbols = ({customClass, headers, data, handlers}) => {

@@ -50,8 +50,9 @@ button {
   font-size:8pt;
   font-family: 'Consolas';
   border-collapse: collapse;
-  border: 1px solid silver;
   width: fit-content;
+  font-style: italic;
+  font-weight: bold;
 }
 
 .clsStyle input {
@@ -61,6 +62,13 @@ button {
 .clsStyle td {
   padding: 2px;
   border: 1px solid silver;
+}
+
+.clsStyle th {
+  padding: 5px;
+  border: 1px solid silver;
+
+  background-color: blueviolet;
 }
 
 .clsStyle td:nth-child(1),
@@ -78,7 +86,16 @@ button {
   cursor: pointer;
 }
 
-.clsStyle th {
+.clsStyle th:hover {
+  background: rgb(154, 9, 164);
+}
+
+.clsBorderless th
+{
+  font-size:8pt;
+  font-family: 'Consolas';
+  border-collapse: collapse;
+  width: fit-content;
   padding: 5px;
   border: 1px solid silver;
   font-style: italic;
@@ -86,7 +103,7 @@ button {
   background-color: blueviolet;
 }
 
-.clsStyle th:hover {
+.clsBorderless th:hover {
   background: rgb(154, 9, 164);
 }
 
@@ -110,6 +127,7 @@ button {
   padding: 0px;
   overflow-y: auto;
   width: fit-content;
+  width: 30%
 }
 
 .clsImageContainer {
@@ -127,15 +145,30 @@ button {
   width: 50%;
 }
 
-.clsTraderTable {
+.clsCalculator {
   vertical-align: top;
   font-size: 13pt;
-  border: #1974ca;
+  border: #da5a11;
   border-style: solid;
   border-width: 2pt;
-  margin: 10px;
-  border-radius: 2%;
+  margin: 0px 10px 10px 10px;
+}
 
+.clsOrders {
+  vertical-align: top;
+  font-size: 13pt;
+  border: #16b175;
+  border-style: solid;
+  border-width: 2pt;
+  margin: 0px 10px 10px 10px;
+}
+
+.clsSymbolProperties
+{
+  background-color: blueviolet;
+  border: 1px solid silver;
+  font-size: small;
+  margin-bottom: 200px;
 }
 
 .clsPositionsTable {
@@ -181,4 +214,8 @@ button {
   font-size: large;
   margin: 1px;
   width: 40%;
+}
+
+.apexcharts-tooltip  {
+  background: #ffffff00 !important;
 }

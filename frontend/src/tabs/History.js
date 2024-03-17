@@ -39,7 +39,7 @@ const History = ({customClass, handlers, headers, data}) => {
                     </table>
                 </div>
                 <div className="clsImageContainer" >
-                    <img src={`trades/${imgData}.png`} ></img>
+                    <img src={`trades/${imgData}.png`} styles={{width:"100%"}}></img>
                 </div>
             </div>
         </>

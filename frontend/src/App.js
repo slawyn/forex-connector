@@ -5,9 +5,9 @@ import 'react-tabs/style/react-tabs.css';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import "./App.css";
-import Symbols from "./Symbols";
-import Trader from "./Trader";
-import History from "./History";
+import Symbols from "./tabs/Symbols";
+import Trader from "./tabs/Trader";
+import History from "./tabs/History";
 
 const darkTheme = createTheme({
   palette: {
@@ -235,7 +235,6 @@ function App() {
                   />
                 </div>
                 <div className="clsTraderContainer">
-                  <div className="clsTraderTable">
                     <Trader
                       customClass={theme}
                       account={terminalData.account}
@@ -244,7 +243,6 @@ function App() {
                       data={mapTerminalData(terminalData.open)}
                       handlers={handlersTrader}
                       />
-                  </div>
                 </div>
               </div>
             </div>

@@ -18,16 +18,16 @@ const Calculator = ({customClass, trade, handlers}) => {
 
     return (
         <>
-            <table className="">
+            <table className={customClass}>
                 <tbody>
                     <tr>
-                        <td>Symbol: {trade.name}</td>
-                        <td>Contract Size: {trade.contract_size}</td>
-                        <td>Point Value: {trade.point_value}</td>
-                        <td>Volume Step: {trade.volume_step}</td>
-                        <td>Digits: {trade.digits}</td>
-                        <td>Tick Size: {trade.tick_size}</td>
-                        <td>Tick Value: {trade.tick_value}</td>
+                        <th className={customClass}>Symbol: {trade.name}</th>
+                        <th className={customClass}>Contract Size: {trade.contract_size}</th>
+                        <th className={customClass}>Point Value: {trade.point_value}</th>
+                        <th className={customClass}>Volume Step: {trade.volume_step}</th>
+                        <th className={customClass}>Digits: {trade.digits}</th>
+                        <th className={customClass}>Tick Size: {trade.tick_size}</th>
+                        <th className={customClass}>Tick Value: {trade.tick_value}</th>
                     </tr>
                     <tr>
                         <td>
@@ -92,7 +92,7 @@ const Calculator = ({customClass, trade, handlers}) => {
                             />
                             <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("market_buy") }}>{"Market.Buy"}</button>
                             <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("limit_buy") }}>{"Limit.Buy"} </button>
-                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("stop_buy") }}  >{"Stop.Buy"}</button>
+                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("stop_buy") }}>{"Stop.Buy"}</button>
                         </td>
                         <td>
                             <TextField

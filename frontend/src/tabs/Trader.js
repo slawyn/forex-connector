@@ -1,6 +1,7 @@
 import React from "react";
 import Orders from "./Orders";
 import { Calculator, getCorrespondingClosingType } from "./Calculator";
+import Charter from "./Charter"
 
 function round(number, digits) {
     const d = Math.pow(10, digits);
@@ -15,7 +16,6 @@ function calculatePoints(ask, riskAmount, contractSize, pointValue, riskLot, dig
     }
     return (riskAmount / (contractSize * pointValue * riskLot));
 };
-
 
 
 const Trader = ({customClass, account, symbol, headers, data, handlers}) => {
@@ -189,20 +189,29 @@ const Trader = ({customClass, account, symbol, headers, data, handlers}) => {
     const handlersOrders = {handleCloseTrade};
     return (
         <>
-            <Calculator
-                customClass={customClass}
-                trade={trade}
-                handlers = {handlersCalculator}
-              />
+            <div className="clsCalculator">
+                <Calculator
+                    customClass="clsBorderless"
+                    trade={trade}
+                    handlers = {handlersCalculator}
+                  />
+            </div>
+            <div>
+                <Charter
+                    customClass={customClass}
+                />
+            </div>
+            <div className="clsOrders">
+                <Orders
+                    customClass={customClass}
+                    headers={headers}
+                    data={data}
+                    handlers={handlersOrders}
+                />
+            </div>
 
-            <Orders customClass={customClass}
-                headers={headers}
-                data={data}
-                handlers={handlersOrders}
-            />
         </>
     )
-
 }
 
 export { Trader as default };
