@@ -8,6 +8,7 @@ import "./App.css";
 import Symbols from "./tabs/Symbols";
 import Trader from "./tabs/Trader";
 import History from "./tabs/History";
+import Header from "./tabs/Header";
 
 const darkTheme = createTheme({
   palette: {
@@ -15,9 +16,14 @@ const darkTheme = createTheme({
   },
 });
 
+const mapTerminalData = (data) => {
+  return Object.entries(data).map(([key, value]) => { return { id: key, items: value } });
+};
+
 function App() {
-  // usestate for setting a javascript
-  // object for storing and using data
+  /**
+   * Terminal data is numbers, and symbol data is per symbol
+   */
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
   const [terminalData, setTerminalData] = React.useState({
     date: "",
@@ -27,43 +33,19 @@ function App() {
     op_headers: [],
     open: {}
   });
+  /**
+   * Positional data represents open orders, and error data as status evaluation
+   */
   const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
   const theme = "clsStyle";
 
-
-  const mapTerminalData = (data) => {
-    return Object.entries(data).map(([key, value]) => { return { id: key, items: value } });
-  };
-
-
-  /**
- * Fetch Terminal Data
- */
-  const fetchTerminalData = () => {
-    fetch("/update").then((res) =>
-
+  const fetchTerminalData = (force) => {
+    /**
+     * Fetch all Terminal Data
+     */
+    fetch(`/update?force=${force}`).then((res) =>
       res.json().then((receivedTerminalData) => {
-
-        /* Partial update */
-        setTerminalData((previousstate) => ({
-          date: receivedTerminalData.date,
-          account: receivedTerminalData.account,
-          headers: receivedTerminalData.headers,
-          instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments },
-          op_headers: receivedTerminalData.op_headers,
-          open: receivedTerminalData.open
-        })
-        )
-      })
-    );
-  };
-
-  const fetchTerminalDataForce = () => {
-    fetch("/update-all").then((res) =>
-      res.json().then((receivedTerminalData) => {
-
-        /* Partial update */
         setTerminalData((previousstate) => ({
           date: receivedTerminalData.date,
           account: receivedTerminalData.account,
@@ -78,6 +60,9 @@ function App() {
   };
 
   const fetchAllPositions = () => {
+    /**
+     * Fetch all positional Data
+     */
     fetch("/get-positions").then((res) =>
       res.json().then((receivedPositions) => {
         setPositionData(receivedPositions);
@@ -85,51 +70,25 @@ function App() {
     );
   };
 
-  /**
-   * 
-   * @param {Trading Symbol} symbol 
-   */
-  const commandSelectInstrument = (symbol) => {
+  const _transmitCommand = (command, data) => {
+    /**
+     * Send Command to terminal
+     */
     const requestOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer my-token',
-
       },
-      body: JSON.stringify({ 'command': 'instrument', 'instrument': symbol })
+      body: JSON.stringify({ 'command': command, data: data })
     };
 
     fetch('/command', requestOptions)
       .then(response => response.json())
-      .then(((receivedSymbolData) => {
-        setSymbolData(receivedSymbolData)
-      }));
+      .then(((receivedSymbolData) => {setSymbolData(receivedSymbolData)}));
   };
 
-  /**
-   * 
-   * @param {Stop loss price} sl 
-   * @param {Take profit price} tp 
-   */
-  const commandDrawPreview = (ask, bid, sl, tp) => {
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer my-token',
-
-      },
-      body: JSON.stringify({ 'command': 'preview', 'preview': { 'ask': ask, 'bid': bid, 'sl': sl, 'tp': tp } })
-    };
-
-    fetch('/command', requestOptions)
-      .then(response => response.json())
-      .then(((receivedSymbolData) => {
-
-      }));
-  };
-
+  
   const transmitSavePositions = (selected) => {
     selected = "";
     const requestOptions = {
@@ -172,18 +131,20 @@ function App() {
       }));
   };
 
+  const commandSelectInstrument = (symbol) => {_transmitCommand('select', symbol)};
+  const commandDrawPreview = (ask, bid, sl, tp) => {_transmitCommand('preview', { 'ask': ask, 'bid': bid, 'sl': sl, 'tp': tp })};
 
   React.useEffect(() => {
     /* Mount */
-    const interval = setInterval(() => { fetchTerminalData() }, 2000);
+    const interval = setInterval(() => { fetchTerminalData(false) }, 2000);
 
     /* Unmount */
     return () => clearInterval(interval);
   }, []);
 
   const handlersHistory = { fetchAllPositions, transmitSavePositions};
-  const handlersTrader ={ transmitTradeRequest, commandDrawPreview};
-  const handlersSymbols = {commandSelectInstrument, fetchTerminalDataForce};
+  const handlersTrader = { transmitTradeRequest, commandDrawPreview};
+  const handlersSymbols = {commandSelectInstrument, fetchTerminalData: ()=>{fetchTerminalData(true)}};
   return (
 
     <div className="App">
@@ -196,33 +157,15 @@ function App() {
           </TabList>
           <TabPanel>
             <div>
-              <table className={theme}>
-                <tbody>
-                  <tr>
-                    <td className={theme}>Company</td>
-                    <td className={theme}>Balance</td>
-                    <td className={theme}>Login</td>
-                    <td className={theme}>Server</td>
-                    <td className={theme}>Profit</td>
-                    <td className={theme}>Leverage</td>
-                    <td className={theme}>Date</td>
-                    <td className={theme}>
-                      <button className={"clsBluebutton"} onClick={fetchTerminalDataForce}>Get Symbols</button>
-                    </td>
-
-                  </tr>
-                  <tr>
-                    <td className={theme}>{terminalData.account.company}</td>
-                    <td className={theme}>{terminalData.account.balance}{terminalData.account.currency}</td>
-                    <td className={theme}>{terminalData.account.login}</td>
-                    <td className={theme}>{terminalData.account.server}</td>
-                    <td className={theme}>{terminalData.account.profit}</td>
-                    <td className={theme}>{terminalData.account.leverage}</td>
-                    <td className={theme}>{terminalData.date}</td>
-                    <td className={theme}>Last Error:{errorData.error}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <Header
+                  customClass={theme}
+                  account={terminalData.account}
+                  errorData={errorData}
+                  date={terminalData.date}
+                  getSymbols={()=>{fetchTerminalData(true)}}
+                  />
+              </div>
               <div className="clsGlobalContainer">
                 <div className="clsSymbolsContainer">
                   <Symbols
@@ -235,14 +178,14 @@ function App() {
                   />
                 </div>
                 <div className="clsTraderContainer">
-                    <Trader
-                      customClass={theme}
-                      account={terminalData.account}
-                      symbol={symbolData.info}
-                      headers={terminalData.op_headers}
-                      data={mapTerminalData(terminalData.open)}
-                      handlers={handlersTrader}
-                      />
+                  <Trader
+                    customClass={theme}
+                    account={terminalData.account}
+                    symbol={symbolData.info}
+                    headers={terminalData.op_headers}
+                    data={mapTerminalData(terminalData.open)}
+                    handlers={handlersTrader}
+                    />
                 </div>
               </div>
             </div>

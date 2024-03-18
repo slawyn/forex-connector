@@ -9,6 +9,7 @@ class Commander():
 
     def __init__(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.instrument = ""
 
     def connect(self):
         error = False
@@ -57,7 +58,12 @@ class Commander():
         rdata = []
         if not self.ping():
             rdata, error = self.send_receive(f"INSTRUMENT:{instrument}\r\n")
+            if not error:
+                self.instrument = instrument
         return rdata
+    
+    def get_selected_instrument(self):
+        return self.instrument
 
     def send_test(self):
         self.send_instrument("#Euro50")

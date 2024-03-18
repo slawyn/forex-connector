@@ -39,10 +39,10 @@ class App:
         self.commander = Commander()
         self._set_filter("currency")
 
-    def select_instrument(self, data):
-        data = self.commander.send_instrument(data)
+    def terminal_select(self, symbol):
+        data = self.commander.send_instrument(symbol)
 
-    def draw_preview(self, ask, bid, sl, tp):
+    def terminal_preview(self, ask, bid, sl, tp):
         drawlines = [str(ask), str(bid), str(sl[0]), str(sl[1]), str(tp[0]), str(tp[1])]
         data = self.commander.send_drawlines(drawlines)
 
@@ -66,8 +66,9 @@ class App:
                 "server": info.server,
                 "login": info.login}
 
-    def _get_symbol(self, sym):
-        symbol= self.trader.get_symbol(sym)
+    def get_selected_symbol(self):
+        instrument = self.commander.get_selected_instrument()
+        symbol= self.trader.get_symbol(instrument)
         self.trader.update_rates_for_symbol(symbol)
         return symbol
     
@@ -209,9 +210,6 @@ def get_with_terminal_info(force=False):
     instr_headers, instr = app._get_symbols(filter)
     account = app._get_account_info()
     op_headers, open_positions = app._get_open_positions()
-
-    # Instruments sub-dictionary
-    instruments = {}
     return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account": account, "op_headers": op_headers, "open": open_positions}
 
 
@@ -220,21 +218,19 @@ def send_command(data):
     '''
     return
 
+def is_it_true(value):
+  return value.lower() == 'true'
 
 @flask.route('/update', methods=['GET'])
 def update():
-    return get_with_terminal_info()
+    force = request.args.get("force", default=False, type=is_it_true)
+    return get_with_terminal_info(force=force)
 
 
 @flask.route('/get-positions', methods=['GET'])
 def get_positions():
     headers, positions = app._get_history_positions()
     return {"positions": positions, "headers": headers}
-
-
-@flask.route('/update-all', methods=['GET'])
-def update_all():
-    return get_with_terminal_info(force=True)
 
 
 @flask.route('/save', methods=['POST'])
@@ -266,41 +262,38 @@ def trade():
 def command():
     data = request.get_json()
     type = data.get("command")
-    if type == "instrument":
-        instrument = data.get("instrument")
-        status = app.select_instrument(instrument)
-        symbol = app._get_symbol(instrument)
-        updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = symbol.get_info()
-        conversion = symbol.get_conversion()
-
-
-        return {"info": {"name": name,
-                         "step": step,
-                         "ask": ask,
-                         "bid": bid,
-                         "volume_step": volume_step,
-                         "point_value": point_value,
-                         "contract_size": contract_size,
-                         "digits": digits,
-                         "tick_size": step,
-                         "tick_value": tick_value,
-                         "conversion": conversion
-                         }}
+    if type == "select":
+        status = app.terminal_select(data.get("data"))
 
     elif type == "preview":
-        preview = data.get("preview")
+        preview = data.get("data")
         sl = preview.get("sl")
         tp = preview.get("tp")
         ask = preview.get("ask")
         bid = preview.get("bid")
-        status = app.draw_preview(ask, bid, sl, tp)
-        return {"id": 0}
+        status = app.terminal_preview(ask, bid, sl, tp)
 
+    symbol = app.get_selected_symbol()
+    updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = symbol.get_info()
+    conversion = symbol.get_conversion()
+
+    return {"info": {"name": name,
+                     "step": step,
+                     "ask": ask,
+                     "bid": bid,
+                     "volume_step": volume_step,
+                     "point_value": point_value,
+                     "contract_size": contract_size,
+                     "digits": digits,
+                     "tick_size": step,
+                     "tick_value": tick_value,
+                     "conversion": conversion
+                    }
+            }
 
 if __name__ == "__main__":
     try:
-        CONFIG_NAME = "config/config.json"
-        app = App(Config(CONFIG_NAME))
+        app = App(Config("config/config.json"))
         flask.run(debug=True)
     except Exception as e:
         log(e)
