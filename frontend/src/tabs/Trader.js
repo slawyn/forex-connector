@@ -1,7 +1,6 @@
 import React from "react";
 import Orders from "./Orders";
 import { Calculator, getCorrespondingClosingType } from "./Calculator";
-import Charter from "./Charter"
 
 function round(number, digits) {
     const d = Math.pow(10, digits);
@@ -18,10 +17,9 @@ function calculatePoints(ask, riskAmount, contractSize, pointValue, riskLot, dig
 };
 
 
-const Trader = ({customClass, account, symbol, headers, data, handlers}) => {
+const Trader = ({customClass, account, symbol, headers, data, handlers, preview}) => {
     const [trade, setTrade] = React.useState({
         name: "",
-        preview: false,
         risk: 1.00,
         ratio: 2.25,
         ratio_step: 0.25,
@@ -68,12 +66,10 @@ const Trader = ({customClass, account, symbol, headers, data, handlers}) => {
 
 
     React.useEffect(() => {
-        if (trade.preview) {
-            const sl = [trade.ask - trade.points, trade.bid + trade.points];
-            const tp = [trade.ask + (trade.points * trade.ratio), trade.bid - (trade.points * trade.ratio)];
-            handlers.commandDrawPreview(trade.ask, trade.bid, sl, tp);
-        }
-    }, [trade.ratio, trade.preview, trade.points, trade.ask, trade.bid]);
+       const sl = [trade.ask - trade.points, trade.bid + trade.points];
+       const tp = [trade.ask + (trade.points * trade.ratio), trade.bid - (trade.points * trade.ratio)];
+       handlers.commandPreview(trade.ask, trade.bid, sl, tp);
+    }, [preview, trade.ratio, trade.points, trade.ask, trade.bid]);
 
     function handleVolumeChange (value) {
         setTrade((previousTrade) => ({
@@ -141,12 +137,6 @@ const Trader = ({customClass, account, symbol, headers, data, handlers}) => {
         }));
     };
 
-    function handlePreviewChange (value)  {
-        setTrade((previousTrade) => ({
-            ...previousTrade,
-            preview: value
-        }));
-    };
 
     function handleOpenTrade (type) {
         var request = {
@@ -185,31 +175,23 @@ const Trader = ({customClass, account, symbol, headers, data, handlers}) => {
         handlers.transmitTradeRequest(request);
     };
 
-    const handlersCalculator = {handleOpenTrade, handleVolumeChange,handleRiskChange, handleRatioChange, handleCommentChange, handleAskChange, handleBidChange, handlePreviewChange};
+    const handlersCalculator = {handleOpenTrade, handleVolumeChange,handleRiskChange, handleRatioChange, handleCommentChange, handleAskChange, handleBidChange};
     const handlersOrders = {handleCloseTrade};
     return (
         <>
             <div className="clsCalculator">
-                <Calculator
-                    customClass="clsBorderless"
+                <Calculator customClass="clsBorderless"
                     trade={trade}
                     handlers = {handlersCalculator}
                   />
             </div>
-            <div>
-                <Charter
-                    customClass={customClass}
-                />
-            </div>
             <div className="clsOrders">
-                <Orders
-                    customClass={customClass}
+                <Orders customClass={customClass}
                     headers={headers}
                     data={data}
                     handlers={handlersOrders}
                 />
-            </div>
-
+            </div> 
         </>
     )
 }

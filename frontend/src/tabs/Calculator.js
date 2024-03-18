@@ -1,9 +1,15 @@
 import { TextField } from '@mui/material';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
+
 import InputAdornment from '@mui/material/InputAdornment';
 
-function getCorrespondingClosingType (type) {
+import * as React from 'react';
+import Box from '@mui/material/Box';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+
+function getCorrespondingClosingType(type) {
     let close_type = ""
     if (type.includes("buy")) {
         close_type = "close_buy";
@@ -14,22 +20,51 @@ function getCorrespondingClosingType (type) {
     return close_type;
 };
 
-const Calculator = ({customClass, trade, handlers}) => {
+const Calculator = ({ customClass, trade, handlers }) => {
+    const [type, setType] = React.useState('');
+
+    const handleChange = (event: SelectChangeEvent) => {
+        setType(event.target.value)
+    };
 
     return (
         <>
             <table className={customClass}>
-                <tbody>
+                <thead>
                     <tr>
-                        <th className={customClass}>Symbol: {trade.name}</th>
+                        <th className={customClass} colSpan="2">Symbol: {trade.name}</th>
                         <th className={customClass}>Contract Size: {trade.contract_size}</th>
                         <th className={customClass}>Point Value: {trade.point_value}</th>
                         <th className={customClass}>Volume Step: {trade.volume_step}</th>
                         <th className={customClass}>Digits: {trade.digits}</th>
                         <th className={customClass}>Tick Size: {trade.tick_size}</th>
-                        <th className={customClass}>Tick Value: {trade.tick_value}</th>
+                        <th className={customClass} colSpan="2">Tick Value: {trade.tick_value}</th>
+                        <th></th>
+                        <th></th>
                     </tr>
+                </thead>
+                <tbody>
+
                     <tr>
+                        <td>
+                            <FormControl fullWidth>
+                                <InputLabel id="demo-simple-select-label">Order type</InputLabel>
+                                <Select
+                                    labelId="demo-simple-select-label"
+                                    id="demo-simple-select"
+                                    value={type}
+                                    label="Order type"
+                                    onChange={handleChange}
+                                >
+                                    <MenuItem value={'market_buy'}>Market.Buy</MenuItem>
+                                    <MenuItem value={'limit_buy'}>Limit.Buy</MenuItem>
+                                    <MenuItem value={'stop_buy'}>Stop.Buy</MenuItem>
+                                    <MenuItem value={'market_sell'}>Market.Sell</MenuItem>
+                                    <MenuItem value={'limit_sell'}>Limit.Sell</MenuItem>
+                                    <MenuItem value={'stop_sell'}>Stop.Sell</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </td>
                         <td>
                             <TextField
                                 id="trade-volume"
@@ -76,8 +111,6 @@ const Calculator = ({customClass, trade, handlers}) => {
                                 }}
                             />
                         </td>
-                    </tr>
-                    <tr>
                         <td>
                             <TextField
                                 id="trade-ask"
@@ -90,9 +123,6 @@ const Calculator = ({customClass, trade, handlers}) => {
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                                 }}
                             />
-                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("market_buy") }}>{"Market.Buy"}</button>
-                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("limit_buy") }}>{"Limit.Buy"} </button>
-                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade("stop_buy") }}>{"Stop.Buy"}</button>
                         </td>
                         <td>
                             <TextField
@@ -104,15 +134,15 @@ const Calculator = ({customClass, trade, handlers}) => {
                                     startAdornment: <InputAdornment position="start">PP</InputAdornment>,
                                 }}
                             />
+                        </td>
+                        <td>
                             <TextField
                                 id="outlined-helperText"
                                 label="Comment"
                                 value={trade.comment}
                                 onChange={(e) => { handlers.handleCommentChange(e.target.value) }}
-                                helperText="Strategy tracking"
                             />
                         </td>
-
                         <td>
                             <TextField
                                 id="trade-bid"
@@ -125,18 +155,9 @@ const Calculator = ({customClass, trade, handlers}) => {
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                                 }}
                             />
-                            <button className={"clsRedbutton"} onClick={() => { handlers.handleOpenTrade("market_sell") }}>{"Market.Sell"} </button>
-                            <button className={"clsRedbutton"} onClick={() => { handlers.handleOpenTrade("limit_sell") }}>{"Limit.Sell"} </button>
-                            <button className={"clsRedbutton"} onClick={() => { handlers.handleOpenTrade("stop_sell") }}  >{"Stop.Sell"}</button>
                         </td>
-
-                    </tr>
-
-                    <tr>
                         <td>
-                            <FormControlLabel
-                                control={<Checkbox onChange={(e) => { handlers.handlePreviewChange(e.target.checked) }} />}
-                                label="Preview in MT5" />
+                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade(type) }}>{"Execute Trade"} </button>
                         </td>
                     </tr>
                 </tbody>

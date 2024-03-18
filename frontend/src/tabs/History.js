@@ -3,7 +3,6 @@ import React, { } from "react";
 const History = ({customClass, handlers, headers, data}) => {
 
     const [imgData, setImage] = React.useState("0");
-
     return (
         <>
             <button onClick={handlers.transmitSavePositions} className={"clsOrangebutton"} style={{ width: "fit-content" }}>Upload to Google</button>

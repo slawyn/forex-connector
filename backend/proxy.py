@@ -264,20 +264,12 @@ def command():
     type = data.get("command")
     if type == "select":
         status = app.terminal_select(data.get("data"))
+        
+        symbol = app.get_selected_symbol()
+        updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = symbol.get_info()
+        conversion = symbol.get_conversion()
 
-    elif type == "preview":
-        preview = data.get("data")
-        sl = preview.get("sl")
-        tp = preview.get("tp")
-        ask = preview.get("ask")
-        bid = preview.get("bid")
-        status = app.terminal_preview(ask, bid, sl, tp)
-
-    symbol = app.get_selected_symbol()
-    updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = symbol.get_info()
-    conversion = symbol.get_conversion()
-
-    return {"info": {"name": name,
+        return {"info": {"name": name,
                      "step": step,
                      "ask": ask,
                      "bid": bid,
@@ -290,6 +282,15 @@ def command():
                      "conversion": conversion
                     }
             }
+    elif type == "preview":
+        preview = data.get("data")
+        sl = preview.get("sl")
+        tp = preview.get("tp")
+        ask = preview.get("ask")
+        bid = preview.get("bid")
+        status = app.terminal_preview(ask, bid, sl, tp)
+
+    return {}
 
 if __name__ == "__main__":
     try:

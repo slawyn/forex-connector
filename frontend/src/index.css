@@ -52,7 +52,6 @@ button {
   border-collapse: collapse;
   width: fit-content;
   font-style: italic;
-  font-weight: bold;
 }
 
 .clsStyle input {
@@ -60,25 +59,28 @@ button {
 }
 
 .clsStyle td {
-  padding: 2px;
-  border: 1px solid silver;
+  padding: 0px 5px 5px 0px;
 }
 
 .clsStyle th {
-  padding: 5px;
-  border: 1px solid silver;
-
   background-color: blueviolet;
+  border: 2px;
+  border-color: aliceblue;
 }
 
 .clsStyle td:nth-child(1),
+.clsStyle td:nth-child(2),
 .clsStyle td:nth-child(8),
 .clsStyle td:nth-child(9){
-  border: 3px solid rgb(25, 131, 81);
+  border: 2px solid rgb(25, 131, 81);
 }
 
 .clsStyle tr:nth-child(even) {
   background: #413f3f;
+}
+
+.clsStyle td:nth-child(even) {
+  background: #413f3f60;
 }
 
 .clsStyle tr:hover {
@@ -96,10 +98,7 @@ button {
   font-family: 'Consolas';
   border-collapse: collapse;
   width: fit-content;
-  padding: 5px;
-  border: 1px solid silver;
   font-style: italic;
-  font-weight: bold;
   background-color: blueviolet;
 }
 
@@ -107,13 +106,13 @@ button {
   background: rgb(154, 9, 164);
 }
 
-.clsGlobalContainer {
+.cls100PContainer {
   font-size: 0;
   height: 100%;
   width: 100%;
 }
 
-.clsSymbolsContainer {
+.cls50PContainer {
   display: inline-block;
   vertical-align: top;
   align-self: start;
@@ -145,6 +144,10 @@ button {
   width: 50%;
 }
 
+.clsHeaderContainer {
+  display: flex;
+}
+
 .clsCalculator {
   vertical-align: top;
   font-size: 13pt;
@@ -161,6 +164,8 @@ button {
   border-style: solid;
   border-width: 2pt;
   margin: 0px 10px 10px 10px;
+  overflow-y: scroll;
+  overflow-x: scroll;
 }
 
 .clsSymbolProperties

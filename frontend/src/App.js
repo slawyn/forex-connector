@@ -8,7 +8,9 @@ import "./App.css";
 import Symbols from "./tabs/Symbols";
 import Trader from "./tabs/Trader";
 import History from "./tabs/History";
-import Header from "./tabs/Header";
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Charter from "./tabs/Charter"
 
 const darkTheme = createTheme({
   palette: {
@@ -38,6 +40,7 @@ function App() {
    */
   const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
+  const [preview, setPreview] = React.useState({preview:false});
   const theme = "clsStyle";
 
   const fetchTerminalData = (force) => {
@@ -85,10 +88,10 @@ function App() {
 
     fetch('/command', requestOptions)
       .then(response => response.json())
-      .then(((receivedSymbolData) => {setSymbolData(receivedSymbolData)}));
+      .then(((receivedSymbolData) => { setSymbolData((previousstate) =>({...previousstate,...receivedSymbolData})) }));
   };
 
-  
+
   const transmitSavePositions = (selected) => {
     selected = "";
     const requestOptions = {
@@ -96,7 +99,6 @@ function App() {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer my-token',
-
       },
       body: JSON.stringify(selected)
     };
@@ -113,7 +115,6 @@ function App() {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer my-token',
-
       },
       body: JSON.stringify(request)
     };
@@ -131,8 +132,12 @@ function App() {
       }));
   };
 
-  const commandSelectInstrument = (symbol) => {_transmitCommand('select', symbol)};
-  const commandDrawPreview = (ask, bid, sl, tp) => {_transmitCommand('preview', { 'ask': ask, 'bid': bid, 'sl': sl, 'tp': tp })};
+  const commandSelect = (symbol) => {
+    _transmitCommand('select', symbol)
+  };
+  const commandPreview = (ask, bid, sl, tp) => { 
+    if(preview.preview) { _transmitCommand('preview', { ask, bid,  sl,  tp })};
+  }
 
   React.useEffect(() => {
     /* Mount */
@@ -142,58 +147,69 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const handlersHistory = { fetchAllPositions, transmitSavePositions};
-  const handlersTrader = { transmitTradeRequest, commandDrawPreview};
-  const handlersSymbols = {commandSelectInstrument, fetchTerminalData: ()=>{fetchTerminalData(true)}};
   return (
 
     <div className="App">
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
         <Tabs>
-          <TabList>
-            <Tab>Trading</Tab>
-            <Tab>History</Tab>
-          </TabList>
+          <div className="clsHeaderContainer">
+            <TabList>
+              <Tab>Trading</Tab>
+              <Tab>History</Tab>
+            </TabList>
+            <div>
+              <button className={"clsBluebutton"} onClick={() => { fetchTerminalData(true)}}>Get Symbols</button>
+            </div>
+            <table className={theme}>
+              <tbody>
+                <tr>
+                  <td className={theme}>Company: {terminalData.account.company}</td>
+                  <td className={theme}>Balance: {terminalData.account.balance}{terminalData.account.currency}</td>
+                  <td className={theme}>Login: {terminalData.account.login}</td>
+                  <td className={theme}>Server: {terminalData.account.server}</td>
+                  <td className={theme}>Profit: {terminalData.account.profit}</td>
+                  <td className={theme}>Leverage: {terminalData.account.leverage}</td>
+                  <td className={theme}>Date: {terminalData.date}</td>
+                  <td className={theme}>Last Error:{errorData.error}</td>
+                  <td>
+                     <FormControlLabel control={<Checkbox onChange={(e) => {setPreview(() => ({preview: e.target.checked}))}} />} label="Preview in MT5" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <TabPanel>
             <div>
-              <div>
-                <Header
-                  customClass={theme}
+              <div className="clsHeaderContainer">
+                <Trader customClass={theme}
                   account={terminalData.account}
-                  errorData={errorData}
-                  date={terminalData.date}
-                  getSymbols={()=>{fetchTerminalData(true)}}
-                  />
+                  symbol={symbolData.info}
+                  headers={terminalData.op_headers}
+                  data={mapTerminalData(terminalData.open)}
+                  handlers={ { transmitTradeRequest, commandPreview }}
+                  preview={preview.preview}
+                />
               </div>
-              <div className="clsGlobalContainer">
-                <div className="clsSymbolsContainer">
-                  <Symbols
-                    customClass={theme}
+              <div className="cls100PContainer">
+                <div className="cls50PContainer">
+                  <Charter customClass={theme}/>
+                </div>
+                <div className="cls50PContainer">
+                  <Symbols customClass={theme}
                     account={terminalData.account}
                     headers={terminalData.headers}
                     data={mapTerminalData(terminalData.instruments)}
                     instrument={symbolData.info.name}
-                    handlers = {handlersSymbols}
+                    handlers={{ commandSelect, fetchTerminalData: () => { fetchTerminalData(true) } }}
                   />
-                </div>
-                <div className="clsTraderContainer">
-                  <Trader
-                    customClass={theme}
-                    account={terminalData.account}
-                    symbol={symbolData.info}
-                    headers={terminalData.op_headers}
-                    data={mapTerminalData(terminalData.open)}
-                    handlers={handlersTrader}
-                    />
                 </div>
               </div>
             </div>
           </TabPanel>
           <TabPanel>
-            <History
-              customClass={theme}
-              handlers ={handlersHistory}
+            <History customClass={theme}
+              handlers={{ fetchAllPositions, transmitSavePositions }}
               headers={positionData.headers}
               data={positionData.positions}
             />

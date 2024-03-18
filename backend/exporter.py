@@ -35,4 +35,3 @@ class Exporter():
 if __name__ == "__main__":
     exporter = Exporter('GOLD', datetime.datetime(2023, 2, 11), datetime.datetime(2023, 2, 12))
     data = exporter.get_ticks()
-   # print(data)
