@@ -18,20 +18,28 @@ const darkTheme = createTheme({
   },
 });
 
-const mapTerminalData = (data) => {
-  return Object.entries(data).map(([key, value]) => { return { id: key, items: value } });
+const mapTerminalData = (data, updates) => {
+  return Object.entries(data).map(([key, value]) => { return { id: key, items: value , updated: updates.includes(key)} });
 };
+
+const setUpdated = (data) => {
+  return Object.keys(data)
+}
+
 
 function App() {
   /**
    * Terminal data is numbers, and symbol data is per symbol
    */
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
+  const [ratesData, setRatesData] = React.useState({timestamps:[], rates:[]});
+  const [selectedId, setSelectedId] = React.useState("");
   const [terminalData, setTerminalData] = React.useState({
     date: "",
     account: [],
     headers: [],
     instruments: {},
+    updates: {},
     op_headers: [],
     open: {}
   });
@@ -43,7 +51,7 @@ function App() {
   const [preview, setPreview] = React.useState({preview:false});
   const theme = "clsStyle";
 
-  const fetchTerminalData = (force) => {
+  function fetchTerminalData (force) {
     /**
      * Fetch all Terminal Data
      */
@@ -54,26 +62,42 @@ function App() {
           account: receivedTerminalData.account,
           headers: receivedTerminalData.headers,
           instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments },
+          updates: setUpdated(receivedTerminalData.instruments),
           op_headers: receivedTerminalData.op_headers,
           open: receivedTerminalData.open
         })
-        )
+        );
       })
     );
   };
 
-  const fetchAllPositions = () => {
+  function fetchRates(instrument) {
+    /**
+     * Fetch rates for instrument
+     */
+    fetch(`/rates?instrument=${instrument}`).then((res) =>
+    res.json().then((receivedRates) => {
+      setRatesData((previousRates) => ({
+        timestamps: {...previousRates.timestamps, ...receivedRates.timestamps},
+        rates: {...previousRates.rates, ...receivedRates.rates},
+      })
+      )
+    })
+    );
+  };
+
+  function fetchAllPositions() {
     /**
      * Fetch all positional Data
      */
-    fetch("/get-positions").then((res) =>
+    fetch("/positions").then((res) =>
       res.json().then((receivedPositions) => {
         setPositionData(receivedPositions);
       })
     );
   };
 
-  const _transmitCommand = (command, data) => {
+  function _transmitCommand(command, data){
     /**
      * Send Command to terminal
      */
@@ -92,7 +116,7 @@ function App() {
   };
 
 
-  const transmitSavePositions = (selected) => {
+  function transmitSavePositions(selected){
     selected = "";
     const requestOptions = {
       method: 'POST',
@@ -109,7 +133,7 @@ function App() {
       }));
   };
 
-  const transmitTradeRequest = (request) => {
+  function transmitTradeRequest (request) {
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -132,20 +156,32 @@ function App() {
       }));
   };
 
-  const commandSelect = (symbol) => {
-    _transmitCommand('select', symbol)
+  function commandSelect(symbolId) {
+    setSelectedId(symbolId)
+    _transmitCommand('select', symbolId)
   };
-  const commandPreview = (ask, bid, sl, tp) => { 
+
+  function getSelectedId() {
+    return selectedId
+  }
+
+  function commandPreview(ask, bid, sl, tp) { 
     if(preview.preview) { _transmitCommand('preview', { ask, bid,  sl,  tp })};
   }
 
   React.useEffect(() => {
     /* Mount */
-    const interval = setInterval(() => { fetchTerminalData(false) }, 2000);
+    const interval = setInterval(() => { 
+      fetchTerminalData(false);
+      if(selectedId !== "")
+      { 
+        fetchRates(selectedId);
+      }
+    }, 2000);
 
     /* Unmount */
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedId]);
 
   return (
 
@@ -186,7 +222,7 @@ function App() {
                   account={terminalData.account}
                   symbol={symbolData.info}
                   headers={terminalData.op_headers}
-                  data={mapTerminalData(terminalData.open)}
+                  data={mapTerminalData(terminalData.open, terminalData.updates)}
                   handlers={ { transmitTradeRequest, commandPreview }}
                   preview={preview.preview}
                 />
@@ -199,9 +235,9 @@ function App() {
                   <Symbols customClass={theme}
                     account={terminalData.account}
                     headers={terminalData.headers}
-                    data={mapTerminalData(terminalData.instruments)}
+                    data={mapTerminalData(terminalData.instruments, terminalData.updates)}
                     instrument={symbolData.info.name}
-                    handlers={{ commandSelect, fetchTerminalData: () => { fetchTerminalData(true) } }}
+                    handlers={{ commandSelect, getSelectedId, fetchTerminalData: () => { fetchTerminalData(true) } }}
                   />
                 </div>
               </div>

@@ -21,12 +21,6 @@ function getCorrespondingClosingType(type) {
 };
 
 const Calculator = ({ customClass, trade, handlers }) => {
-    const [type, setType] = React.useState('');
-
-    const handleChange = (event: SelectChangeEvent) => {
-        setType(event.target.value)
-    };
-
     return (
         <>
             <table className={customClass}>

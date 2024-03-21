@@ -33,11 +33,6 @@ class Symbol:
 
     def update_rates(self, rates, timeframe):
         self.rates_container.add_rates(rates, timeframe)
-        rates_dict = self.rates_container.get_rates()
-        for key in rates_dict:
-            for rate in rates_dict[key]:
-                pass
-                # print(rate.get_timestamp())
 
     def update(self, sym):
         self.updated = (self.time != sym.time)

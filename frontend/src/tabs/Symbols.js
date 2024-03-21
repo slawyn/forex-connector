@@ -5,8 +5,7 @@ import TableHeads from "./elements/TableHeads"
 
 const Symbols = ({customClass, headers, data, handlers}) => {
     const [sortConfig, setSortConfig] = React.useState({ key: 0, direction: 'ascending' });
-
-
+    
     function requestSort (sortkey){
         let direction = 'ascending'
         if (sortConfig.key === sortkey && sortConfig.direction === 'ascending') {
@@ -19,7 +18,7 @@ const Symbols = ({customClass, headers, data, handlers}) => {
         <div>
             <table className={customClass}>
                 <TableHeads data={headers} className={customClass} sorter={requestSort} />
-                <TableRows data={data} sortConfig={sortConfig} className={customClass} selector={handlers.commandSelect} />
+                <TableRows data={data} sortConfig={sortConfig} className={customClass} setId={handlers.commandSelect} getId={handlers.getSelectedId}/>
             </table>
         </div >
     );

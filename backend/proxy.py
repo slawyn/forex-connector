@@ -213,25 +213,29 @@ def get_with_terminal_info(force=False):
     return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account": account, "op_headers": op_headers, "open": open_positions}
 
 
-def send_command(data):
-    '''Updates table with instruments
-    '''
-    return
-
 def is_it_true(value):
   return value.lower() == 'true'
 
 @flask.route('/update', methods=['GET'])
-def update():
+def get_update():
     force = request.args.get("force", default=False, type=is_it_true)
     return get_with_terminal_info(force=force)
 
 
-@flask.route('/get-positions', methods=['GET'])
+@flask.route('/positions', methods=['GET'])
 def get_positions():
     headers, positions = app._get_history_positions()
     return {"positions": positions, "headers": headers}
 
+@flask.route('/rates', methods=['GET'])
+def get_rates():
+    instrument = request.args.get("instrument", default='', type=str)
+    timestamps = []
+    rates = []
+    if instrument == '':
+        pass
+    
+    return {'timestamps': timestamps, 'rates':rates}
 
 @flask.route('/save', methods=['POST'])
 def save():

@@ -1,18 +1,6 @@
 import React from "react";
 
-const TableRows = ({data, sortConfig, className, selector}) => {
-
-    const [selectedId, setSelectedId] = React.useState("");
-    /**
-     * 
-     * @param {Selectes Symbol} symbol 
-     */
-    function selectRow(symbol) {
-        setSelectedId(symbol);
-        selector(symbol);
-    };
-
-
+const TableRows = ({data, sortConfig, className, setId, getId}) => {
 
     /**
      * Sort Data when possible
@@ -48,8 +36,9 @@ const TableRows = ({data, sortConfig, className, selector}) => {
                 /** Map instruments to rows */
                 sortedData.map((rowData) => {
 
-                    return <tr key={rowData.id} onClick={() => selectRow(rowData.id)} className={className} style={{
-                        backgroundColor: rowData.id === selectedId ? 'orange' : rowData.updated === true ? 'red' : '',
+                    return <tr key={rowData.id} onClick={() => setId(rowData.id)} className={className} style={{
+                        backgroundColor: rowData.id === getId() ? 'orange' :  '',
+                        color: rowData.updated === true ? 'red' : ''
                     }} >
                         {
                             /** Map row line */
