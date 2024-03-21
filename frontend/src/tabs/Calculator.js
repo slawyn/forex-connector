@@ -32,14 +32,15 @@ const Calculator = ({ customClass, trade, handlers }) => {
             <table className={customClass}>
                 <thead>
                     <tr>
-                        <th className={customClass} colSpan="2">Symbol: {trade.name}</th>
+                        <th className={customClass}>{trade.name}</th>
                         <th className={customClass}>Contract Size: {trade.contract_size}</th>
                         <th className={customClass}>Point Value: {trade.point_value}</th>
                         <th className={customClass}>Volume Step: {trade.volume_step}</th>
                         <th className={customClass}>Digits: {trade.digits}</th>
                         <th className={customClass}>Tick Size: {trade.tick_size}</th>
-                        <th className={customClass} colSpan="2">Tick Value: {trade.tick_value}</th>
-                        <th></th>
+                        <th className={customClass} colSpan="1">Tick Value: {trade.tick_value}</th>
+                        <th><button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade() }}>{"Execute Trade"} </button>
+                        </th>
                         <th></th>
                     </tr>
                 </thead>
@@ -52,9 +53,9 @@ const Calculator = ({ customClass, trade, handlers }) => {
                                 <Select
                                     labelId="demo-simple-select-label"
                                     id="demo-simple-select"
-                                    value={type}
                                     label="Order type"
-                                    onChange={handleChange}
+                                    value={trade.type}
+                                    onChange={(e) => { handlers.handleTypeChange(e.target.value) }}
                                 >
                                     <MenuItem value={'market_buy'}>Market.Buy</MenuItem>
                                     <MenuItem value={'limit_buy'}>Limit.Buy</MenuItem>
@@ -155,9 +156,6 @@ const Calculator = ({ customClass, trade, handlers }) => {
                                     startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                                 }}
                             />
-                        </td>
-                        <td>
-                            <button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade(type) }}>{"Execute Trade"} </button>
                         </td>
                     </tr>
                 </tbody>

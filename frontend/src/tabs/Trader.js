@@ -20,6 +20,7 @@ function calculatePoints(ask, riskAmount, contractSize, pointValue, riskLot, dig
 const Trader = ({customClass, account, symbol, headers, data, handlers, preview}) => {
     const [trade, setTrade] = React.useState({
         name: "",
+        type:"",
         risk: 1.00,
         ratio: 2.25,
         ratio_step: 0.25,
@@ -51,7 +52,7 @@ const Trader = ({customClass, account, symbol, headers, data, handlers, preview}
             contract_size: symbol.contract_size,
             digits: symbol.digits,
             tick_size: symbol.tick_size,
-            tick_value: symbol.tick_value,
+            tick_value: round(symbol.tick_value, 4),
             conversion: symbol.conversion,
             points: calculatePoints(
                 symbol.ask,
@@ -83,6 +84,14 @@ const Trader = ({customClass, account, symbol, headers, data, handlers, preview}
                 value,
                 symbol.digits,
                 symbol.conversion)
+        }));
+    };
+
+    function handleTypeChange(value) {
+        setTrade((previousTrade) => ({
+            ...previousTrade,
+            risk_volume: parseFloat(value),
+            type: value
         }));
     };
 
@@ -138,12 +147,12 @@ const Trader = ({customClass, account, symbol, headers, data, handlers, preview}
     };
 
 
-    function handleOpenTrade (type) {
+    function handleOpenTrade () {
         var request = {
             symbol: trade.name,
             position: 0,
             lot: trade.risk_volume,
-            type: type,
+            type: trade.type,
             entry_buy: trade.ask,
             entry_sell: trade.bid,
             stoploss_sell: round(trade.bid + trade.points, trade.digits),
@@ -175,17 +184,17 @@ const Trader = ({customClass, account, symbol, headers, data, handlers, preview}
         handlers.transmitTradeRequest(request);
     };
 
-    const handlersCalculator = {handleOpenTrade, handleVolumeChange,handleRiskChange, handleRatioChange, handleCommentChange, handleAskChange, handleBidChange};
+    const handlersCalculator = {handleOpenTrade, handleTypeChange, handleVolumeChange,handleRiskChange, handleRatioChange, handleCommentChange, handleAskChange, handleBidChange};
     const handlersOrders = {handleCloseTrade};
     return (
         <>
-            <div className="clsCalculator">
+            <div className="cls50PContainer">
                 <Calculator customClass="clsBorderless"
                     trade={trade}
                     handlers = {handlersCalculator}
                   />
             </div>
-            <div className="clsOrders">
+            <div className="cls50PContainer">
                 <Orders customClass={customClass}
                     headers={headers}
                     data={data}

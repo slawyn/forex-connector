@@ -181,7 +181,7 @@ function App() {
           </div>
           <TabPanel>
             <div>
-              <div className="clsHeaderContainer">
+              <div className="cls100PContainer">
                 <Trader customClass={theme}
                   account={terminalData.account}
                   symbol={symbolData.info}

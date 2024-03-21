@@ -9,7 +9,7 @@ body {
 }
 
 input {
-  line-height: 6ex;
+  /* line-height: 6ex; */
   color: white;
   background-color: #effff000;
   border-width: 0px #effff000 none;
@@ -157,16 +157,6 @@ button {
   margin: 0px 10px 10px 10px;
 }
 
-.clsOrders {
-  vertical-align: top;
-  font-size: 13pt;
-  border: #16b175;
-  border-style: solid;
-  border-width: 2pt;
-  margin: 0px 10px 10px 10px;
-  overflow-y: scroll;
-  overflow-x: scroll;
-}
 
 .clsSymbolProperties
 {
