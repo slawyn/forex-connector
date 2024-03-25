@@ -28,11 +28,22 @@ class Symbol:
         self.update(sym)
         self.updated = True
 
-    def get_last_timestamp(self):
-        return self.rates_container.get_last_timestamp()
+    def get_timestamp_first(self, timeframe):
+        return self.rates_container.get_timestamp_first(timeframe)
 
     def update_rates(self, rates, timeframe):
         self.rates_container.add_rates(rates, timeframe)
+
+    def get_rates(self, timeframe, start, end):
+        rates = self.rates_container.get_rates(timeframe)
+        outs = {}
+        for timestamp in rates:
+            rate = rates[timestamp]
+            outs[timestamp*1000] = {"open":rate.open,
+                               "high":rate.high,
+                               "low":rate.low,
+                               "close":rate.close}
+        return outs
 
     def update(self, sym):
         self.updated = (self.time != sym.time)

@@ -7,25 +7,18 @@ class RatesContainer:
     def add_rates(self, rates, time_frame):
         '''Extend the rates
         '''
-        if len(rates)>0:
-            _timestamp = rates[0][Rate.IDX_TIME]
-            if time_frame not in self.rates:
-                self.rates[time_frame] = []
+        if time_frame not in self.rates:
+            self.rates[time_frame] = {}
 
-            # if the first new element has the same timestamp that matches the old timestamp
-            if len(self.rates[time_frame]) > 0 and self.rates[time_frame][-1].get_timestamp() == _timestamp:
-                rates = rates[1:]
+        for rate in rates:
+            self.rates[time_frame][int(rate[Rate.IDX_TIME])] = Rate(rate)
 
-            for rate in rates:
-                self.rates[time_frame].append(Rate(rate))
+    def get_rates(self, time_frame):
+        return self.rates[time_frame]
 
-    def get_rates(self):
-        return self.rates
-
-    def get_last_timestamp(self):
-        if len(self.rates)>0:
-            key = list(self.rates.keys())[-1]
-            return self.rates[key][-1].get_timestamp()
+    def get_timestamp_first(self, time_frame):
+        if time_frame in self.rates and len(self.rates[time_frame])>0:
+            return list(self.rates[time_frame].keys())[-1]
         return 0
     
 class Rate:
@@ -48,8 +41,7 @@ class Rate:
         return self.time
 
     def get_min_max(rates):
-        '''
-        Find min and max for price and volume
+        '''Find min and max for price and volume
         '''
 
         # Find highest and lowest

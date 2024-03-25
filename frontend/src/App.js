@@ -32,17 +32,10 @@ function App() {
    * Terminal data is numbers, and symbol data is per symbol
    */
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
-  const [ratesData, setRatesData] = React.useState({timestamps:[], rates:[]});
-  const [selectedId, setSelectedId] = React.useState("");
-  const [terminalData, setTerminalData] = React.useState({
-    date: "",
-    account: [],
-    headers: [],
-    instruments: {},
-    updates: {},
-    op_headers: [],
-    open: {}
-  });
+  const [ratesData, setRatesData] = React.useState({});
+  const [selected, setSelectedId] = React.useState({instrument:"", start:0, end:0});
+  const [terminalData, setTerminalData] = React.useState({date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {}});
+  
   /**
    * Positional data represents open orders, and error data as status evaluation
    */
@@ -71,19 +64,18 @@ function App() {
     );
   };
 
-  function fetchRates(instrument) {
+  function fetchRates(instrument, start, end) {
     /**
      * Fetch rates for instrument
      */
-    fetch(`/rates?instrument=${instrument}`).then((res) =>
-    res.json().then((receivedRates) => {
-      setRatesData((previousRates) => ({
-        timestamps: {...previousRates.timestamps, ...receivedRates.timestamps},
-        rates: {...previousRates.rates, ...receivedRates.rates},
+    if(instrument !== "" && instrument !== undefined)
+    {
+      fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}`).then((res) =>
+      res.json().then((receivedRates) => {
+        setRatesData((previousRates) => ({...previousRates, ...receivedRates}))
       })
-      )
-    })
-    );
+      );
+    }
   };
 
   function fetchAllPositions() {
@@ -157,13 +149,23 @@ function App() {
   };
 
   function commandSelect(symbolId) {
-    setSelectedId(symbolId)
+    const base = new Date().getTime()/1000
+    setSelectedId({id:symbolId, start: Math.floor(base - (3600*50)), end:Math.floor(base)})
     _transmitCommand('select', symbolId)
   };
 
   function getSelectedId() {
-    return selectedId
+    return selected.id
   }
+
+  function handleRates(start, end) {
+    fetch(`/rates?start=${start}&end=${end}`).then((res) =>
+      res.json().then((receivedPositions) => {
+        setPositionData(receivedPositions);
+      })
+    );
+  }
+
 
   function commandPreview(ask, bid, sl, tp) { 
     if(preview.preview) { _transmitCommand('preview', { ask, bid,  sl,  tp })};
@@ -173,16 +175,26 @@ function App() {
     /* Mount */
     const interval = setInterval(() => { 
       fetchTerminalData(false);
-      if(selectedId !== "")
-      { 
-        fetchRates(selectedId);
-      }
     }, 2000);
 
     /* Unmount */
     return () => clearInterval(interval);
-  }, [selectedId]);
+  }, []);
 
+
+  React.useEffect(() => {
+    /* Mount */
+    const interval = setInterval(() => { 
+      fetchRates(selected.id, selected.start, selected.end);
+    }, 2000);
+
+    /* Unmount */
+    return () => clearInterval(interval);
+  }, [selected]);
+
+
+
+  const charterHandlers = {handleRates}
   return (
 
     <div className="App">
@@ -229,7 +241,7 @@ function App() {
               </div>
               <div className="cls100PContainer">
                 <div className="cls50PContainer">
-                  <Charter customClass={theme}/>
+                  <Charter customClass={theme} charterdata={ratesData} handlers={charterHandlers}/>
                 </div>
                 <div className="cls50PContainer">
                   <Symbols customClass={theme}

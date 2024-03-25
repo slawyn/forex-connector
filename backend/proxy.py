@@ -39,23 +39,26 @@ class App:
         self.commander = Commander()
         self._set_filter("currency")
 
+    def run(self):
+        self.window.mainloop()
+
     def terminal_select(self, symbol):
         data = self.commander.send_instrument(symbol)
 
     def terminal_preview(self, ask, bid, sl, tp):
-        drawlines = [str(ask), str(bid), str(sl[0]), str(sl[1]), str(tp[0]), str(tp[1])]
-        data = self.commander.send_drawlines(drawlines)
+        data = self.commander.send_drawlines([str(ask), str(bid), str(sl[0]), str(sl[1]), str(tp[0]), str(tp[1])])
 
-    def run(self):
-        self.window.mainloop()
-
-    def _save_to_google(self):
+    def save_to_google(self):
         self.trader.update_history_info()
 
     def _set_filter(self, filter):
         self.trader.set_filter(filter)
 
-    def _get_account_info(self):
+    def get_rates(self, instrument, start_timestamp, end_timestamp):
+        symbol = self.trader.get_symbol(instrument)
+        return self.trader.update_rates_for_symbol(symbol, start_timestamp, end_timestamp)
+
+    def get_account_info(self):
         self.trader.update_account_info()
         info = self.trader.get_account_info()
         return {"balance": info.balance,
@@ -69,10 +72,11 @@ class App:
     def get_selected_symbol(self):
         instrument = self.commander.get_selected_instrument()
         symbol= self.trader.get_symbol(instrument)
-        self.trader.update_rates_for_symbol(symbol)
         return symbol
     
-    def _trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
+    def trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
+        ''' Send trade to terminal
+        '''
         ACTIONS = {
             "market_buy":  [TradeRequest.get_type_market_buy(), entry_buy, stoploss_buy, takeprofit_buy],
             "limit_buy":   [TradeRequest.get_type_limit_buy(), entry_buy, stoploss_buy, takeprofit_buy],
@@ -92,9 +96,9 @@ class App:
             print("Exception", e)
         return return_info
 
-    def _save_to_google(self):
-        ''' Collect Information '''
-        # Get Positions of closed deals and add them to excel sheet
+    def save_to_google(self):
+        ''' Collect Information and add to excel sheet
+        '''
         drive_handle = DriveFileController(self.config.get_google_secrets_file(),
                                            self.config.get_google_folder_id(),
                                            self.config.get_google_spreadsheet(),
@@ -105,8 +109,8 @@ class App:
         drive_handle.update_google_sheet(positions)
         return []
 
-    def _get_history_positions(self):
-        '''Gets closed positions from history
+    def get_history_positions(self):
+        '''Gets closed positions from terminal
         '''
         start_date = convert_string_to_date(self.config.get_google_startdate())
         positions = self.trader.get_history_positions(start_date, onlyfinished=False)
@@ -114,7 +118,7 @@ class App:
         return ClosedPosition.get_info_header(), json_positions
 
     def _get_open_positions(self):
-        '''Open Positions
+        ''' Get Open Positions from terminal
         '''
         TYPES = {
             TradeRequest.get_type_market_buy(): "market_buy",
@@ -134,7 +138,7 @@ class App:
 
         return OpenPosition.get_info_header(), diff_positions
 
-    def _get_symbols(self, filter_updated=True):
+    def get_symbols(self, filter):
         '''Builds a list of instruments based on filter
         '''
         indices = []
@@ -169,9 +173,8 @@ class App:
                 formated_signal = ""
 
             # Create data set
-            #timer = convert_timestamp_to_string(epoch - sym.time)
             timer = get_current_date()
-            if updated or not filter_updated:
+            if updated or filter:
                 react_data[name] = [name,
                                     currency,
                                     description,
@@ -206,9 +209,8 @@ def make_pretty(styler):
 def get_with_terminal_info(force=False):
     '''Updates table with instruments
     '''
-    filter = not force
-    instr_headers, instr = app._get_symbols(filter)
-    account = app._get_account_info()
+    instr_headers, instr = app.get_symbols(filter=force)
+    account = app.get_account_info()
     op_headers, open_positions = app._get_open_positions()
     return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account": account, "op_headers": op_headers, "open": open_positions}
 
@@ -221,27 +223,27 @@ def get_update():
     force = request.args.get("force", default=False, type=is_it_true)
     return get_with_terminal_info(force=force)
 
-
 @flask.route('/positions', methods=['GET'])
 def get_positions():
-    headers, positions = app._get_history_positions()
+    headers, positions = app.get_history_positions()
     return {"positions": positions, "headers": headers}
 
 @flask.route('/rates', methods=['GET'])
 def get_rates():
     instrument = request.args.get("instrument", default='', type=str)
+    start = request.args.get("start", default=0, type=int)
+    end = request.args.get("end", default=0, type=int)
     timestamps = []
     rates = []
-    if instrument == '':
-        pass
+    if instrument != '':
+        rates = app.get_rates(instrument, start, end)
     
-    return {'timestamps': timestamps, 'rates':rates}
+    return json.dumps(rates)
 
 @flask.route('/save', methods=['POST'])
 def save():
-    app._save_to_google()
+    app.save_to_google()
     return {"id": 0}
-
 
 @flask.route('/trade', methods=['POST'])
 def trade():
@@ -257,10 +259,9 @@ def trade():
     takeprofit_buy = data.get("takeprofit_buy")
     takeprofit_sell = data.get("takeprofit_sell")
     comment = data.get("comment")
-    result = app._trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
+    result = app.trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
 
     return {"error": result[0], "text": result[1]}
-
 
 @flask.route('/command', methods=['POST'])
 def command():
@@ -268,7 +269,6 @@ def command():
     type = data.get("command")
     if type == "select":
         status = app.terminal_select(data.get("data"))
-        
         symbol = app.get_selected_symbol()
         updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = symbol.get_info()
         conversion = symbol.get_conversion()

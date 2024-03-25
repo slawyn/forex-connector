@@ -4,10 +4,7 @@ import React from "react";
 import Chart from "react-apexcharts";
 import { Line, Bar, Candlestick } from "react-chartjs-2";
 
-import { Stack, TextField } from "@mui/material";
-import InputAdornment from "@mui/material/InputAdornment";
 
-const labels = ["January", "February", "March", "April", "May", "June"];
 
 var options = {
 
@@ -31,6 +28,13 @@ var options = {
     }
 };
 
+
+const mapChartdata = (charterdata) => {
+    const data =  { data: Object.entries(charterdata).map(([timestamp, object]) => { return { x: new Date(parseInt(timestamp)), y: [object.open, object.high, object.low, object.close]  }})}
+    return [data]
+};
+
+// open high low close
 var series = [{
     data: [{
         x: new Date(1538778600000),
@@ -275,20 +279,9 @@ var series = [{
     ]
 }]
 
-// const data = {
-//     labels: labels,
-//     datasets: [
-//       {
-//         label: "My First dataset", // Setting up the label for the dataset
-//         backgroundColor: "rgb(255, 99, 132)", // Setting up the background color for the dataset
-//         borderColor: "rgb(255, 99, 132)", // Setting up the border color for the dataset
-//         data: [0, 10, 5, 2, 20, 30, 45], // Setting up the data for the dataset
-//       },
-//     ],
-//   };
 
-const Charter = ({ customClass }) => {
-    return <Chart options={options} series={series} type="candlestick" />;
+const Charter = ({ charterdata, customClass }) => {
+    return <Chart options={options} series={mapChartdata(charterdata)} type="candlestick" />;
 }
 
 

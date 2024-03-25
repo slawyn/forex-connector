@@ -163,16 +163,28 @@ class Trader:
         # Update rates
         return exported_symbol
 
-    def update_rates_for_symbol(self, symbol):
+    def update_rates_for_symbol(self, symbol, start, end):
         '''Add difference of rates to the symbol
         '''
-        timestamp = symbol.get_last_timestamp()
-        if timestamp == 0:
-            timestamp = datetime.datetime.utcnow()- datetime.timedelta(days=14)
-
-        # Update rates
-        rates = self.get_rates_for_symbol(symbol.name, timestamp, datetime.datetime.now(datetime.timezone.utc))
-        symbol.update_rates(rates, mt5.TIMEFRAME_D1)
+        rates = []
+        if start != end:
+            timestamp_start = datetime.datetime.fromtimestamp(start)
+            timestamp_end = datetime.datetime.fromtimestamp(end)
+            TIME_FRAME = mt5.TIMEFRAME_D1
+            if symbol.get_timestamp_first(TIME_FRAME) == 0:
+                symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end), TIME_FRAME)
+                rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
+            else:
+                timestamp_last = datetime.datetime.fromtimestamp(symbol.get_timestamp_first(TIME_FRAME))
+                if timestamp_end < timestamp_last:
+                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_end, utc_to=timestamp_last), TIME_FRAME)
+                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end), TIME_FRAME)
+                    rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
+                elif timestamp_start < timestamp_last:
+                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_last), TIME_FRAME)
+                    rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
+        
+        return rates
 
 
     def get_updated_symbols_sorted(self):
@@ -205,6 +217,7 @@ class Trader:
         return syms
 
     def get_rates_for_symbol(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_H1):
+        data = []
         try:
             data = mt5.copy_rates_range(symbol_name, frame, utc_from, utc_to)
             code = mt5.last_error()[0]
@@ -216,8 +229,8 @@ class Trader:
         return data
 
     def get_ticks_for_symbol(self, symbol_name, utc_from, utc_to):
+        data = []
         try:
-            #info = mt5.symbol_info_tick(symbol_name)
             data = mt5.copy_ticks_range(symbol_name, utc_from, utc_to, mt5.COPY_TICKS_ALL)
             code = mt5.last_error()[0]
             if code != 1:
