@@ -33,7 +33,7 @@ function App() {
    */
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
   const [ratesData, setRatesData] = React.useState({});
-  const [selected, setSelectedId] = React.useState({id:"", start:0, end:0});
+  const [selected, setSelectedId] = React.useState({id:""});
   const [terminalData, setTerminalData] = React.useState({date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {}});
   
   /**
@@ -43,6 +43,8 @@ function App() {
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
   const [preview, setPreview] = React.useState({preview:false});
   const theme = "clsStyle";
+
+  const timeframes = {"H1":(3600*24*1000), "D1":(3600*24*14*1000), "M5":(60*5*100*1000)};
 
   function fetchTerminalData (force) {
     /**
@@ -64,13 +66,13 @@ function App() {
     );
   };
 
-  function fetchRates(instrument, start, end) {
+  function fetchRates(instrument, timeframe, start, end) {
     /**
      * Fetch rates for instrument
      */
     if(instrument !== "" && instrument !== undefined)
     {
-      fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}`).then((res) =>
+      fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`).then((res) =>
       res.json().then((receivedRates) => {
         setRatesData((previousRates) => ({...previousRates, ...receivedRates}))
       })
@@ -78,7 +80,7 @@ function App() {
     }
   };
 
-  function fetchAllPositions() {
+  function fetchPosiions() {
     /**
      * Fetch all positional Data
      */
@@ -152,20 +154,18 @@ function App() {
     const base = new Date().getTime()
     setSelectedId({id:symbolId, start: Math.floor(base - (3600*50*1000)), end:Math.floor(base)})
     _transmitCommand('select', symbolId)
+
+    for(let [key, value] of Object.entries(timeframes))
+    {
+      fetchRates(symbolId, key, Math.floor(base - (value)), Math.floor(base));
+    }
+    // fetchRates(selected.id, "D1", selected.start, selected.end);
+    // fetchRates(symbolId, "H1", Math.floor(base - (3600*24*1000)), Math.floor(base));
   };
 
   function getSelectedId() {
     return selected.id
   }
-
-  function handleRates(start, end) {
-    fetch(`/rates?start=${start}&end=${end}`).then((res) =>
-      res.json().then((receivedPositions) => {
-        setPositionData(receivedPositions);
-      })
-    );
-  }
-
 
   function commandPreview(ask, bid, sl, tp) { 
     if(preview.preview) { _transmitCommand('preview', { ask, bid,  sl,  tp })};
@@ -182,19 +182,6 @@ function App() {
   }, []);
 
 
-  React.useEffect(() => {
-    /* Mount */
-    const interval = setInterval(() => { 
-      fetchRates(selected.id, selected.start, selected.end);
-    }, 2000);
-
-    /* Unmount */
-    return () => clearInterval(interval);
-  }, [selected]);
-
-
-
-  const charterHandlers = {handleRates}
   return (
 
     <div className="App">
@@ -241,7 +228,7 @@ function App() {
               </div>
               <div className="cls100PContainer">
                 <div className="cls50PContainer">
-                  <Charter customClass={theme} id={selected.id} symbol={symbolData.info} charterdata={ratesData} handlers={charterHandlers}/>
+                    <Charter customClass={theme} id={selected.id} timeframes={Object.keys(timeframes)} symbol={symbolData.info} charterdata={ratesData}/>
                 </div>
                 <div className="cls50PContainer">
                   <Symbols customClass={theme}
@@ -257,7 +244,7 @@ function App() {
           </TabPanel>
           <TabPanel>
             <History customClass={theme}
-              handlers={{ fetchAllPositions, transmitSavePositions }}
+              handlers={{ fetchPosiions, transmitSavePositions }}
               headers={positionData.headers}
               data={positionData.positions}
             />

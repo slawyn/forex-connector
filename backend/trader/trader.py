@@ -163,14 +163,17 @@ class Trader:
         # Update rates
         return exported_symbol
 
-    def update_rates_for_symbol(self, symbol, start, end):
+    def update_rates_for_symbol(self, symbol, time_frame, start_s, end_s):
         '''Add difference of rates to the symbol
         '''
-        rates = []
-        if start != end:
-            timestamp_start = datetime.datetime.fromtimestamp(start, tz=datetime.timezone.utc)
-            timestamp_end = datetime.datetime.fromtimestamp(end, tz=datetime.timezone.utc)
-            TIME_FRAME = mt5.TIMEFRAME_D1
+        rates = {}
+        period = Trader.TIMEFRAMES.index(time_frame)
+        if start_s != end_s and period >=0:
+            timestamp_start = datetime.datetime.fromtimestamp(start_s, tz=datetime.timezone.utc)
+            timestamp_end = datetime.datetime.fromtimestamp(end_s, tz=datetime.timezone.utc)
+
+            
+            TIME_FRAME = Trader.MT_TIMEFRAMES[period]
             if symbol.get_timestamp_first(TIME_FRAME) == 0:
                 symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end), TIME_FRAME)
                 rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
@@ -184,7 +187,7 @@ class Trader:
                     symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_last), TIME_FRAME)
                     rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
         
-        return rates
+        return {time_frame:rates}
 
 
     def get_updated_symbols_sorted(self):

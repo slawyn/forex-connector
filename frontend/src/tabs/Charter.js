@@ -4,52 +4,87 @@ import Chart from "react-apexcharts";
 
 
 
-const Charter = ({ id, symbol, charterdata, customClass }) => {
+const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
     const formatter = (value)=> {
-        if(symbol !== undefined)
-        {
+        if(symbol !== undefined) {
             return value.toFixed(symbol.digits)
             // TOOD fix this
         }
         return value.toFixed(6)
     }
 
-    const chartref = React.useRef(null);
-    const options = {
-        plugins: {
-            tooltip: {}
-        },
-        chart: {
-            type: 'candlestick',
-            height: 350
-        },
-        xaxis: {
-            type: 'datetime',
-        },
-        data:[],
-        yaxis: {
-            labels:
+
+
+
+
+    const mapChartdata = (id, timeframe, charterdata)=> {
+        if(timeframe in charterdata) {
+            const symbolrates = charterdata[timeframe]
+            if (id in symbolrates)
             {
-                formatter
+                const data =  { data: Object.entries(symbolrates[id]).map(([timestamp, object]) => { return { x: new Date(parseInt(timestamp)), y: [object.open, object.high, object.low, object.close]  }})}
+                return [data]
             }
-        },
-        title: {
-            text: id,
-            align: 'left'
-        },
-    };
-
-
-    const mapChartdata =(charterdata)=> {
-        if(id in charterdata)
-        {
-            const data =  { data: Object.entries(charterdata[id]).map(([timestamp, object]) => { return { x: new Date(parseInt(timestamp)), y: [object.open, object.high, object.low, object.close]  }})}
-            return [data]
         }
         return []
     };
-    
-    return <Chart ref={chartref} options={options} series={mapChartdata(charterdata)} type="candlestick" />;
+
+    let charts = [];
+    timeframes.forEach((timeframe, index) => {
+        const options = {
+            plugins: {
+                tooltip: {}
+            },
+            chart: {
+                type: 'candlestick',
+                height: 350
+            },
+            xaxis: {
+                type: 'datetime',
+            },
+            data:[],
+            yaxis: {
+                labels: {
+                    formatter
+                }
+            },
+            title: {
+                align: 'left',
+                text :  `${id}#${timeframe}`
+            },
+        };  
+      
+        /** check arrangement */
+        if(charts.length % 2 === 1 )
+        {   
+            charts.push(<div className="cls100PContainer">
+                            <div className="cls50PContainer">
+                                {charts.pop()}
+                            </div>
+                            <div className="cls50PContainer">
+                                <Chart options={options} series={mapChartdata(id, timeframe, charterdata)} type="candlestick" />
+                            </div>
+                        </div>)
+            charts.push(<></>)
+            
+        }
+        else if ( timeframes.length === index + 1 )
+        {   
+            charts.push(<div className="cls100PContainer">
+                        <Chart options={options} series={mapChartdata(id, timeframe, charterdata)} type="candlestick" />
+                        </div>)
+        }
+        else
+        {
+            charts.push(<Chart options={options} series={mapChartdata(id, timeframe, charterdata)} type="candlestick" />)
+        }
+    })
+
+    return (
+        <>
+        { charts }
+        </>
+    )
 }
 
 

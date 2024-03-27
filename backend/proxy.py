@@ -54,9 +54,9 @@ class App:
     def _set_filter(self, filter):
         self.trader.set_filter(filter)
 
-    def get_rates(self, instrument, start_ms, end_ms):
+    def get_rates(self, instrument, time_frame, start_ms, end_ms):
         symbol = self.trader.get_symbol(instrument)
-        return self.trader.update_rates_for_symbol(symbol, start_ms/1000, end_ms/1000)
+        return self.trader.update_rates_for_symbol(symbol, time_frame, start_ms/1000, end_ms/1000)
 
     def get_account_info(self):
         self.trader.update_account_info()
@@ -233,10 +233,10 @@ def get_rates():
     instrument = request.args.get("instrument", default='', type=str)
     start_ms = request.args.get("start", default=0, type=int)
     end_ms = request.args.get("end", default=0, type=int)
-    timestamps = []
+    time_frame = request.args.get("timeframe", default="D1", type=str)
     rates = []
     if instrument != '':
-        rates = app.get_rates(instrument, start_ms, end_ms)
+        rates = app.get_rates(instrument, time_frame, start_ms, end_ms)
     
     return json.dumps(rates)
 
