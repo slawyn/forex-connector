@@ -168,14 +168,14 @@ class Trader:
         '''
         rates = []
         if start != end:
-            timestamp_start = datetime.datetime.fromtimestamp(start)
-            timestamp_end = datetime.datetime.fromtimestamp(end)
+            timestamp_start = datetime.datetime.fromtimestamp(start, tz=datetime.timezone.utc)
+            timestamp_end = datetime.datetime.fromtimestamp(end, tz=datetime.timezone.utc)
             TIME_FRAME = mt5.TIMEFRAME_D1
             if symbol.get_timestamp_first(TIME_FRAME) == 0:
                 symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end), TIME_FRAME)
                 rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
             else:
-                timestamp_last = datetime.datetime.fromtimestamp(symbol.get_timestamp_first(TIME_FRAME))
+                timestamp_last = datetime.datetime.fromtimestamp(symbol.get_timestamp_first(TIME_FRAME), tz=datetime.timezone.utc)
                 if timestamp_end < timestamp_last:
                     symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_end, utc_to=timestamp_last), TIME_FRAME)
                     symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end), TIME_FRAME)

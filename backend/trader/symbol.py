@@ -43,7 +43,7 @@ class Symbol:
                                "high":rate.high,
                                "low":rate.low,
                                "close":rate.close}
-        return outs
+        return {self.name: outs}
 
     def update(self, sym):
         self.updated = (self.time != sym.time)

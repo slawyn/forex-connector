@@ -54,9 +54,9 @@ class App:
     def _set_filter(self, filter):
         self.trader.set_filter(filter)
 
-    def get_rates(self, instrument, start_timestamp, end_timestamp):
+    def get_rates(self, instrument, start_ms, end_ms):
         symbol = self.trader.get_symbol(instrument)
-        return self.trader.update_rates_for_symbol(symbol, start_timestamp, end_timestamp)
+        return self.trader.update_rates_for_symbol(symbol, start_ms/1000, end_ms/1000)
 
     def get_account_info(self):
         self.trader.update_account_info()
@@ -231,12 +231,12 @@ def get_positions():
 @flask.route('/rates', methods=['GET'])
 def get_rates():
     instrument = request.args.get("instrument", default='', type=str)
-    start = request.args.get("start", default=0, type=int)
-    end = request.args.get("end", default=0, type=int)
+    start_ms = request.args.get("start", default=0, type=int)
+    end_ms = request.args.get("end", default=0, type=int)
     timestamps = []
     rates = []
     if instrument != '':
-        rates = app.get_rates(instrument, start, end)
+        rates = app.get_rates(instrument, start_ms, end_ms)
     
     return json.dumps(rates)
 

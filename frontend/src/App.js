@@ -33,7 +33,7 @@ function App() {
    */
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
   const [ratesData, setRatesData] = React.useState({});
-  const [selected, setSelectedId] = React.useState({instrument:"", start:0, end:0});
+  const [selected, setSelectedId] = React.useState({id:"", start:0, end:0});
   const [terminalData, setTerminalData] = React.useState({date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {}});
   
   /**
@@ -149,8 +149,8 @@ function App() {
   };
 
   function commandSelect(symbolId) {
-    const base = new Date().getTime()/1000
-    setSelectedId({id:symbolId, start: Math.floor(base - (3600*50)), end:Math.floor(base)})
+    const base = new Date().getTime()
+    setSelectedId({id:symbolId, start: Math.floor(base - (3600*50*1000)), end:Math.floor(base)})
     _transmitCommand('select', symbolId)
   };
 
@@ -241,7 +241,7 @@ function App() {
               </div>
               <div className="cls100PContainer">
                 <div className="cls50PContainer">
-                  <Charter customClass={theme} charterdata={ratesData} handlers={charterHandlers}/>
+                  <Charter customClass={theme} id={selected.id} symbol={symbolData.info} charterdata={ratesData} handlers={charterHandlers}/>
                 </div>
                 <div className="cls50PContainer">
                   <Symbols customClass={theme}
