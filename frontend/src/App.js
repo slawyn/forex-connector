@@ -155,12 +155,9 @@ function App() {
     setSelectedId({id:symbolId, start: Math.floor(base - (3600*50*1000)), end:Math.floor(base)})
     _transmitCommand('select', symbolId)
 
-    for(let [key, value] of Object.entries(timeframes))
-    {
+    for(let [key, value] of Object.entries(timeframes)){
       fetchRates(symbolId, key, Math.floor(base - (value)), Math.floor(base));
     }
-    // fetchRates(selected.id, "D1", selected.start, selected.end);
-    // fetchRates(symbolId, "H1", Math.floor(base - (3600*24*1000)), Math.floor(base));
   };
 
   function getSelectedId() {

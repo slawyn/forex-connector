@@ -121,6 +121,19 @@ const Calculator = ({ customClass, trade, handlers }) => {
                         </td>
                         <td>
                             <TextField
+                                id="trade-bid"
+                                label="Bid"
+                                type="number"
+                                value={trade.bid}
+                                onChange={(e) => { handlers.handleBidChange(e.target.value) }}
+                                helperText=""
+                                inputProps={{
+                                    startAdornment: <InputAdornment position="start">Price</InputAdornment>,
+                                }}
+                            />
+                        </td>
+                        <td>
+                            <TextField
                                 id="outlined-read-only-input"
                                 label="Price Points"
                                 value={trade.points}
@@ -136,19 +149,6 @@ const Calculator = ({ customClass, trade, handlers }) => {
                                 label="Comment"
                                 value={trade.comment}
                                 onChange={(e) => { handlers.handleCommentChange(e.target.value) }}
-                            />
-                        </td>
-                        <td>
-                            <TextField
-                                id="trade-bid"
-                                label="Bid"
-                                type="number"
-                                value={trade.bid}
-                                onChange={(e) => { handlers.handleBidChange(e.target.value) }}
-                                helperText=""
-                                inputProps={{
-                                    startAdornment: <InputAdornment position="start">Price</InputAdornment>,
-                                }}
                             />
                         </td>
                     </tr>
