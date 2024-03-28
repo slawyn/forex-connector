@@ -44,7 +44,7 @@ function App() {
   const [preview, setPreview] = React.useState({preview:false});
   const theme = "clsStyle";
 
-  const timeframes = {"H1":(3600*24*1000), "D1":(3600*24*14*1000), "M5":(60*5*100*1000)};
+  const timeframes = {"D1":(3600*24*14*1000), "H1":(3600*48*1000),  "M5":(60*5*100*1000)};
 
   function fetchTerminalData (force) {
     /**

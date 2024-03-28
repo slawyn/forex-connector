@@ -35,14 +35,9 @@ const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
             plugins: {
                 tooltip: {}
             },
-            chart: {
-                type: 'candlestick',
-                height: 350
-            },
             xaxis: {
                 type: 'datetime',
             },
-            data:[],
             yaxis: {
                 labels: {
                     formatter

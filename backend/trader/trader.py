@@ -175,16 +175,16 @@ class Trader:
             
             TIME_FRAME = Trader.MT_TIMEFRAMES[period]
             if symbol.get_timestamp_first(TIME_FRAME) == 0:
-                symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end), TIME_FRAME)
+                symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end, frame=TIME_FRAME), timeframe=TIME_FRAME)
                 rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
             else:
                 timestamp_last = datetime.datetime.fromtimestamp(symbol.get_timestamp_first(TIME_FRAME), tz=datetime.timezone.utc)
                 if timestamp_end < timestamp_last:
-                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_end, utc_to=timestamp_last), TIME_FRAME)
-                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end), TIME_FRAME)
+                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_end, utc_to=timestamp_last, frame=TIME_FRAME), timeframe=TIME_FRAME)
+                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end, frame=TIME_FRAME), timeframe=TIME_FRAME)
                     rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
                 elif timestamp_start < timestamp_last:
-                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_last), TIME_FRAME)
+                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_last, frame=TIME_FRAME), timeframe=TIME_FRAME)
                     rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
         
         return {time_frame:rates}
