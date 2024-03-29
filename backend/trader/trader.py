@@ -179,8 +179,7 @@ class Trader:
 
             # Update recent
             current_timestamp = datetime.datetime.fromtimestamp(symbol.time)
-            if current_timestamp>timestamp_end:
-                symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_end, utc_to=current_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME)
+            symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_end, utc_to=current_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME)
 
             
             # Update before current start

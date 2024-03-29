@@ -8,32 +8,30 @@ const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
     const formatter = (value)=> {
         if(value !== undefined)
         {
-
             if(symbol !== undefined) {
                 return value.toFixed(symbol.digits)
-                // TOOD fix this
             }
             return value.toFixed(6)
         }
         return ''
     }
 
-
-
-
-
     const mapChartdata = (id, timeframe, charterdata)=> {
         if(timeframe in charterdata && id in charterdata[timeframe]) {
             const symbolrates = charterdata[timeframe][id]
             return Object.entries(symbolrates).map(([timestamp, object]) => { return { x: new Date(parseInt(timestamp)), y: [object.open, object.high, object.low, object.close]  }})
         }
+
         return []
     };
 
     const mapLinedata = (id, timeframe, charterdata, priceLine)=> {
         if(timeframe in charterdata && id in charterdata[timeframe]) {
             const symbolrates = charterdata[timeframe][id]
-            return [{x:new Date(parseInt(Object.keys(symbolrates)[0])), y:priceLine},{x:new Date(), y:priceLine}]
+            if(Object.keys(symbolrates).length>0)
+            {
+                return [{x:new Date(parseInt(Object.keys(symbolrates)[0])), y:priceLine},{x:new Date(), y:priceLine}]
+            }
         }
         return []
     };
@@ -92,7 +90,8 @@ const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
                 },
                 function({seriesIndex, dataPointIndex, w}) {
                     return w.globals.series[seriesIndex][dataPointIndex]
-                  }, 
+                    
+                }, 
                 function({seriesIndex, dataPointIndex, w}) {
                     return w.globals.series[seriesIndex][dataPointIndex]
                   },]
