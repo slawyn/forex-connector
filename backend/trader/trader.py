@@ -170,20 +170,26 @@ class Trader:
         period = Trader.TIMEFRAMES.index(time_frame)
         if start_s != end_s and period >=0:
             TIME_FRAME = Trader.MT_TIMEFRAMES[period]
-            
             timestamp_start = datetime.datetime.fromtimestamp(start_s)
             timestamp_end = datetime.datetime.fromtimestamp(end_s)
+
+            # Update initial
             if symbol.get_timestamp_first(TIME_FRAME) == 0:
                 symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end, frame=TIME_FRAME), timeframe=TIME_FRAME)
-            else:
-                timestamp_last = datetime.datetime.fromtimestamp(symbol.get_timestamp_first(TIME_FRAME))
-                if timestamp_end < timestamp_last:
-                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_end, utc_to=timestamp_last, frame=TIME_FRAME), timeframe=TIME_FRAME)
-                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end, frame=TIME_FRAME), timeframe=TIME_FRAME)
-                elif timestamp_start < timestamp_last:
-                    symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_last, frame=TIME_FRAME), timeframe=TIME_FRAME)
 
-            rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=timestamp_end)
+            # Update recent
+            current_timestamp = datetime.datetime.fromtimestamp(symbol.time)
+            if current_timestamp>timestamp_end:
+                symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_end, utc_to=current_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME)
+
+            
+            # Update before current start
+            initial_timestamp = datetime.datetime.fromtimestamp(symbol.get_timestamp_first(TIME_FRAME))
+            if timestamp_start < initial_timestamp:
+                symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=initial_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME) 
+
+            # Get rates
+            rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=current_timestamp)
         
         return {time_frame:rates}
 
