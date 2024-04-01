@@ -261,7 +261,7 @@ def trade():
     comment = data.get("comment")
     result = app.trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
 
-    return {"error": result[0], "text": result[1]}
+    return {"error": result[1], "text": result[0]}
 
 @flask.route('/command', methods=['POST'])
 def command():

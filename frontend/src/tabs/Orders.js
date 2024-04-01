@@ -18,7 +18,7 @@ const Orders = ({customClass, headers, data, handlers}) => {
             ...previousTrade,
             state: false
         }));
-        handlers.handleClose(dialogData.type, dialogData.name, dialogData.id, dialogData.volume, dialogData.ask, dialogData.bid);
+        handlers.handleCloseTrade(dialogData.type, dialogData.name, dialogData.id, dialogData.volume, dialogData.ask, dialogData.bid);
     };
 
     function handleCloseRejected  () {
