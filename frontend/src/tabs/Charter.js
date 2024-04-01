@@ -4,7 +4,7 @@ import ReactApexChart from "react-apexcharts";
 
 
 
-const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
+const Charter = ({ customClass, selected, symbol, timeframes, charterdata}) => {
     const formatter = (value)=> {
         if(value !== undefined)
         {
@@ -50,7 +50,7 @@ const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
               },
             title: {
                 align: 'left',
-                text :  `${id}#${timeframe}`
+                text :  `${selected.id}#${timeframe}`
             },
             chart: {
                 type: 'line',
@@ -96,17 +96,17 @@ const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
             {
                 name: 'candles',
                 type: 'candlestick',
-                data: mapChartdata(id, timeframe, charterdata)
+                data: mapChartdata(selected.id, timeframe, charterdata)
             },
             {
                 name: 'ask',
                 type:'line',
-                data: mapLinedata(id, timeframe, charterdata, symbol.ask, symbol.bid)
+                data: mapLinedata(selected.id, timeframe, charterdata, symbol.ask, symbol.bid)
             },
             {
                 name: 'bid',
                 type:'line',
-                data: mapLinedata(id, timeframe, charterdata, symbol.bid, symbol.ask)
+                data: mapLinedata(selected.id, timeframe, charterdata, symbol.bid, symbol.ask)
             },
         ];
       

@@ -18,6 +18,18 @@ const darkTheme = createTheme({
   },
 });
 
+function createPostRequest(body)
+{
+  return {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer my-token',
+    },
+    body: body
+  };
+}
+
 const mapTerminalData = (data, updates) => {
   return Object.entries(data).map(([key, value]) => { return { id: key, items: value , updated: updates.includes(key)} });
 };
@@ -26,17 +38,12 @@ const setUpdated = (data) => {
   return Object.keys(data)
 }
 
-function mergeDictionariesRecursively(previous, next)
-{ 
-
-  for(let [key, value] of Object.entries(next)) 
-  { 
-    if(key in previous)
-    {
+function mergeDictionariesRecursively(previous, next) { 
+  for(let [key, value] of Object.entries(next))  { 
+    if(key in previous && value instanceof Object) {
       previous[key] = mergeDictionariesRecursively(previous[key], value)
     }
-    else
-    {
+    else {
       previous[key] = value
     }
   }
@@ -51,7 +58,7 @@ function App() {
    */
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
   const [ratesData, setRatesData] = React.useState({});
-  const [selected, setSelectedId] = React.useState({id:""});
+  const [selected, setSelected] = React.useState({id:"", preview: false, calculator:{}});
   const [terminalData, setTerminalData] = React.useState({date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {}});
   
   /**
@@ -59,7 +66,6 @@ function App() {
    */
   const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
-  const [preview, setPreview] = React.useState({preview:false});
   const theme = "clsStyle";
 
   const timeframes = {"D1":(3600*24*35*1000), "H1":(3600*48*1000),  "M5":(60*5*12*20*1000)};
@@ -112,18 +118,7 @@ function App() {
   };
 
   function _transmitCommand(command, data){
-    /**
-     * Send Command to terminal
-     */
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer my-token',
-      },
-      body: JSON.stringify({ 'command': command, data: data })
-    };
-
+    const requestOptions = createPostRequest(JSON.stringify({ 'command': command, data: data }))
     fetch('/command', requestOptions)
       .then(response => response.json())
       .then(((receivedSymbolData) => { setSymbolData((previousstate) =>({...previousstate,...receivedSymbolData})) }));
@@ -131,15 +126,7 @@ function App() {
 
 
   function transmitSavePositions(selected){
-    selected = "";
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer my-token',
-      },
-      body: JSON.stringify(selected)
-    };
+    const requestOptions = createPostRequest("")
     fetch('/save', requestOptions)
       .then(response => response.json())
       .then(((receivedSymbolData) => {
@@ -148,14 +135,7 @@ function App() {
   };
 
   function transmitTradeRequest (request) {
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer my-token',
-      },
-      body: JSON.stringify(request)
-    };
+    const requestOptions = createPostRequest(JSON.stringify(request))
     fetch('/trade', requestOptions)
       .then(response => response.json())
       .then(((idResponse) => {
@@ -170,32 +150,39 @@ function App() {
       }));
   };
 
-  function commandSelect(symbolId) {
+  function commandPreview(ask, bid, sl, tp) { 
+    _transmitCommand('preview', { ask, bid,  sl,  tp })
+  }
+
+  function commandSelect(idSelectedSymbol) {
+    _transmitCommand('select', idSelectedSymbol)
+    setSelected((previous) => (
+      mergeDictionariesRecursively(
+        previous,
+        {
+          id: idSelectedSymbol
+        })
+      ));
+  
+
+
     const base = new Date().getTime()
-    setSelectedId({id:symbolId, start: Math.floor(base - (3600*50*1000)), end:Math.floor(base)})
-    _transmitCommand('select', symbolId)
-
-
     for(let [key, value] of Object.entries(timeframes)){
-      // If some data is available in the buffer
-      if(key in ratesData && (symbolId in ratesData[key]))
+      if(key in ratesData && (idSelectedSymbol in ratesData[key]))
       {
-        const rates = ratesData[key][symbolId];
+        /* If some data is available in the buffer */
+        const rates = ratesData[key][idSelectedSymbol];
         const keys = Object.keys(rates)
-        fetchRates(symbolId, key, keys[keys.length-1], Math.floor(base));
-      // No data available
+        fetchRates(idSelectedSymbol, key, keys[keys.length-1], Math.floor(base));
       } else {
-        fetchRates(symbolId, key, Math.floor(base - (value)), Math.floor(base));
+        /* No data available */
+        fetchRates(idSelectedSymbol, key, Math.floor(base - (value)), Math.floor(base));
       }
     }
   };
 
   function getSelectedId() {
     return selected.id
-  }
-
-  function commandPreview(ask, bid, sl, tp) { 
-    if(preview.preview) { _transmitCommand('preview', { ask, bid,  sl,  tp })};
   }
 
   React.useEffect(() => {
@@ -235,7 +222,7 @@ function App() {
                   <td className={theme}>Date: {terminalData.date}</td>
                   <td className={theme}>Last Error:{errorData.error}</td>
                   <td>
-                     <FormControlLabel control={<Checkbox onChange={(e) => {setPreview(() => ({preview: e.target.checked}))}} />} label="Preview in MT5" />
+                     <FormControlLabel control={<Checkbox onChange={(e) => {setSelected((previous) => (mergeDictionariesRecursively(previous, {preview: e.target.checked})))}} />} label="Preview in MT5" />
                   </td>
                 </tr>
               </tbody>
@@ -250,12 +237,12 @@ function App() {
                   headers={terminalData.op_headers}
                   data={mapTerminalData(terminalData.open, terminalData.updates)}
                   handlers={ { transmitTradeRequest, commandPreview }}
-                  preview={preview.preview}
+                  preview={selected.preview}
                 />
               </div>
               <div className="cls100PContainer">
                 <div className="cls50PContainer">
-                    <Charter customClass={theme} id={selected.id} timeframes={Object.keys(timeframes)} symbol={symbolData.info} charterdata={ratesData}/>
+                    <Charter customClass={theme} selected={selected} timeframes={Object.keys(timeframes)} symbol={symbolData.info} charterdata={ratesData}/>
                 </div>
                 <div className="cls50PContainer">
                   <Symbols customClass={theme}
