@@ -37,12 +37,13 @@ class Symbol:
     def get_rates(self, timeframe, start, end):
         rates = self.rates_container.get_rates(timeframe)
         outs = {}
-        for timestamp in rates:
-            rate = rates[timestamp]
-            outs[timestamp*1000] = {"open":rate.open,
-                               "high":rate.high,
-                               "low":rate.low,
-                               "close":rate.close}
+        for timestamp in sorted(list(rates.keys())):
+            if start<=timestamp<=end:
+                rate = rates[timestamp]
+                outs[timestamp*1000] = {"open":rate.open,
+                                "high":rate.high,
+                                "low":rate.low,
+                                "close":rate.close}
         return {self.name: outs}
 
     def update(self, sym):

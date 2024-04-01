@@ -172,14 +172,21 @@ class Trader:
             TIME_FRAME = Trader.MT_TIMEFRAMES[period]
             timestamp_start = datetime.datetime.fromtimestamp(start_s)
             timestamp_end = datetime.datetime.fromtimestamp(end_s)
+            current_s = symbol.time
 
             # Update initial
             if symbol.get_timestamp_first(TIME_FRAME) == 0:
-                symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end, frame=TIME_FRAME), timeframe=TIME_FRAME)
-
+                symbol.update_rates(self.get_rates_for_symbol(symbol.name,
+                                                              utc_from=timestamp_start,
+                                                              utc_to=timestamp_end,
+                                                              frame=TIME_FRAME),
+                                                              timeframe=TIME_FRAME)
             # Update recent
-            current_timestamp = datetime.datetime.fromtimestamp(symbol.time)
-            symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_end, utc_to=current_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME)
+            symbol.update_rates(self.get_rates_for_symbol(symbol.name, 
+                                                          utc_from=timestamp_end, 
+                                                          utc_to=datetime.datetime.fromtimestamp(current_s),
+                                                          frame=TIME_FRAME),
+                                                          timeframe=TIME_FRAME)
 
             
             # Update before current start
@@ -188,7 +195,8 @@ class Trader:
                 symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=initial_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME) 
 
             # Get rates
-            rates = symbol.get_rates(timeframe=TIME_FRAME, start=timestamp_start, end=current_timestamp)
+            log(start_s, symbol.time, timestamp_start, current_s)
+            rates = symbol.get_rates(timeframe=TIME_FRAME, start=start_s, end=current_s)
         
         return {time_frame:rates}
 

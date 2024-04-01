@@ -26,6 +26,24 @@ const setUpdated = (data) => {
   return Object.keys(data)
 }
 
+function mergeDictionariesRecursively(previous, next)
+{ 
+
+  for(let [key, value] of Object.entries(next)) 
+  { 
+    if(key in previous)
+    {
+      previous[key] = mergeDictionariesRecursively(previous[key], value)
+    }
+    else
+    {
+      previous[key] = value
+    }
+  }
+
+  return previous
+}
+
 
 function App() {
   /**
@@ -74,7 +92,9 @@ function App() {
     {
       fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`).then((res) =>
       res.json().then((receivedRates) => {
-        setRatesData((previousRates) => ({...previousRates, ...receivedRates}))
+        setRatesData((previousRates) => (
+          mergeDictionariesRecursively(previousRates, receivedRates)
+        ))
       })
       );
     }
@@ -155,8 +175,18 @@ function App() {
     setSelectedId({id:symbolId, start: Math.floor(base - (3600*50*1000)), end:Math.floor(base)})
     _transmitCommand('select', symbolId)
 
+
     for(let [key, value] of Object.entries(timeframes)){
-      fetchRates(symbolId, key, Math.floor(base - (value)), Math.floor(base));
+      // If some data is available in the buffer
+      if(key in ratesData && (symbolId in ratesData[key]))
+      {
+        const rates = ratesData[key][symbolId];
+        const keys = Object.keys(rates)
+        fetchRates(symbolId, key, keys[keys.length-1], Math.floor(base));
+      // No data available
+      } else {
+        fetchRates(symbolId, key, Math.floor(base - (value)), Math.floor(base));
+      }
     }
   };
 
