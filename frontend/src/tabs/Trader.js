@@ -69,9 +69,7 @@ const Trader = ({customClass, account, symbol, headers, data, handlers, preview}
     React.useEffect(() => {
        const sl = [trade.ask - trade.points, trade.bid + trade.points];
        const tp = [trade.ask + (trade.points * trade.ratio), trade.bid - (trade.points * trade.ratio)];
-       if(preview) {
-           handlers.commandPreview(trade.ask, trade.bid, sl, tp);
-        }
+        handlers.commandPreview(trade.ask, trade.bid, sl, tp);
     }, [preview, trade.ratio, trade.points, trade.ask, trade.bid]);
 
     function handleVolumeChange (value) {
