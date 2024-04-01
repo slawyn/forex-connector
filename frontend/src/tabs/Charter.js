@@ -25,12 +25,13 @@ const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
         return []
     };
 
-    const mapLinedata = (id, timeframe, charterdata, priceLine)=> {
+    const mapLinedata = (id, timeframe, charterdata, priceLine, priceLine2)=> {
         if(timeframe in charterdata && id in charterdata[timeframe]) {
             const symbolrates = charterdata[timeframe][id]
             if(Object.keys(symbolrates).length>0)
-            {
-                return [{x:new Date(parseInt(Object.keys(symbolrates)[0])), y:priceLine},{x:new Date(), y:priceLine}]
+            {   
+                const recentKey = Object.keys(symbolrates)[Object.keys(symbolrates).length-1];
+                return [{x:new Date(parseInt(Object.keys(symbolrates)[0])), y:priceLine},{x:new Date(parseInt(recentKey)), y:priceLine}]
             }
         }
         return []
@@ -39,21 +40,14 @@ const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
     let charts = [];
     timeframes.forEach((timeframe, index) => {
         const options = {
-            plugins: {
-                tooltip: {}
-            },
-            colors: ["#008000",  "#00BBFF", "#FF0000",],
-            legend: {
-                show: false
-            },
-            xaxis: {
-                type: 'datetime',
-            },
-            yaxis: {
-                labels: {
-                    formatter
-                }
-            },
+            plugins: { tooltip: {} },
+            colors: ["#008000",  "#00BBFF80", "#FFFF00"],
+            legend: { show: false },
+            xaxis: { type: 'datetime' },
+            yaxis: { labels: { formatter }},
+            fill: {
+                type: ['gradient','solid','solid']
+              },
             title: {
                 align: 'left',
                 text :  `${id}#${timeframe}`
@@ -62,7 +56,7 @@ const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
                 type: 'line',
               },
             stroke: {
-                width: [0.8, 1]
+                width: [1, 4, 4]
               },
               tooltip: {
                 shared: true,
@@ -107,12 +101,12 @@ const Charter = ({ customClass, id, symbol, timeframes, charterdata}) => {
             {
                 name: 'ask',
                 type:'line',
-                data: mapLinedata(id, timeframe, charterdata, symbol.ask)
+                data: mapLinedata(id, timeframe, charterdata, symbol.ask, symbol.bid)
             },
             {
                 name: 'bid',
                 type:'line',
-                data: mapLinedata(id, timeframe, charterdata, symbol.bid)
+                data: mapLinedata(id, timeframe, charterdata, symbol.bid, symbol.ask)
             },
         ];
       
