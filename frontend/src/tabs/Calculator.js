@@ -49,8 +49,7 @@ const Calculator = ({ customClass, trade, handlers }) => {
                                     id="demo-simple-select"
                                     label="Order type"
                                     value={trade.type}
-                                    onChange={(e) => { handlers.handleTypeChange(e.target.value) }}
-                                >
+                                    onChange={(e) => { handlers.handleTypeChange(e.target.value) }}>
                                     <MenuItem value={'market_buy'}>Market.Buy</MenuItem>
                                     <MenuItem value={'limit_buy'}>Limit.Buy</MenuItem>
                                     <MenuItem value={'stop_buy'}>Stop.Buy</MenuItem>

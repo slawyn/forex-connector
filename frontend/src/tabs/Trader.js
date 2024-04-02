@@ -16,12 +16,28 @@ function calculatePoints(ask, riskAmount, contractSize, pointValue, riskLot, dig
     return (riskAmount / (contractSize * pointValue * riskLot));
 };
 
+function calculateInitialRisk(ask, bid, riskAmount, contractSize, pointValue, volumeStep, conversion) {
+    let tickValue = 1 / ask;
+
+    if (conversion) {
+        pointValue = tickValue;
+    }
+
+    const INITIAL_SPREAD_AMOUNT = 10
+    let priceRisk = (ask - bid) * INITIAL_SPREAD_AMOUNT
+
+    let riskLot = (riskAmount / (contractSize * pointValue * priceRisk));
+    return Math.trunc(riskLot/volumeStep)*volumeStep
+}
+
 
 const Trader = ({customClass, account, symbol, headers, data, handlers, preview}) => {
+    const INITIAL_RISK_PERCENTAGE = 1.00
+    const INITIAL_RISK = INITIAL_RISK_PERCENTAGE/100.0
     const [trade, setTrade] = React.useState({
         name: "",
         type:"",
-        risk: 1.00,
+        risk: INITIAL_RISK_PERCENTAGE,
         ratio: 2.25,
         ratio_step: 0.25,
         bid: 0,
@@ -45,7 +61,15 @@ const Trader = ({customClass, account, symbol, headers, data, handlers, preview}
             name: symbol.name,
             bid: symbol.bid,
             ask: symbol.ask,
-            risk_volume: symbol.volume_step,
+            risk_volume:
+                calculateInitialRisk(
+                    symbol.ask, 
+                    symbol.bid,
+                    previousTrade.risk * INITIAL_RISK * account.balance,
+                    symbol.contract_size,
+                    symbol.point_value,
+                    symbol.volume_step,
+                    symbol.conversion),
             volume_step: symbol.volume_step,
             balance: account.balance,
             point_value: symbol.point_value,
@@ -56,10 +80,17 @@ const Trader = ({customClass, account, symbol, headers, data, handlers, preview}
             conversion: symbol.conversion,
             points: calculatePoints(
                 symbol.ask,
-                previousTrade.risk * 0.01 * account.balance,
+                previousTrade.risk * INITIAL_RISK * account.balance,
                 symbol.contract_size,
                 symbol.point_value,
-                symbol.volume_step,
+                calculateInitialRisk(
+                    symbol.ask, 
+                    symbol.bid,
+                    previousTrade.risk * INITIAL_RISK * account.balance,
+                    symbol.contract_size,
+                    symbol.point_value,
+                    symbol.volume_step,
+                    symbol.conversion),
                 symbol.digits,
                 symbol.conversion)
         }));
@@ -67,31 +98,30 @@ const Trader = ({customClass, account, symbol, headers, data, handlers, preview}
 
 
     React.useEffect(() => {
-       const sl = [trade.ask - trade.points, trade.bid + trade.points];
-       const tp = [trade.ask + (trade.points * trade.ratio), trade.bid - (trade.points * trade.ratio)];
+        const sl = [trade.ask - trade.points, trade.bid + trade.points];
+        const tp = [trade.ask + (trade.points * trade.ratio), trade.bid - (trade.points * trade.ratio)];
         handlers.commandPreview(trade.ask, trade.bid, sl, tp);
     }, [preview, trade.ratio, trade.points, trade.ask, trade.bid]);
 
-    function handleVolumeChange (value) {
+    function handleVolumeChange (risk_volume) {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            risk_volume: parseFloat(value),
+            risk_volume: parseFloat(risk_volume),
             points: calculatePoints(
                 trade.ask,
                 trade.risk * 0.01 * trade.balance,
                 trade.contract_size,
                 trade.point_value,
-                value,
+                risk_volume,
                 symbol.digits,
                 symbol.conversion)
         }));
     };
 
-    function handleTypeChange(value) {
+    function handleTypeChange(type) {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            risk_volume: parseFloat(value),
-            type: value
+            type: type
         }));
     };
 
