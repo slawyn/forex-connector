@@ -3,26 +3,32 @@ import TableRows from "./elements/TableRows"
 import TableHeads from "./elements/TableHeads"
 
 
-const Symbols = ({customClass, headers, data, handlers}) => {
+const Symbols = ({ customClass, headers, data, instrument, handlers }) => {
     const [sortConfig, setSortConfig] = React.useState({ key: 0, direction: 'ascending' });
-    
-    function requestSort (sortkey){
+
+    function requestSort(sortkey) {
         let direction = 'ascending'
         if (sortConfig.key === sortkey && sortConfig.direction === 'ascending') {
             direction = 'descending';
         }
         setSortConfig({ key: sortkey, direction: direction });
     }
-
     return (
         <div>
             <table className={customClass}>
-                <TableHeads data={headers} className={customClass} sorter={requestSort} />
-                <TableRows data={data} sortConfig={sortConfig} className={customClass} setId={handlers.commandSelect} getId={handlers.getSelectedId}/>
+                <TableHeads
+                    className={customClass}
+                    data={headers}
+                    sorter={requestSort} />
+                <TableRows
+                    className={customClass}
+                    data={data}
+                    sortConfig={sortConfig}
+                    setId={handlers.setId}
+                    id={instrument} />
             </table>
         </div >
     );
-
 };
 
 

@@ -158,10 +158,7 @@ class Trader:
         return symbols
 
     def get_symbol(self, sym_name):
-        exported_symbol = self.symbols[sym_name]
-
-        # Update rates
-        return exported_symbol
+        return self.symbols.get(sym_name, None)
 
     def update_rates_for_symbol(self, symbol, time_frame, start_s, end_s):
         '''Add difference of rates to the symbol

@@ -1,3 +1,4 @@
+import performance from "./../Performance";
 import React, { useState } from "react";
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -40,6 +41,8 @@ const Orders = ({customClass, headers, data, handlers}) => {
             type: type
         }));
     };
+
+    performance.z()
 
     return (
         <>

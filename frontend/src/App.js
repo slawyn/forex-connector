@@ -1,5 +1,5 @@
-// Importing modules
-import React from "react";
+import performance from "./Performance";
+import React, { Profiler } from "react";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -11,6 +11,7 @@ import History from "./tabs/History";
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Charter from "./tabs/Charter"
+import TopBar from "./tabs/TopBar";
 
 const darkTheme = createTheme({
   palette: {
@@ -29,27 +30,44 @@ function createPostRequest(body) {
   };
 }
 
-const mapTerminalData = (data, updates) => {
+function mapTerminalData(data, updates) {
   return Object.entries(data).map(([key, value]) => { return { id: key, items: value, updated: updates.includes(key) } });
-};
+}
 
-const setUpdated = (data) => {
+function setUpdated(data) {
   return Object.keys(data)
 }
 
-function mergeDictionariesRecursively(previous, next) {
+function mergeArray(array)
+{ 
+  let merged = {}
+  array.forEach((dictionary, index) => {
+    merged = mergeDict(merged, dictionary)
+  })
+  return merged
+}
+
+function mergeDict(previous, next) {
   for (let [key, value] of Object.entries(next)) {
     if (key in previous && value instanceof Object) {
-      previous[key] = mergeDictionariesRecursively(previous[key], value)
+      previous[key] = mergeDict(previous[key], value)
     }
     else {
       previous[key] = value
     }
   }
-
   return previous
 }
 
+function Commander ()
+{
+  const [state, setState] = React.useState()
+}
+
+function syncChartData(timeframes, symbol, rates, calculator)
+{
+    return {symbol, rates, calculator}
+}
 
 function App() {
   /**
@@ -59,22 +77,18 @@ function App() {
   const [ratesData, setRatesData] = React.useState({});
   const [selected, setSelected] = React.useState({ id: "", preview: false, calculator: {} });
   const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
-
-  /**
-   * Positional data represents open orders, and error data as status evaluation
-   */
   const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
   const theme = "clsStyle";
 
   const timeframes = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000), "M5": (60 * 5 * 12 * 20 * 1000) };
-
+ 
   function fetchTerminalData(force) {
     /**
      * Fetch all Terminal Data
      */
-    fetch(`/update?force=${force}`).then((res) =>
-      res.json().then((receivedTerminalData) => {
+    fetch(`/update?force=${force}`).then((response) =>
+    response.json().then((receivedTerminalData) => {
         setTerminalData((previousstate) => ({
           date: receivedTerminalData.date,
           account: receivedTerminalData.account,
@@ -93,50 +107,80 @@ function App() {
     /**
      * Fetch rates for instrument
      */
-    if (instrument !== "" && instrument !== undefined) {
-      fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`).then((res) =>
-        res.json().then((receivedRates) => {
-          setRatesData((previousRates) => (
-            mergeDictionariesRecursively(previousRates, receivedRates)
-          ))
-        })
-      );
-    }
+    fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`).then((response) =>
+    response.json().then((receivedRates) => {
+        setRatesData((previousRates) => (
+          mergeDict(previousRates, receivedRates)
+        ))
+      })
+    );
   };
 
-  function fetchPosiions() {
+  function fetchHistory() {
     /**
      * Fetch all positional Data
      */
-    fetch("/positions").then((res) =>
-      res.json().then((receivedPositions) => {
+    fetch("/history").then((response) =>
+    response.json().then((receivedPositions) => {
         setPositionData(receivedPositions);
       })
     );
   };
 
-  function _transmitCommand(command, data) {
-    const requestOptions = createPostRequest(JSON.stringify({ 'command': command, data: data }))
-    fetch('/command', requestOptions)
-      .then(response => response.json())
-      .then(((receivedSymbolData) => { setSymbolData((previousstate) => ({ ...previousstate, ...receivedSymbolData })) }));
+  function fetchSymbol(instrument) {
+    /**
+     * Fetch symbol info
+     */
+    fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
+    response.json().then((receivedSymbol) => {
+        setSymbolData(receivedSymbol);
+      })
+    );
   };
 
+  function fetchAll(instrument) {
+    /**
+    * Fetch symbol info and rates
+    */
+   const base = new Date().getTime()
+   const promises = Object.entries(timeframes).map(([key, value]) => {
+      let start = Math.floor(base - (value))
+      const end = Math.floor(base)
+
+      if (key in ratesData && (instrument in ratesData[key])) {
+        /* If some data is available in the buffer */
+        const rates = ratesData[key][instrument];
+        const keys = Object.keys(rates)
+        start = keys[keys.length - 1]
+      }
+      return fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${key}`).then((response) =>response.json());
+   });
+
+   /* Fetch and merge*/
+   Promise.all(promises).then(receivedRatesData => {
+      setRatesData(previousRatesData => (mergeDict(previousRatesData, mergeArray(receivedRatesData))))
+    })
+   
+
+  fetchSymbol(instrument)
+ };
+
+  function _transmitCommand(command, data) {
+    const requestOptions = createPostRequest(JSON.stringify({ 'command': command, data: data }))
+    fetch('/command', requestOptions).then(response =>
+      response.json()).then(((receivedSymbolData) => {}));
+  };
 
   function transmitSavePositions(selected) {
     const requestOptions = createPostRequest("")
-    fetch('/save', requestOptions)
-      .then(response => response.json())
-      .then(((receivedSymbolData) => {
-
-      }));
+    fetch('/save', requestOptions).then(response =>
+      response.json()).then(((receivedSymbolData) => {}));
   };
 
-  function transmitTradeRequest(request) {
+  function requestTrade(request) {
     const requestOptions = createPostRequest(JSON.stringify(request))
-    fetch('/trade', requestOptions)
-      .then(response => response.json())
-      .then(((idResponse) => {
+    fetch('/trade', requestOptions).then(response =>
+      response.json()).then(((idResponse) => {
         if (idResponse.error !== 10009) {
           throw new Error(`Result: [${idResponse.error}] ${idResponse.text} `);
         }
@@ -147,9 +191,15 @@ function App() {
       }));
   };
 
+  function setControl({preview})
+  {
+    setSelected((previous) => (mergeDict(previous, { preview: preview }))) 
+  }
+
   function commandPreview(ask, bid, sl, tp) {
+    console.log(ask,bid)
     setSelected((previous) => (
-      mergeDictionariesRecursively(
+      mergeDict(
         previous,
         {
           calculator:
@@ -164,40 +214,9 @@ function App() {
         })
     ));
 
-    if(selected.preview)
-    {
+    if (selected.preview) {
       _transmitCommand('preview', { ask, bid, sl, tp })
     }
-  }
-
-  function commandSelect(idSelectedSymbol) {
-    _transmitCommand('select', idSelectedSymbol)
-    setSelected((previous) => (
-      mergeDictionariesRecursively(
-        previous,
-        {
-          id: idSelectedSymbol
-        })
-    ));
-
-
-
-    const base = new Date().getTime()
-    for (let [key, value] of Object.entries(timeframes)) {
-      if (key in ratesData && (idSelectedSymbol in ratesData[key])) {
-        /* If some data is available in the buffer */
-        const rates = ratesData[key][idSelectedSymbol];
-        const keys = Object.keys(rates)
-        fetchRates(idSelectedSymbol, key, keys[keys.length - 1], Math.floor(base));
-      } else {
-        /* No data available */
-        fetchRates(idSelectedSymbol, key, Math.floor(base - (value)), Math.floor(base));
-      }
-    }
-  };
-
-  function getSelectedId() {
-    return selected.id
   }
 
   React.useEffect(() => {
@@ -222,26 +241,24 @@ function App() {
               <Tab>Trading</Tab>
               <Tab>History</Tab>
             </TabList>
-            <div>
-              <button className={"clsBluebutton"} onClick={() => { fetchTerminalData(true) }}>Get Symbols</button>
-            </div>
-            <table className={theme}>
-              <tbody>
-                <tr>
-                  <td className={theme}>Company: {terminalData.account.company}</td>
-                  <td className={theme}>Balance: {terminalData.account.balance}{terminalData.account.currency}</td>
-                  <td className={theme}>Login: {terminalData.account.login}</td>
-                  <td className={theme}>Server: {terminalData.account.server}</td>
-                  <td className={theme}>Profit: {terminalData.account.profit}</td>
-                  <td className={theme}>Leverage: {terminalData.account.leverage}</td>
-                  <td className={theme}>Date: {terminalData.date}</td>
-                  <td className={theme}>Last Error:{errorData.error}</td>
-                  <td>
-                    <FormControlLabel control={<Checkbox onChange={(e) => { setSelected((previous) => (mergeDictionariesRecursively(previous, { preview: e.target.checked }))) }} />} label="Preview in MT5" />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <button className={"css-blue-button"} onClick={() => { fetchTerminalData(true) }}>Get Symbols</button>
+            <TopBar
+              customClass={theme}
+              company={terminalData.account.company}
+              balance={terminalData.account.balance}
+              currency={terminalData.account.currency}
+              login={terminalData.account.login}
+              server={terminalData.account.server}
+              profit={terminalData.account.profit}
+              leverage={terminalData.account.leverage}
+              date={terminalData.date}
+              error={errorData.error}
+            />
+
+            <FormControlLabel
+              control={<Checkbox onChange={(e) => { setControl({preview: e.target.checked}) }} />}
+              label="Control MT5" />
+              
           </div>
           <TabPanel>
             <div>
@@ -251,29 +268,36 @@ function App() {
                   symbol={symbolData.info}
                   headers={terminalData.op_headers}
                   data={mapTerminalData(terminalData.open, terminalData.updates)}
-                  handlers={{ transmitTradeRequest, commandPreview }}
-                  preview={selected.preview}
+                  handlers={{ requestTrade: requestTrade, commandPreview }}
                 />
               </div>
               <div className="cls100PContainer">
                 <div className="cls50PContainer">
-                  <Charter customClass={theme} selected={selected} timeframes={Object.keys(timeframes)} symbol={symbolData.info} charterdata={ratesData} />
+                  <Charter
+                    customClass={theme}
+                    timeframes={Object.keys(timeframes)}
+                    symbol={symbolData.info}
+                    data={syncChartData(timeframes, symbolData.info, ratesData, selected.calculator)
+                    }
+                  />
                 </div>
                 <div className="cls50PContainer">
-                  <Symbols customClass={theme}
+                  <Symbols
+                    customClass={theme}
                     account={terminalData.account}
                     headers={terminalData.headers}
                     data={mapTerminalData(terminalData.instruments, terminalData.updates)}
                     instrument={symbolData.info.name}
-                    handlers={{ commandSelect, getSelectedId, fetchTerminalData: () => { fetchTerminalData(true) } }}
+                    handlers={{ setId: fetchAll}}
                   />
                 </div>
               </div>
             </div>
           </TabPanel>
           <TabPanel>
-            <History customClass={theme}
-              handlers={{ fetchPosiions, transmitSavePositions }}
+            <History
+              customClass={theme}
+              handlers={{ getHistory:fetchHistory, saveHistory: transmitSavePositions }}
               headers={positionData.headers}
               data={positionData.positions}
             />

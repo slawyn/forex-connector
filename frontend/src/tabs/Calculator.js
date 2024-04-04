@@ -3,7 +3,6 @@ import { TextField } from '@mui/material';
 import InputAdornment from '@mui/material/InputAdornment';
 
 import * as React from 'react';
-import Box from '@mui/material/Box';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -33,7 +32,8 @@ const Calculator = ({ customClass, trade, handlers }) => {
                         <th className={customClass}>Digits: {trade.digits}</th>
                         <th className={customClass}>Tick Size: {trade.tick_size}</th>
                         <th className={customClass} colSpan="1">Tick Value: {trade.tick_value}</th>
-                        <th><button className={"clsBluebutton"} onClick={() => { handlers.handleOpenTrade() }}>{"Execute Trade"} </button>
+                        <th>
+                            <button className={"css-blue-button"} onClick={() => { handlers.handleOpenTrade() }}>{"Execute Trade"} </button>
                         </th>
                         <th></th>
                     </tr>

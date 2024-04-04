@@ -1,12 +1,7 @@
-body {
-  margin: 0;
-}
-
 input {
   /* line-height: 6ex; */
   color: white;
   background-color: #effff000;
-  border-width: 0px #effff000 none;
   width: 60%;
   text-align: left;
 }
@@ -21,19 +16,21 @@ button {
   border-style: double;
 }
 
-.clsRedbutton:hover,
-.clsBluebutton:hover,
+.css-red-button:hover,
+.css-blue-button:hover,
 .clsOrangebutton:hover {
   background-color: #effff000;
   color: white;
 }
 
-.clsRedbutton {
+.css-red-button {
   background-color: red;
 }
 
-.clsBluebutton {
+.css-blue-button {
   background-color: rgb(0, 187, 255);
+  width: auto;
+  float: right;
 }
 
 .clsOrangebutton {

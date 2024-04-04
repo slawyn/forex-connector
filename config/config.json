@@ -1,8 +1,8 @@
 {
 	"google": {
 		"secretsfile": "config/secretsfile.json",
-		"folderid": "1g3aFjGgRA1V7IC9K2iwh2Ma5y28ymBE5",
-		"spreadsheet": "Trading Journal",
+		"folderid": "1DwxiNMkwK5wF1UkSFrCwQYWkKtFoR2W8",
+		"spreadsheet": "Trading.Journal",
 		"worksheet": "2024",
 		"date": "2024-01-01 10:10:10"
 	},

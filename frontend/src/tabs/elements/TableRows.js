@@ -1,6 +1,6 @@
 import React from "react";
 
-const TableRows = ({data, sortConfig, className, setId, getId}) => {
+const TableRows = ({ data, sortConfig, className, setId, id }) => {
 
     /**
      * Sort Data when possible
@@ -29,25 +29,27 @@ const TableRows = ({data, sortConfig, className, setId, getId}) => {
         return objs;
     }, [data, sortConfig]);
 
-
     return (
         <tbody>
             {
                 /** Map instruments to rows */
                 sortedData.map((rowData) => {
-
-                    return <tr key={rowData.id} onClick={() => setId(rowData.id)} className={className} style={{
-                        backgroundColor: rowData.id === getId() ? 'orange' :  '',
-                        color: rowData.updated === true ? 'red' : ''
-                    }} >
-                        {
-                            /** Map row line */
-                            rowData.items.map((cellData) => {
-                                return <td>{cellData}</td>
-                            })
-                        }
-
-                    </tr>
+                    return (
+                        <tr
+                            key={rowData.id}
+                            onClick={() => setId(rowData.id)}
+                            className={className}
+                            style={{
+                                backgroundColor: rowData.id === id ? 'orange' : '',
+                                color: rowData.updated === true ? 'red' : ''
+                            }} >
+                            {
+                                /** Map row line */
+                                rowData.items.map((cellData) => {
+                                    return <td>{cellData}</td>
+                                })
+                            }
+                        </tr>)
                 })
             }
         </tbody>

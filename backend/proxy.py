@@ -19,6 +19,20 @@ flask = Flask(__name__)
 app = None
 
 
+def calculate_indicators(spread, open_price, bid, atr):
+    ratio = (spread/atr)*100
+    atr_reserve = (open_price-bid)/atr*100
+    signal = (abs(atr_reserve) - ratio)
+    if signal > 0:
+        if atr_reserve>0:
+            direction = "[Sell]"
+        else:
+            direction = "[Buy]"
+        formatted_signal = "%-2.2f %s" % (signal, direction)
+    else:
+        formatted_signal = ""
+
+    return (formatted_signal, ratio, atr_reserve)
 class App:
     COL_INSTRUMENT = 'INSTRUMENT'
     COL_BASE = 'CURRENCY'
@@ -54,6 +68,9 @@ class App:
     def _set_filter(self, filter):
         self.trader.set_filter(filter)
 
+    def get_symbol(self, instrument):
+        return self.trader.get_symbol(instrument)
+
     def get_rates(self, instrument, time_frame, start_ms, end_ms):
         symbol = self.trader.get_symbol(instrument)
         return self.trader.update_rates_for_symbol(symbol, time_frame, start_ms/1000, end_ms/1000)
@@ -68,11 +85,6 @@ class App:
                 "company": info.company,
                 "server": info.server,
                 "login": info.login}
-
-    def get_selected_symbol(self):
-        instrument = self.commander.get_selected_instrument()
-        symbol= self.trader.get_symbol(instrument)
-        return symbol
     
     def trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
         ''' Send trade to terminal
@@ -141,50 +153,35 @@ class App:
     def get_symbols(self, filter):
         '''Builds a list of instruments based on filter
         '''
-        indices = []
         react_data = {}
 
         ##
-
         syms = self.trader.get_updated_symbols_sorted()
-        indices = range(len(syms))
-        date = datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)
-        epoch = date.total_seconds()  # + (2*60*60)
-
-        for idx in indices:
+        for idx in range(len(syms)):
             sym = syms[idx]
+
+            name = sym.get_name()
+            spread = sym.get_spread()
+            bid = sym.get_bid()
+            digits = sym.get_digits()
+
+            # indicators
             atr = self.trader.get_atr(sym)
-            updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = sym.get_info()
-            currency = sym.get_currency()
-
-            # additional calcs
-            ratio = (spread/atr)*100
-            atr_reserve = (session_open-bid)/atr*100
-
-            signal = (abs(atr_reserve) - ratio)
-
-            if signal > 0:
-                if atr_reserve>0:
-                    direction = "[Sell]"
-                else:
-                    direction = "[Buy]"
-                formated_signal = "%-2.2f %s" % (signal, direction)
-            else:
-                formated_signal = ""
+            formatted_signal, ratio, atr_reserve = calculate_indicators(spread, sym.get_session_open(), bid, atr)
 
             # Create data set
             timer = get_current_date()
-            if updated or filter:
+            if sym.is_updated() or filter:
                 react_data[name] = [name,
-                                    currency,
-                                    description,
-                                    f"%2.{digits}f" % ask,
+                                    sym.get_currency(),
+                                    sym.get_description(),
+                                    f"%2.{digits}f" % sym.get_ask(),
                                     f"%2.{digits}f" % bid,
                                     f"%2.{digits}f" % (spread),
                                     "%-2.4f" % atr,
                                     "%-2.2f" % (ratio),
                                     "%-2.2f" % abs(atr_reserve),
-                                    formated_signal,
+                                    formatted_signal,
                                     timer]
 
         return App.COLUMNS,  react_data
@@ -223,8 +220,8 @@ def get_update():
     force = request.args.get("force", default=False, type=is_it_true)
     return get_with_terminal_info(force=force)
 
-@flask.route('/positions', methods=['GET'])
-def get_positions():
+@flask.route('/history', methods=['GET'])
+def get_history():
     headers, positions = app.get_history_positions()
     return {"positions": positions, "headers": headers}
 
@@ -239,6 +236,25 @@ def get_rates():
         rates = app.get_rates(instrument, time_frame, start_ms, end_ms)
     
     return json.dumps(rates)
+
+@flask.route('/symbol', methods=['GET'])
+def get_symbol():
+    symbol = app.get_symbol(request.args.get("instrument", ""))
+    if symbol is not None:
+        return {"info": {"name": symbol.get_name(),
+                        "step": symbol.get_step(),
+                        "ask": symbol.get_ask(),
+                        "bid": symbol.get_bid(),
+                        "volume_step": symbol.get_volume_step(),
+                        "point_value": symbol.get_point_value(),
+                        "contract_size": symbol.get_contract_size(),
+                        "digits": symbol.get_digits(),
+                        "tick_size": symbol.get_step(),
+                        "tick_value": symbol.get_tick_value(),
+                        "conversion": symbol.get_conversion()
+                        }
+                }
+    return {}
 
 @flask.route('/save', methods=['POST'])
 def save():
@@ -263,29 +279,15 @@ def trade():
 
     return {"error": result[1], "text": result[0]}
 
+
+
 @flask.route('/command', methods=['POST'])
 def command():
     data = request.get_json()
     type = data.get("command")
     if type == "select":
         status = app.terminal_select(data.get("data"))
-        symbol = app.get_selected_symbol()
-        updated, name, spread, ask, bid, digits, step, session_open, volume_step, point_value, contract_size, description, tick_value = symbol.get_info()
-        conversion = symbol.get_conversion()
-
-        return {"info": {"name": name,
-                     "step": step,
-                     "ask": ask,
-                     "bid": bid,
-                     "volume_step": volume_step,
-                     "point_value": point_value,
-                     "contract_size": contract_size,
-                     "digits": digits,
-                     "tick_size": step,
-                     "tick_value": tick_value,
-                     "conversion": conversion
-                    }
-            }
+ 
     elif type == "preview":
         preview = data.get("data")
         sl = preview.get("sl")

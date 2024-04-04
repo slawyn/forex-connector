@@ -1,12 +1,22 @@
 import React, { } from "react";
 
-const History = ({customClass, handlers, headers, data}) => {
+const History = ({ customClass, handlers, headers, data }) => {
 
     const [imgData, setImage] = React.useState("0");
     return (
         <>
-            <button onClick={handlers.transmitSavePositions} className={"clsOrangebutton"} style={{ width: "fit-content" }}>Upload to Google</button>
-            <button onClick={handlers.fetchAllPositions} className={"clsBluebutton"} style={{ width: "fit-content" }}>Fetch Trades</button>
+            <button
+                onClick={handlers.saveHistory}
+                className={"clsOrangebutton"}
+                style={{ width: "fit-content" }}>
+                Upload to Google
+            </button>
+            <button
+                onClick={handlers.getHistory}
+                className={"css-blue-button"}
+                style={{ width: "fit-content" }}>
+                Fetch Trades
+            </button>
             <div className="clsGlobalContainer" >
                 <div className="clsHistoryContainer" >
                     <table className={customClass} >
@@ -38,7 +48,7 @@ const History = ({customClass, handlers, headers, data}) => {
                     </table>
                 </div>
                 <div className="clsImageContainer" >
-                    <img src={`trades/${imgData}.png`} styles={{width:"100%"}}></img>
+                    <img src={`trades/${imgData}.png`} styles={{ width: "100%" }}></img>
                 </div>
             </div>
         </>
