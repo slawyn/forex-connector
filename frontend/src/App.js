@@ -78,11 +78,9 @@ class Commander {
         const requestOptions = createPostRequest(JSON.stringify({ 'command': 'select', data: this.instrument}))
         fetch('/command', requestOptions).then(response =>response.json())
         this.selected = true
-      }
-
-      if(this.selected && Object.keys(this.trading).length > 0) {
-        // const requestOptions = createPostRequest(JSON.stringify({ 'command': 'preview', data: this.trading}))
-        // fetch('/command', requestOptions).then(response =>response.json())
+      } else if(this.selected && Object.keys(this.trading).length > 0) {
+        const requestOptions = createPostRequest(JSON.stringify({ 'command': 'preview', data: this.trading}))
+        fetch('/command', requestOptions).then(response =>response.json())
       }
     }
     else{
@@ -175,6 +173,7 @@ const App = () => {
   };
 
   function setCommand(props) {
+    console.log(props)
     commander.setCommand(props)
   }
 

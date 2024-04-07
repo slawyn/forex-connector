@@ -128,6 +128,10 @@ void CommanderSetState(CommanderState_e state)
    eCommanderState = state;
 }
 
+bool CommanderIsAvailable()
+{
+   return eCommanderState == CommanderStateInactive;
+}
 
 void CriarLinhaH(const long janela,
                  const int subjanela,
@@ -407,6 +411,12 @@ void HandleSocketIncomingData(int idxClient)
       {  
          /* Received command */
          Print(strCommand);
+         if(!CommanderIsAvailable())
+         {  
+            Print("WARNING: Commander is busy");
+            continue;
+         }
+            
          if (strCommand == "QUOTE") {
             pClient.Send(Symbol() + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_BID), 6) + "," + DoubleToString(SymbolInfoDouble(Symbol(), SYMBOL_ASK), 6) + "\r\n");
    
@@ -414,7 +424,7 @@ void HandleSocketIncomingData(int idxClient)
             bForceClose = true;
 			
          } else if (StringFind(strCommand, "CLEAR:") == 0) {
-			CommanderSetState(CommanderStateClearLines);
+			   CommanderSetState(CommanderStateClearLines);
 			
          } else if (StringFind(strCommand, "DRAW:") == 0) {
    			int k = StringSplit(StringSubstr(strCommand, 5),',',strSplits);
