@@ -70,6 +70,7 @@ class Commander {
 
     if(props.instrument !== undefined) {
       this.instrument = props.instrument
+      this.selected = false
     }
 
     if(this.preview) { 
@@ -80,8 +81,8 @@ class Commander {
       }
 
       if(this.selected && Object.keys(this.trading).length > 0) {
-        const requestOptions = createPostRequest(JSON.stringify({ 'command': 'preview', data: this.trading}))
-        fetch('/command', requestOptions).then(response =>response.json())
+        // const requestOptions = createPostRequest(JSON.stringify({ 'command': 'preview', data: this.trading}))
+        // fetch('/command', requestOptions).then(response =>response.json())
       }
     }
     else{
