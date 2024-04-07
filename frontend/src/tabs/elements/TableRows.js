@@ -1,6 +1,7 @@
 import React from "react";
 
-const TableRows = ({ data, sortConfig, className, setId, id }) => {
+const TableRows = ({ data, sortConfig, className, setId}) => {
+    const [selectedId, setSelectedId] = React.useState('');
 
     /**
      * Sort Data when possible
@@ -37,10 +38,10 @@ const TableRows = ({ data, sortConfig, className, setId, id }) => {
                     return (
                         <tr
                             key={rowData.id}
-                            onClick={() => setId(rowData.id)}
+                            onClick={() => { setSelectedId(rowData.id); setId(rowData.id);}}
                             className={className}
                             style={{
-                                backgroundColor: rowData.id === id ? 'orange' : '',
+                                backgroundColor: rowData.id === selectedId ? 'orange' : '',
                                 color: rowData.updated === true ? 'red' : ''
                             }} >
                             {

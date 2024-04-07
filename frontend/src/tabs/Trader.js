@@ -96,7 +96,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers, preview
     function calculateParameters(ask, bid, ratio, points) {
         const sl = [ask - points, bid + points];
         const tp = [ask + (points * ratio), bid - (points * ratio)];
-        handlers.commandPreview( ask, bid, sl, tp );
+        handlers.setCommand(ask, bid, sl, tp);
     }
 
 

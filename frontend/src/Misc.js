@@ -5,14 +5,14 @@ import React from "react";
     const [state, setState] = React.useState(false);
 
     function onToggle() {
-      if (state) {
+      const new_state = !state
+      if (new_state) {
         btnRef.current.className += " active"
       }
       else {
         btnRef.current.className = btnRef.current.className.replace(" active", "")
       }
 
-      const new_state = !state
       setState(new_state)
       if (handler) {
         handler(new_state)
