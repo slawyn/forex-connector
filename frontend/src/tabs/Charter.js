@@ -30,6 +30,13 @@ function customHandleSelection({ seriesIndex, dataPointIndex, w }) {
     )
 }
 
+const areEqual = (prevProps, nextProps) => {
+    if (prevProps.heading === nextProps.heading) {
+      return true                                    // donot re-render
+    }
+    return false                                     // will re-render
+  }
+  
 
 const yFormatter = (digits, value) => {
     if (value !== undefined) {
@@ -85,104 +92,112 @@ const mapLinedata = (symbolrates, value) => {
 };
 
 
-const Charter = ({ customClass, calculator, timeframes, data }) => {
+const Charter = ({ customClass, calculator, timeframes, rates, symbol }) => {
     const refs = React.useRef(timeframes.map(() => React.createRef()));
 
+    /* Update all references */
     refs.current.forEach((reference, index) => {
         const timeframe = timeframes[index]
-        if (timeframe in data.rates && data.symbol.name in data.rates[timeframe]) {
-            const symbolrates = data.rates[timeframe][data.symbol.name]
-            const digits = data.symbol.digits
-            reference.current.chart.updateOptions(
-                {
-                    yaxis: {
-                        labels: {
-                            formatter: (value) => { return yFormatter(digits, value) }
+        if (timeframe in rates && symbol.name in rates[timeframe]) {
+            const symbolrates = rates[timeframe][symbol.name]
+            const digits = symbol.digits
+            if(reference.current) {
+                reference.current.chart.updateOptions({
+                        yaxis: {
+                            labels: {
+                                formatter: (value) => { return yFormatter(digits, value) }
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'candles',
+                                type: 'candlestick',
+                                data: mapChartdata(symbolrates)
+                            },
+                            {
+                                name: 'ask',
+                                type: 'line',
+                                data: mapLinedata(symbolrates, symbol.ask)
+                            },
+                            {
+                                name: 'bid',
+                                type: 'line',
+                                data: mapLinedata(symbolrates, symbol.bid)
+                            },
+                            // {
+                            //     name: 'stop-loss',
+                            //     type: 'line',
+                            //     data: mapLinedata(symbolrates, data.calculator.sl0)
+                            // },
+                            // {
+                            //     name: 'stop-loss1',
+                            //     type: 'line',
+                            //     data: mapLinedata(symbolrates, data.calculator.sl1)
+                            // },
+                            // {
+                            //     name: 'take-profit0',
+                            //     type: 'line',
+                            //     data: mapLinedata(symbolrates, data.calculator.tp0)
+                            // },
+                            // {
+                            //     name: 'take-profit1',
+                            //     type: 'line',
+                            //     data: mapLinedata(symbolrates, data.calculator.tp1)
+                            // }
+                        ],
+                        title: {
+                            align: 'left',
+                            text: `${symbol.name}#${timeframe}`
                         }
-                    },
-                    series: [
-                        {
-                            name: 'candles',
-                            type: 'candlestick',
-                            data: mapChartdata(symbolrates)
-                        },
-                        {
-                            name: 'ask',
-                            type: 'line',
-                            data: mapLinedata(symbolrates, data.symbol.ask)
-                        },
-                        {
-                            name: 'bid',
-                            type: 'line',
-                            data: mapLinedata(symbolrates, data.symbol.bid)
-                        },
-                        {
-                            name: 'stop-loss',
-                            type: 'line',
-                            data: mapLinedata(symbolrates, data.calculator.sl0)
-                        },
-                        {
-                            name: 'stop-loss1',
-                            type: 'line',
-                            data: mapLinedata(symbolrates, data.calculator.sl1)
-                        },
-                        {
-                            name: 'take-profit0',
-                            type: 'line',
-                            data: mapLinedata(symbolrates, data.calculator.tp0)
-                        },
-                        {
-                            name: 'take-profit1',
-                            type: 'line',
-                            data: mapLinedata(symbolrates, data.calculator.tp1)
-                        }
-                    ],
-                    title: {
-                        align: 'left',
-                        text: `${data.symbol.name}#${timeframe}`
                     }
-                }
-            )
-        }
-    }
-    )
-
-    let createdCharts = [];
-    timeframes.forEach((value, index) => {
-
-        const series = []
-        const reference = refs.current[index]
-
-        /** check arrangement */
-        if (createdCharts.length % 2 === 1) {
-            createdCharts.push(
-                <div className="cls100PContainer">
-                    <div className="cls50PContainer">
-                        {createdCharts.pop()}
-                    </div>
-                    <div className="cls50PContainer">
-                        <ReactApexChart ref={reference} key={index} options={options} series={series} />
-                    </div>
-                </div>)
-            createdCharts.push(<></>)
-
-        }
-        else if (timeframes.length === index + 1) {
-            createdCharts.push(
-                <div className="cls100PContainer">
-                    <ReactApexChart ref={reference} key={index} options={options} series={series} />
-                </div>)
-        }
-        else {
-            createdCharts.push(<ReactApexChart ref={reference} key={index} options={options} series={series} />)
+            )}
         }
     })
+
+    /* Create the charts only once, and use updateSeries to update the values */
+    const charts = React.useMemo(() => {
+
+        let _charts = [];
+        timeframes.forEach((value, index) => {
+
+            const series = []
+            const reference = refs.current[index]
+
+            /** rearrange */
+            if (_charts.length % 2 === 1) {
+                _charts.push(
+                    <div className="cls100PContainer">
+                        <div className="cls50PContainer">
+                            {_charts.pop()}
+                        </div>
+                        <div className="cls50PContainer">
+                            <ReactApexChart ref={reference} key={index} options={options} series={series} />
+                        </div>
+                    </div>)
+                _charts.push(<></>)
+
+            }
+            /* 100 % chart */
+            else if (timeframes.length === index + 1) {
+                _charts.push(
+                    <div className="cls100PContainer">
+                        <ReactApexChart ref={reference} key={index} options={options} series={series} />
+                    </div>)
+            }
+            /* 50% chart */
+            else {
+                _charts.push(<ReactApexChart ref={reference} key={index} options={options} series={series} />)
+            }
+        })
+        return _charts;
+    }, [timeframes])
+
     return (
         <>
-            {createdCharts}
+            {charts}
         </>
     )
 }
 
-
-export { Charter as default };
+Charter.whyDidYouRender = true
+export default Charter;

@@ -1,4 +1,3 @@
-import performance from "./../Performance";
 import React from "react";
 import Orders from "./Orders";
 import { Calculator, getCorrespondingClosingType } from "./Calculator";
@@ -90,14 +89,13 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers, preview
             points: points
         }));
 
-        // calculateParameters(symbol.ask, symbol.bid, trade.ratio, points)
     }, [symbol, account.balance, trade.ratio, trade.risk, INITIAL_RISK]);
+    calculateParameters(trade.ask, trade.bid, trade.ratio, trade.points)
 
 
     function calculateParameters(ask, bid, ratio, points) {
         const sl = [ask - points, bid + points];
         const tp = [ask + (points * ratio), bid - (points * ratio)];
-        console.log("CALLED")
         handlers.commandPreview( ask, bid, sl, tp );
     }
 
@@ -256,4 +254,5 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers, preview
     )
 }
 
+Trader.whyDidYouRender = false
 export { Trader as default };

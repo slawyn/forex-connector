@@ -42,8 +42,6 @@ const Orders = ({customClass, headers, data, handlers}) => {
         }));
     };
 
-    performance.z()
-
     return (
         <>
             <Dialog

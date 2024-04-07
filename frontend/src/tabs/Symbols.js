@@ -31,5 +31,5 @@ const Symbols = ({ customClass, headers, data, instrument, handlers }) => {
     );
 };
 
-
+Symbols.whyDidYouRender = true
 export default Symbols;

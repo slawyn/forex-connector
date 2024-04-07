@@ -205,3 +205,59 @@ button {
 .apexcharts-tooltip  {
   background: #ffffff00 !important;
 }
+
+.top-bar{
+  font-size:10pt;
+  font-family: 'Consolas';
+  border-collapse: collapse;
+  width: fit-content;
+  font-style: italic;
+}
+
+.top-bar td {
+  padding-left:20px;
+  padding-right:20px;
+}
+
+.top-bar td:nth-child(even) {
+  background: #26a5ff60;
+}
+
+.top-bar tr:hover {
+  background: rgb(115, 42, 0);
+  cursor: pointer;
+}
+
+.css-button-checkbox{
+  width: auto;
+}
+
+.css-button-checkbox:hover{
+  width: auto;
+  background-color: #effff000;
+  color:white
+}
+
+.css-button-checkbox.active{
+  background-color: #da5a11;
+}
+
+.top-bar-tabs {
+  font-size:10pt;
+  font-family: 'Consolas';
+  border-collapse: collapse;
+  width: fit-content;
+  font-style: italic;
+  margin:0px;
+  padding:0px;
+  display: flex;
+}
+
+.top-bar-tab {
+  cursor: pointer;
+  padding: 0px 10px;
+}
+
+.top-bar-tab:hover {
+  background:#da5a11
+}

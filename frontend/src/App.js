@@ -1,23 +1,29 @@
 import performance from "./Performance";
-import React, { Profiler } from "react";
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import 'react-tabs/style/react-tabs.css';
+import React from "react";
+
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import "./App.css";
+import "./css/App.css";
 import Symbols from "./tabs/Symbols";
 import Trader from "./tabs/Trader";
 import History from "./tabs/History";
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
 import Charter from "./tabs/Charter"
 import TopBar from "./tabs/TopBar";
+import MiscCheckbox from "./Misc";
+
+import SlidingPane from "react-sliding-pane";
+import "react-sliding-pane/dist/react-sliding-pane.css";
+
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import 'react-tabs/style/react-tabs.css';
+
 
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
   },
 });
+
 
 function createPostRequest(body) {
   return {
@@ -38,8 +44,7 @@ function setUpdated(data) {
   return Object.keys(data)
 }
 
-function mergeArray(array)
-{ 
+function mergeArray(array) {
   let merged = {}
   array.forEach((dictionary, index) => {
     merged = mergeDict(merged, dictionary)
@@ -59,36 +64,37 @@ function mergeDict(previous, next) {
   return previous
 }
 
-function Commander ()
-{
+const debugrates = {}
+
+function Commander() {
   const [state, setState] = React.useState()
 }
+const timeFramesSpan = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000), "M5": (60 * 5 * 12 * 20 * 1000) };
+const timeframes = Object.keys(timeFramesSpan)
+const theme = "clsStyle";
 
-function syncChartData(timeframes, symbol, rates, calculator)
-{
-    return {symbol, rates, calculator}
-}
-
-function App() {
+const App = () => {
   /**
    * Terminal data is numbers, and symbol data is per symbol
    */
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
   const [ratesData, setRatesData] = React.useState({});
+  const [instrumentData, setInstrumentData] = React.useState({ selected: { info:{}}, rates: {} })
+
   const [selected, setSelected] = React.useState({ id: "", preview: false, calculator: {} });
   const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
   const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
-  const theme = "clsStyle";
+  const [paneState, setPaneState] = React.useState(false);
 
-  const timeframes = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000), "M5": (60 * 5 * 12 * 20 * 1000) };
- 
+
+
   function fetchTerminalData(force) {
     /**
      * Fetch all Terminal Data
      */
     fetch(`/update?force=${force}`).then((response) =>
-    response.json().then((receivedTerminalData) => {
+      response.json().then((receivedTerminalData) => {
         setTerminalData((previousstate) => ({
           date: receivedTerminalData.date,
           account: receivedTerminalData.account,
@@ -108,7 +114,7 @@ function App() {
      * Fetch rates for instrument
      */
     fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`).then((response) =>
-    response.json().then((receivedRates) => {
+      response.json().then((receivedRates) => {
         setRatesData((previousRates) => (
           mergeDict(previousRates, receivedRates)
         ))
@@ -121,7 +127,7 @@ function App() {
      * Fetch all positional Data
      */
     fetch("/history").then((response) =>
-    response.json().then((receivedPositions) => {
+      response.json().then((receivedPositions) => {
         setPositionData(receivedPositions);
       })
     );
@@ -132,7 +138,7 @@ function App() {
      * Fetch symbol info
      */
     fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
-    response.json().then((receivedSymbol) => {
+      response.json().then((receivedSymbol) => {
         setSymbolData(receivedSymbol);
       })
     );
@@ -142,39 +148,58 @@ function App() {
     /**
     * Fetch symbol info and rates
     */
-   const base = new Date().getTime()
-   const promises = Object.entries(timeframes).map(([key, value]) => {
+    const base = new Date().getTime()
+    const promises = Object.entries(timeFramesSpan).map(async ([key, value]) => {
       let start = Math.floor(base - (value))
       const end = Math.floor(base)
 
+      /* If some rate data has already been fetched previously */
       if (key in ratesData && (instrument in ratesData[key])) {
-        /* If some data is available in the buffer */
         const rates = ratesData[key][instrument];
         const keys = Object.keys(rates)
         start = keys[keys.length - 1]
       }
-      return fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${key}`).then((response) =>response.json());
-   });
+      return fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${key}`).then((response) => response.json());
+    });
 
-   /* Fetch and merge*/
-   Promise.all(promises).then(receivedRatesData => {
-      setRatesData(previousRatesData => (mergeDict(previousRatesData, mergeArray(receivedRatesData))))
+    /* Fetch and merge*/
+    Promise.all(promises).then(receivedRatesData => {
+
+      /* Additionally fetch selected instrument */
+        fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
+        response.json().then((receivedSymbolData) => {
+          setInstrumentData(previousInstrumentdata => ({
+            rates: mergeDict(previousInstrumentdata.rates, mergeArray(receivedRatesData)),
+            selected: receivedSymbolData
+          }))
+        }))
+
+        setRatesData(previousRatesData => (mergeDict(previousRatesData, mergeArray(receivedRatesData))))
     })
-   
 
-  fetchSymbol(instrument)
- };
+    // Promise.all(promises).then(receivedRatesData => {
+    //   setInstrumentData(previousInstrumentdata => ({
+    //     rates: mergeDict(previousInstrumentdata.rates, mergeArray(receivedRatesData)),
+    //     symbol: {}
+    //   }
+    //   ))
+    //   setRatesData(previousRatesData => (mergeDict(previousRatesData, mergeArray(receivedRatesData))))
+    // })
+
+
+    fetchSymbol(instrument)
+  };
 
   function _transmitCommand(command, data) {
     const requestOptions = createPostRequest(JSON.stringify({ 'command': command, data: data }))
     fetch('/command', requestOptions).then(response =>
-      response.json()).then(((receivedSymbolData) => {}));
+      response.json()).then(((receivedSymbolData) => { }));
   };
 
   function transmitSavePositions(selected) {
     const requestOptions = createPostRequest("")
     fetch('/save', requestOptions).then(response =>
-      response.json()).then(((receivedSymbolData) => {}));
+      response.json()).then(((receivedSymbolData) => { }));
   };
 
   function requestTrade(request) {
@@ -191,13 +216,11 @@ function App() {
       }));
   };
 
-  function setControl({preview})
-  {
-    setSelected((previous) => (mergeDict(previous, { preview: preview }))) 
+  function toggleSync(preview) {
+    setSelected((previous) => (mergeDict(previous, { preview: preview })))
   }
 
   function commandPreview(ask, bid, sl, tp) {
-    console.log(ask,bid)
     setSelected((previous) => (
       mergeDict(
         previous,
@@ -219,6 +242,7 @@ function App() {
     }
   }
 
+
   React.useEffect(() => {
     /* Mount */
     const interval = setInterval(() => {
@@ -237,13 +261,15 @@ function App() {
         <CssBaseline />
         <Tabs>
           <div className="clsHeaderContainer">
-            <TabList>
-              <Tab>Trading</Tab>
-              <Tab>History</Tab>
+            <TabList className="top-bar-tabs">
+              <Tab className="top-bar-tab">Trading</Tab>
+              <Tab className="top-bar-tab">History</Tab>
             </TabList>
+            <MiscCheckbox customClass={"css-button-checkbox"} text="Sync" handler={toggleSync} />
             <button className={"css-blue-button"} onClick={() => { fetchTerminalData(true) }}>Get Symbols</button>
+            <button className={"css-blue-button"} onClick={() => setPaneState(true)}>Open Pane</button>
             <TopBar
-              customClass={theme}
+              customClass="top-bar"
               company={terminalData.account.company}
               balance={terminalData.account.balance}
               currency={terminalData.account.currency}
@@ -254,13 +280,27 @@ function App() {
               date={terminalData.date}
               error={errorData.error}
             />
-
-            <FormControlLabel
-              control={<Checkbox onChange={(e) => { setControl({preview: e.target.checked}) }} />}
-              label="Control MT5" />
-              
           </div>
           <TabPanel>
+
+            <SlidingPane
+              customClass={theme}
+              overlayClassName={theme}
+              isOpen={paneState}
+              title="Hey, it is optional pane title.  I can be React component too."
+              subtitle="Optional subtitle."
+              onRequestClose={() => { setPaneState(false) }}
+            >
+              <ThemeProvider theme={darkTheme}>
+                <CssBaseline />
+                <History
+                  customClass={theme}
+                  handlers={{ getHistory: fetchHistory, saveHistory: transmitSavePositions }}
+                  headers={positionData.headers}
+                  data={positionData.positions}
+                />
+              </ThemeProvider>
+            </SlidingPane>
             <div>
               <div className="cls100PContainer">
                 <Trader customClass={theme}
@@ -275,10 +315,10 @@ function App() {
                 <div className="cls50PContainer">
                   <Charter
                     customClass={theme}
-                    timeframes={Object.keys(timeframes)}
+                    timeframes={timeframes}
                     symbol={symbolData.info}
-                    data={syncChartData(timeframes, symbolData.info, ratesData, selected.calculator)
-                    }
+                    // rates={debugrates}
+                    rates={ratesData}
                   />
                 </div>
                 <div className="cls50PContainer">
@@ -288,7 +328,7 @@ function App() {
                     headers={terminalData.headers}
                     data={mapTerminalData(terminalData.instruments, terminalData.updates)}
                     instrument={symbolData.info.name}
-                    handlers={{ setId: fetchAll}}
+                    handlers={{ setId: fetchAll }}
                   />
                 </div>
               </div>
@@ -297,15 +337,17 @@ function App() {
           <TabPanel>
             <History
               customClass={theme}
-              handlers={{ getHistory:fetchHistory, saveHistory: transmitSavePositions }}
+              handlers={{ getHistory: fetchHistory, saveHistory: transmitSavePositions }}
               headers={positionData.headers}
               data={positionData.positions}
             />
           </TabPanel>
+          {/* </Tabs> */}
         </Tabs>
       </ThemeProvider>
     </div>
   );
 }
 
+App.whyDidYouRender = false
 export default App;
