@@ -173,7 +173,6 @@ const App = () => {
   };
 
   function setCommand(props) {
-    console.log(props)
     commander.setCommand(props)
   }
 

@@ -53,14 +53,27 @@ const options = {
     colors: ["#008000", "#00BBFF80", "#FFFF00", '#fc03ec', '#fc03ec', '#03fce7', '#03fce7'],
     legend: { show: false },
     xaxis: { type: 'datetime' },
+    series: [
+        {
+            name: 'candles',
+            type: 'candlestick',
+            data: []
+        },
+        {
+            name: 'ask',
+            type: 'line',
+            data: []
+        },
+        {
+            name: 'bid',
+            type: 'line',
+            data: []
+        }],
     fill: {
         type: ['gradient']
     },
     title: {
         align: 'left',
-    },
-    chart: {
-        type: 'line'
     },
     stroke: {
         width: [1, 2, 2, 1, 1, 1, 1],
@@ -78,6 +91,28 @@ const options = {
             defaultHandleSelection
         ]
     },
+    markers:{
+        size:0
+    },
+    dataLabels : {
+        enabled: false
+    },
+    chart: {
+        type: 'line',
+        animations: {
+            enabled: false,
+            easing: 'linear',
+            speed: 800,
+            animateGradually: {
+                enabled: false,
+                delay: 0
+            },
+            dynamicAnimation: {
+                enabled: true,
+                speed: 350
+            }
+        }
+    }
 };
 
 const mapChartdata = (symbolrates) => {
@@ -93,11 +128,10 @@ const mapLinedata = (symbolrates, value) => {
 };
 
 /* Global varables */
+// const TIMEFRAMES = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000)};
 const TIMEFRAMES = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000), "M5": (60 * 5 * 12 * 20 * 1000) };
-let rates = {}
-let previousInstrument = ''
 
-async function fetchRates(instrument, handler) {
+async function fetchRates(instrument, rates, handler) {
     let updated = []
 
     /* Gather promises */
@@ -115,7 +149,7 @@ async function fetchRates(instrument, handler) {
     });
 
     Promise.all(promises).then(receivedRatesData => {
-        
+
         /* Execute and merge data */
         const mergedUpdates = mergeArray(receivedRatesData)
         const mergedFull = mergeDict(rates, mergedUpdates)
@@ -130,8 +164,7 @@ async function fetchRates(instrument, handler) {
             }
         }
 
-        rates = mergedFull;
-        handler(updated)
+        handler(mergedFull, updated.length > 0)
     })
 }
 
@@ -140,87 +173,110 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
     console.log("Rendering Charter")
 
     const refs = React.useRef(Object.entries(TIMEFRAMES).map(() => React.createRef()));
-    const [show, setShow] = React.useState({ updated: []})
+    const localInstrument = React.useRef('')
+    const localSymbol = React.useRef({})
+    const rates = React.useRef({})
+    const interval = React.useRef(null)
 
-    /* */
-    function updateRates(instrument) {
-        if (instrument !== previousInstrument) {
-            previousInstrument = instrument
-
-            fetchRates(instrument, (updated) => {
-                setShow({ updated: updated })
-            })
-        }
+    /* instrument changed */
+    if (instrument !== localInstrument.current) {
+        localInstrument.current = instrument
+        console.log("       :: Instrument ", localInstrument.current)
+        updateChart()
+        fetchRates(localInstrument.current, rates, (newRates, updated) => {
+            rates.current = newRates
+            if(updated)
+            {
+                updateChart()
+            }
+        })
     }
 
-    updateRates(instrument)
+    if (localSymbol.current !== symbol) {
+        localSymbol.current = symbol
+        console.log("       :: Symbol ", localSymbol.current)
 
-
-    /* Update all references */
-    refs.current.forEach((reference, _index) => {
-        if (reference.current) {
-            const timeframe = Object.keys(TIMEFRAMES)[_index]
-            if (timeframe in rates && instrument in rates[timeframe]) {
-
-                const currentchart = rates[timeframe][instrument]
-                const digits = symbol.digits
-
-                reference.current.chart.updateOptions({
-                    yaxis: {
-                        labels: {
-                            formatter: (value) => { return yFormatter(digits, value) }
+        /* Update all ask and bid references */
+        refs.current.forEach((reference, _index) => {
+            if (reference.current) {
+                const timeframe = Object.keys(TIMEFRAMES)[_index]
+                if (timeframe in rates && localInstrument.current in rates[timeframe]) {
+                    const currentchart = rates[timeframe][localInstrument.current]
+                    reference.current.chart.updateOptions({
+                        title: {
+                            align: 'left',
+                            text: `${instrument}#${timeframe}`
                         }
-                    },
-                    series: [
-                        {
-                            name: 'candles',
-                            type: 'candlestick',
-                            data: mapChartdata(currentchart)
+                    })
+                    // reference.current.chart.updateSeries(
+                    //     [
+                    //         {
+                    //             name: 'ask',
+                    //             type: 'line',
+                    //             data: mapLinedata(currentchart, symbol.ask)
+                    //         },
+                    //         {
+                    //             name: 'bid',
+                    //             type: 'line',
+                    //             data: mapLinedata(currentchart, symbol.bid)
+                    //         },
+                    //     ]
+                    // )
+                    const digits = symbol.digits
+                    reference.current.chart.updateOptions({
+                        yaxis: {
+                            labels: {
+                                formatter: (value) => { return yFormatter(digits, value) }
+                            }
                         },
-                        {
-                            name: 'ask',
-                            type: 'line',
-                            data: mapLinedata(currentchart, symbol.ask)
-                        },
-                        {
-                            name: 'bid',
-                            type: 'line',
-                            data: mapLinedata(currentchart, symbol.bid)
-                        },
-                        // {
-                        //     name: 'stop-loss',
-                        //     type: 'line',
-                        //     data: mapLinedata(symbolrates, data.calculator.sl0)
-                        // },
-                        // {
-                        //     name: 'stop-loss1',
-                        //     type: 'line',
-                        //     data: mapLinedata(symbolrates, data.calculator.sl1)
-                        // },
-                        // {
-                        //     name: 'take-profit0',
-                        //     type: 'line',
-                        //     data: mapLinedata(symbolrates, data.calculator.tp0)
-                        // },
-                        // {
-                        //     name: 'take-profit1',
-                        //     type: 'line',
-                        //     data: mapLinedata(symbolrates, data.calculator.tp1)
-                        // }
-                    ],
-                    title: {
-                        align: 'left',
-                        text: `${instrument}#${timeframe}`
-                    }
-                })
+                    })
+                }
             }
-        }
-    })
+        })
+    }
+
+    function updateChart() {
+
+        /* Update all references */
+        refs.current.forEach((reference, _index) => {
+            if (reference.current) {
+                const timeframe = Object.keys(TIMEFRAMES)[_index]
+
+                /* Draw if chart is available */
+                if (timeframe in rates && localInstrument.current in rates[timeframe] && Object.keys(rates[timeframe][localInstrument.current] > 0)) {
+                    console.log("       :: Drawing Chart", timeframe, localInstrument.current)
+
+                    const currentchart = rates[timeframe][localInstrument.current]
+                    reference.current.chart.updateSeries(
+                        [
+                            {
+                                name: 'candles',
+                                type: 'candlestick',
+                                data: mapChartdata(currentchart)
+                            },
+                        ]
+                    )
+                }
+            }
+        })
+    }
 
 
 
     /* Create the charts only once, and use updateSeries to update the values */
     const charts = React.useMemo(() => {
+        interval.current = setInterval(() => {
+            if (localInstrument.current !== '') {
+                fetchRates(localInstrument.current, rates, (newRates, updated) => {
+                    rates.current = newRates
+                    if(updated)
+                    {
+                        updateChart()
+                    }
+                })
+            }
+        }, 2000)
+
 
         let _charts = [];
         refs.current.forEach((value, index) => {

@@ -25,3 +25,9 @@ class Config:
 
     def get_export_folder(self):
         return self.dictionary["local"]["dir"]
+    
+    def get_metatrader_configuration(self):
+        return self.dictionary["metatrader"]["configuration"]
+    
+    def get_metatrader_process(self): 
+        return self.dictionary["metatrader"]["process"]

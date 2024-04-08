@@ -59,13 +59,18 @@ class Symbol:
         # calculate point value, does not always work
         self.point_value = (self.tick_value * sym.point)/self.step
 
+        self.price_change = ((self.bid-self.session_open)/(self.session_open+0.00000001))*100.0
+
         ##
         self.point_value = 1
 
         # Pips
         if Symbol.EXCEPTED_FIXED in self.currency:
             self.point_value /= 100.0
-    
+
+    def get_price_change(self):
+        return self.price_change
+
     def get_digits(self):
         return self.digits
     

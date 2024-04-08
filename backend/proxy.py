@@ -45,11 +45,12 @@ class App:
     COL_AVAIL = 'ATR.LEFT[%]'
     COL_SIGNAL = 'SIGNAL[%]'
     COL_UPDATE = 'UPDATE'
-    COLUMNS = [COL_INSTRUMENT, COL_BASE, COL_DESCRIPTION, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_SIGNAL, COL_UPDATE]
+    COL_CHANGE = 'CHANGE[%]'
+    COLUMNS = [COL_INSTRUMENT, COL_BASE, COL_DESCRIPTION, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_SIGNAL, COL_UPDATE, COL_CHANGE]
 
     def __init__(self, config):
         self.config = config
-        self.trader = Trader()
+        self.trader = Trader(config.get_metatrader_configuration(), config.get_metatrader_process())
         self.commander = Commander()
         self._set_filter("currency")
 
@@ -182,7 +183,8 @@ class App:
                                     "%-2.2f" % (ratio),
                                     "%-2.2f" % abs(atr_reserve),
                                     formatted_signal,
-                                    timer]
+                                    timer,
+                                    f"%2.2f" % sym.get_price_change()]
 
         return App.COLUMNS,  react_data
 

@@ -9,7 +9,7 @@ from trader.symbol import Symbol
 from trader.request import TradeRequest
 from trader.trade_codes import ERROR_CODES
 from helpers import *
-
+import subprocess
 
 class Trader:
     TIMEFRAMES = ["M1", "M2", "M3", "M4", "M5", "M6", "M10", "M12", "M20", "M30", "H1", "H2", "H3", "H4", "H6", "H8", "H12", "D1", "W1", "MN1"]
@@ -22,7 +22,12 @@ class Trader:
         description: Used for communicating over the connector with mt5
     '''
 
-    def __init__(self):
+    def __init__(self, mt_config, mt_process):
+        cmd = [mt_process, f"/config:{mt_config}"]
+        
+        log(cmd)
+        p = subprocess.Popen(cmd, start_new_session=True)
+
         # 1. Establish connection to the MetaTrader 5 terminal
         if self.reinit():
             self.ratio = 1

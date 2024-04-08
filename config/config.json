@@ -8,5 +8,9 @@
 	},
 	"local": {
 		"dir": "frontend/public/trades"
+	},
+	"metatrader": {
+		"configuration": "config/start.ini",
+		"process": "C:/Program Files/FxPro - MetaTrader 5/terminal64.exe"
 	}
 }

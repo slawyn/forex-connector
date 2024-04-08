@@ -1,17 +1,4 @@
 @echo off
-set MT5_PATH=C:\Program Files\FxPro - MetaTrader 5\terminal64.exe
-set MT5_CONFIG="%CD%\config\start.ini"
-set MT5_NAME=terminal64.exe
-
-
-:: Start mt5
-tasklist | find /I "%MT5_NAME%" >NUL
-if "%ERRORLEVEL%"=="0" (
-    echo %MT5_NAME% " already running, killing it!"
-    taskkill /IM "%MT5_NAME%" /F
-)
-echo   "%MT5_NAME%" "%MT5_PATH%" /config:%MT5_CONFIG%
-start "%MT5_NAME%" "%MT5_PATH%" /config:%MT5_CONFIG%
 
 
 :: Start flask
