@@ -30,7 +30,6 @@ button {
 .css-blue-button {
   background-color: rgb(0, 187, 255);
   width: auto;
-  float: right;
 }
 
 .clsOrangebutton {
@@ -58,12 +57,16 @@ button {
   border: 2px;
   border-color: aliceblue;
 }
+.clsStyle td:nth-child(1)
+{
+  font-weight: bold;
+  border: 1px solid rgb(136, 150, 244);
+}
 
-.clsStyle td:nth-child(1),
-.clsStyle td:nth-child(2),
+
 .clsStyle td:nth-child(8),
 .clsStyle td:nth-child(9){
-  border: 2px solid rgb(25, 131, 81);
+  border: 1px solid rgb(19, 169, 199);
 }
 
 .clsStyle tr:nth-child(even) {
@@ -116,16 +119,17 @@ button {
   margin: 0px;
   padding: 0px;
   overflow-y: auto;
-  width: fit-content;
-  width: 30%
+  min-width: fit-content;
+}
+.clsGlobalContainer {
+  display: flex;
 }
 
 .clsImageContainer {
-  display: inline-block;
   vertical-align: top;
   margin: 0px;
   padding: 0px;
-  width: 70%;
+  max-width: fit-content;
 }
 
 .clsTraderContainer {
@@ -260,4 +264,15 @@ button {
 
 .top-bar-tab:hover {
   background:#da5a11
+}
+
+.property-fullsize
+{
+  width:100%;
+  height:100%;
+}
+
+.property-fitcontent
+{
+  width:fit-content;
 }

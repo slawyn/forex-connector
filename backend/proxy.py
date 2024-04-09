@@ -278,8 +278,7 @@ def trade():
     takeprofit_sell = data.get("takeprofit_sell")
     comment = data.get("comment")
     result = app.trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
-
-    return {"error": result[1], "text": result[0]}
+    return {"error": result[0], "text": result[1]}
 
 
 

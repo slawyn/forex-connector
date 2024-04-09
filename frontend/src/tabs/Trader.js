@@ -228,7 +228,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers, preview
 
     return (
         <>
-            <div className="cls50PContainer">
+            <nav className="cls50PContainer">
                 <Calculator customClass="clsBorderless"
                     trade={trade}
                     handlers={{
@@ -242,14 +242,14 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers, preview
                         handleBidChange
                     }}
                 />
-            </div>
-            <div className="cls50PContainer">
+            </nav>
+            <nav className="cls50PContainer">
                 <Orders customClass={customClass}
                     headers={headers}
                     data={data}
                     handlers={{ handleCloseTrade }}
                 />
-            </div>
+            </nav>
         </>
     )
 }

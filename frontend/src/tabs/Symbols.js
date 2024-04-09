@@ -14,7 +14,7 @@ const Symbols = ({ customClass, headers, data, handlers }) => {
         setSortConfig({ key: sortkey, direction: direction });
     }
     return (
-        <div>
+        <>
             <table className={customClass}>
                 <TableHeads
                     className={customClass}
@@ -26,7 +26,7 @@ const Symbols = ({ customClass, headers, data, handlers }) => {
                     sortConfig={sortConfig}
                     setId={handlers.setId}/>
             </table>
-        </div >
+        </>
     );
 };
 

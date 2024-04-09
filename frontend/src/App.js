@@ -17,7 +17,6 @@ import "react-sliding-pane/dist/react-sliding-pane.css";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 
-import { mergeDict } from "./utils";
 
 const darkTheme = createTheme({
   palette: {
@@ -37,8 +36,15 @@ function createPostRequest(body) {
   };
 }
 
+function helperChange(value, updates, key) {
+  if(updates.includes(key)) {
+    return value[value.length-1]>=0 ? 'positive':'negative'
+  }
+  return ''
+}
+
 function mapTerminalData(data, updates) {
-  return Object.entries(data).map(([key, value]) => { return { id: key, items: value, updated: updates.includes(key) } });
+  return Object.entries(data).map(([key, value]) => { return { id: key, items: value, updated: updates.includes(key), change: helperChange(value, updates ,key) } });
 }
 
 function setUpdated(data) {
@@ -97,7 +103,7 @@ const App = () => {
    * Terminal data is numbers, and symbol data is per symbol
    */
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
-  const [selected, setSelected] = React.useState({ instrument: "", preview: false, calculator: {} });
+  const [selected, setSelected] = React.useState({ instrument: '',  calculator: {} });
   const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
   const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
@@ -141,7 +147,7 @@ const App = () => {
     /**
      * Fetch symbol info
      */
-    setSelected({instrument: instrument})
+    setSelected(previousstate => ({instrument: instrument}))
     setCommand({instrument: instrument})
 
     fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
@@ -189,11 +195,11 @@ const App = () => {
 
   return (
 
-    <div className="App">
+    <main className="App">
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
         <Tabs>
-          <div className="clsHeaderContainer">
+          <nav className="clsHeaderContainer">
             <TabList className="top-bar-tabs">
               <Tab className="top-bar-tab">Trading</Tab>
               <Tab className="top-bar-tab">History</Tab>
@@ -213,7 +219,7 @@ const App = () => {
               date={terminalData.date}
               error={errorData.error}
             />
-          </div>
+          </nav>
           <TabPanel>
 
             <SlidingPane
@@ -228,25 +234,26 @@ const App = () => {
                 <CssBaseline />
               </ThemeProvider>
             </SlidingPane>
-            <div>
-              <div className="cls100PContainer">
+            <nav>
+              <nav className="cls100PContainer">
                 <Trader customClass={theme}
                   account={terminalData.account}
                   symbol={symbolData.info}
                   headers={terminalData.op_headers}
                   data={mapTerminalData(terminalData.open, terminalData.updates)}
-                  handlers={{ requestTrade: requestTrade, setCommand: (ask, bid, sl, tp) => setCommand({ask, bid, sl, tp}) }}
+                  handlers={{ requestTrade: requestTrade, setCommand: (ask, bid, sl, tp) => {  setCommand({ask, bid, sl, tp}); /* setSelected({calculator: {ask, bid, sl, tp }});  */ } }}
                 />
-              </div>
-              <div className="cls100PContainer">
-                <div className="cls50PContainer">
+              </nav>
+              <nav className="cls100PContainer">
+                <nav className="cls50PContainer">
                   <Charter
                     customClass={theme}
                     symbol={symbolData.info}
                     instrument={selected.instrument}
+                    // calculator={selected.calculator}
                   />
-                </div>
-                <div className="cls50PContainer">
+                </nav>
+                <nav className="cls50PContainer">
                   <Symbols
                     customClass={theme}
                     account={terminalData.account}
@@ -254,9 +261,9 @@ const App = () => {
                     data={mapTerminalData(terminalData.instruments, terminalData.updates)}
                     handlers={{ setId: fetchSymbol }}
                   />
-                </div>
-              </div>
-            </div>
+                </nav>
+              </nav>
+            </nav>
           </TabPanel>
           <TabPanel>
             <History
@@ -269,7 +276,7 @@ const App = () => {
           {/* </Tabs> */}
         </Tabs>
       </ThemeProvider>
-    </div>
+    </main>
   );
 }
 

@@ -33,7 +33,7 @@ const Calculator = ({ customClass, trade, handlers }) => {
                         <th className={customClass}>Tick Size: {trade.tick_size}</th>
                         <th className={customClass} colSpan="1">Tick Value: {trade.tick_value}</th>
                         <th>
-                            <button className={"css-blue-button"} onClick={() => { handlers.handleOpenTrade() }}>{"Execute Trade"} </button>
+                            <button className={"css-blue-button property-fullsize"} onClick={() => { handlers.handleOpenTrade() }}>{"Execute Trade"} </button>
                         </th>
                         <th></th>
                     </tr>

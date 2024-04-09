@@ -14,20 +14,20 @@ function customHandleSelection({ seriesIndex, dataPointIndex, w }) {
     var l = w.globals.seriesCandleL[seriesIndex][dataPointIndex]
     var c = w.globals.seriesCandleC[seriesIndex][dataPointIndex]
     return (
-        '<div class="apexcharts-tooltip-candlestick">' +
-        '<div>Open: <span class="value">' +
+        '<nav class="apexcharts-tooltip-candlestick">' +
+        '<nav>Open: <span class="value">' +
         o +
-        '</span></div>' +
-        '<div>High: <span class="value">' +
+        '</span></nav>' +
+        '<nav>High: <span class="value">' +
         h +
-        '</span></div>' +
-        '<div>Low: <span class="value">' +
+        '</span></nav>' +
+        '<nav>Low: <span class="value">' +
         l +
-        '</span></div>' +
-        '<div>Close: <span class="value">' +
+        '</span></nav>' +
+        '<nav>Close: <span class="value">' +
         c +
-        '</span></div>' +
-        '</div>'
+        '</span></nav>' +
+        '</nav>'
     )
 }
 
@@ -38,37 +38,12 @@ const areEqual = (prevProps, nextProps) => {
     return false                                     // will re-render
 }
 
-
-const yFormatter = (digits, value) => {
-    if (value !== undefined) {
-        // return value.toFixed(digits)
-        return value
-    }
-    return ''
-}
-
-
 const options = {
     plugins: { tooltip: {} },
     colors: ["#008000", "#00BBFF80", "#FFFF00", '#fc03ec', '#fc03ec', '#03fce7', '#03fce7'],
     legend: { show: false },
     xaxis: { type: 'datetime' },
-    series: [
-        {
-            name: 'candles',
-            type: 'candlestick',
-            data: []
-        },
-        {
-            name: 'ask',
-            type: 'line',
-            data: []
-        },
-        {
-            name: 'bid',
-            type: 'line',
-            data: []
-        }],
+    series: [],
     fill: {
         type: ['gradient']
     },
@@ -91,10 +66,10 @@ const options = {
             defaultHandleSelection
         ]
     },
-    markers:{
-        size:0
+    markers: {
+        size: 0
     },
-    dataLabels : {
+    dataLabels: {
         enabled: false
     },
     chart: {
@@ -115,20 +90,20 @@ const options = {
     }
 };
 
-const mapChartdata = (symbolrates) => {
+const formatChartData = (symbolrates) => {
     return Object.entries(symbolrates).map(([timestamp, object]) => { return { x: new Date(parseInt(timestamp)), y: [object.open, object.high, object.low, object.close] } })
 };
 
-const mapLinedata = (symbolrates, value) => {
-    if (Object.keys(symbolrates).length > 0 && value !== undefined) {
+const formatLineData = (symbolrates, value) => {
+    if(Object.keys(symbolrates).length>0)
+    {
         const recentKey = Object.keys(symbolrates)[Object.keys(symbolrates).length - 1];
         return [{ x: new Date(parseInt(Object.keys(symbolrates)[0])), y: value }, { x: new Date(parseInt(recentKey)), y: value }]
     }
     return []
 };
 
-/* Global varables */
-// const TIMEFRAMES = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000)};
+/* Globals */
 const TIMEFRAMES = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000), "M5": (60 * 5 * 12 * 20 * 1000) };
 
 async function fetchRates(instrument, rates, handler) {
@@ -170,67 +145,53 @@ async function fetchRates(instrument, rates, handler) {
 
 
 const Charter = ({ customClass, calculator, symbol, instrument }) => {
-    console.log("Rendering Charter")
+    // console.log("Rendering Charter")
 
     const refs = React.useRef(Object.entries(TIMEFRAMES).map(() => React.createRef()));
     const localInstrument = React.useRef('')
     const localSymbol = React.useRef({})
     const rates = React.useRef({})
+    const localCalculator = React.useRef({sl:[],tp:[]})
     const interval = React.useRef(null)
 
     /* instrument changed */
     if (instrument !== localInstrument.current) {
         localInstrument.current = instrument
-        console.log("       :: Instrument ", localInstrument.current)
+        // console.log("       :: Instrument ", localInstrument.current)
         updateChart()
         fetchRates(localInstrument.current, rates, (newRates, updated) => {
             rates.current = newRates
-            if(updated)
-            {
+            if (updated) {
                 updateChart()
             }
         })
     }
 
+    if(localCalculator.current !== calculator) {
+        localCalculator.current = calculator
+        updateChart()
+    }
+
     if (localSymbol.current !== symbol) {
         localSymbol.current = symbol
-        console.log("       :: Symbol ", localSymbol.current)
+        // console.log("       :: Symbol ", localSymbol.current)
 
         /* Update all ask and bid references */
         refs.current.forEach((reference, _index) => {
             if (reference.current) {
                 const timeframe = Object.keys(TIMEFRAMES)[_index]
-                if (timeframe in rates && localInstrument.current in rates[timeframe]) {
-                    const currentchart = rates[timeframe][localInstrument.current]
-                    reference.current.chart.updateOptions({
-                        title: {
-                            align: 'left',
-                            text: `${instrument}#${timeframe}`
+                const digits = localSymbol.digits
+                reference.current.chart.updateOptions({
+                    yaxis: {
+                        labels: {
+                            formatter: (value) => { return value.toFixed(digits)}
                         }
-                    })
-                    // reference.current.chart.updateSeries(
-                    //     [
-                    //         {
-                    //             name: 'ask',
-                    //             type: 'line',
-                    //             data: mapLinedata(currentchart, symbol.ask)
-                    //         },
-                    //         {
-                    //             name: 'bid',
-                    //             type: 'line',
-                    //             data: mapLinedata(currentchart, symbol.bid)
-                    //         },
-                    //     ]
-                    // )
-                    const digits = symbol.digits
-                    reference.current.chart.updateOptions({
-                        yaxis: {
-                            labels: {
-                                formatter: (value) => { return yFormatter(digits, value) }
-                            }
-                        },
-                    })
-                }
+                    },
+                    title: {
+                        align: 'left',
+                        text: `${instrument}#${timeframe}`
+                    }
+                })
             }
         })
     }
@@ -244,7 +205,7 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
 
                 /* Draw if chart is available */
                 if (timeframe in rates && localInstrument.current in rates[timeframe] && Object.keys(rates[timeframe][localInstrument.current] > 0)) {
-                    console.log("       :: Drawing Chart", timeframe, localInstrument.current)
+                    // console.log("       :: Drawing Chart", timeframe, localInstrument.current, localSymbol)
 
                     const currentchart = rates[timeframe][localInstrument.current]
                     reference.current.chart.updateSeries(
@@ -252,8 +213,23 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
                             {
                                 name: 'candles',
                                 type: 'candlestick',
-                                data: mapChartdata(currentchart)
+                                data: formatChartData(currentchart)
                             },
+                            {
+                                name: 'ask',
+                                type: 'line',
+                                data: formatLineData(currentchart, localSymbol.current.ask)
+                            },
+                            {
+                                name: 'bid',
+                                type: 'line',
+                                data: formatLineData(currentchart, localSymbol.current.bid)
+                            },
+                            // {
+                            //     name: 'sl0',
+                            //     type: 'line',
+                            //     data: formatLineData(currentchart, localCalculator.current.sl[0])
+                            // }
                         ]
                     )
                 }
@@ -265,17 +241,16 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
 
     /* Create the charts only once, and use updateSeries to update the values */
     const charts = React.useMemo(() => {
-        interval.current = setInterval(() => {
-            if (localInstrument.current !== '') {
-                fetchRates(localInstrument.current, rates, (newRates, updated) => {
-                    rates.current = newRates
-                    if(updated)
-                    {
-                        updateChart()
-                    }
-                })
-            }
-        }, 2000)
+        // interval.current = setInterval(() => {
+        //     if (localInstrument.current !== '') {
+        //         fetchRates(localInstrument.current, rates, (newRates, updated) => {
+        //             rates.current = newRates
+        //             if (updated) {
+        //                 updateChart()
+        //             }
+        //         })
+        //     }
+        // }, 3000)
 
 
         let _charts = [];
@@ -287,23 +262,23 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
             /** rearrange */
             if (_charts.length % 2 === 1) {
                 _charts.push(
-                    <div className="cls100PContainer">
-                        <div className="cls50PContainer">
+                    <nav className="cls100PContainer">
+                        <nav className="cls50PContainer">
                             {_charts.pop()}
-                        </div>
-                        <div className="cls50PContainer">
+                        </nav>
+                        <nav className="cls50PContainer">
                             <ReactApexChart ref={reference} key={index} options={options} series={series} />
-                        </div>
-                    </div>)
+                        </nav>
+                    </nav>)
                 _charts.push(<></>)
 
             }
             /* 100 % chart */
             else if (refs.current.length === index + 1) {
                 _charts.push(
-                    <div className="cls100PContainer">
+                    <nav className="cls100PContainer">
                         <ReactApexChart ref={reference} key={index} options={options} series={series} />
-                    </div>)
+                    </nav>)
             }
             /* 50% chart */
             else {

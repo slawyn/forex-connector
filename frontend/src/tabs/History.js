@@ -17,8 +17,8 @@ const History = ({ customClass, handlers, headers, data }) => {
                 style={{ width: "fit-content" }}>
                 Fetch Trades
             </button>
-            <div className="clsGlobalContainer" >
-                <div className="clsHistoryContainer" >
+            <nav className="clsGlobalContainer" >
+                <nav className="clsHistoryContainer" >
                     <table className={customClass} >
                         <thead>
                             <tr>
@@ -46,11 +46,11 @@ const History = ({ customClass, handlers, headers, data }) => {
                             }
                         </tbody>
                     </table>
-                </div>
-                <div className="clsImageContainer" >
-                    <img src={`trades/${imgData}.png`} styles={{ width: "100%" }}></img>
-                </div>
-            </div>
+                </nav>
+                <nav className="clsImageContainer" >
+                    <img src={`trades/${imgData}.png`} className="property-fitcontent"></img>
+                </nav>
+            </nav>
         </>
     );
 };

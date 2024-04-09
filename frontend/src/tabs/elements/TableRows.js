@@ -42,7 +42,7 @@ const TableRows = ({ data, sortConfig, className, setId}) => {
                             className={className}
                             style={{
                                 backgroundColor: rowData.id === selectedId ? 'orange' : '',
-                                color: rowData.updated === true ? 'red' : ''
+                                color: rowData.change === 'positive' ? 'green' : rowData.change === 'negative' ? 'red' :''
                             }} >
                             {
                                 /** Map row line */
