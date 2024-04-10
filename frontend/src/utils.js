@@ -18,3 +18,14 @@ export function mergeDict(previous, next) {
     return previous
 }
 
+export function createPostRequest(body) {
+    return {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer my-token',
+      },
+      body: body
+    };
+  }
+  

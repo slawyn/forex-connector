@@ -1,6 +1,7 @@
 import React from "react";
 import Orders from "./Orders";
 import { Calculator, getCorrespondingClosingType } from "./Calculator";
+import { createPostRequest } from "../utils";
 
 function round(number, digits) {
     const d = Math.pow(10, digits);
@@ -30,7 +31,7 @@ function calculateInitialRisk(ask, bid, riskAmount, contractSize, pointValue, vo
     return initialRiskLot
 }
 
-const Trader = ({ customClass, account, symbol, headers, data, handlers, preview }) => {
+const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
     const INITIAL_RISK_PERCENTAGE = 1.00
     const INITIAL_RISK = INITIAL_RISK_PERCENTAGE / 100.0
     const [trade, setTrade] = React.useState({
@@ -53,6 +54,20 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers, preview
         tick_value: 0,
         conversion: false
     });
+
+    function requestTrade(request) {
+        const requestOptions = createPostRequest(JSON.stringify(request))
+        fetch('/trade', requestOptions).then(response =>
+          response.json()).then(((idResponse) => {
+            if (idResponse.error !== 10009) {
+              throw new Error(`Result: [${idResponse.error}] ${idResponse.text} `);
+            }
+            handlers.setErrorData({
+              error: idResponse.error,
+              text: idResponse.text
+            });
+          }));
+      };
 
     React.useEffect(() => {
         const risk = calculateInitialRisk(
@@ -203,7 +218,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers, preview
             takeprofit_buy: round(trade.ask + (trade.points) * trade.ratio, trade.digits),
             comment: generateComment(trade.risk, trade.comment)
         }
-        handlers.requestTrade(request);
+        requestTrade(request);
     };
 
     function generateComment(risk, text) {
@@ -223,7 +238,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers, preview
             entry_sell: bid
         };
 
-        handlers.requestTrade(request);
+        requestTrade(request);
     };
 
     return (

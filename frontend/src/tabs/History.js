@@ -1,18 +1,37 @@
 import React, { } from "react";
+import { createPostRequest } from "../utils";
 
-const History = ({ customClass, handlers, headers, data }) => {
 
+const History = ({ customClass }) => {
     const [imgData, setImage] = React.useState("0");
+    const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
+
+
+    function saveHistory(selected) {
+        const requestOptions = createPostRequest("")
+        fetch('/save', requestOptions).then(response =>response.json()).then(((receivedSymbolData) => { }));
+      };
+
+    function fetchHistory() {
+        /**
+         * Fetch all positional Data
+         */
+        fetch("/history").then((response) =>
+          response.json().then((receivedPositions) => {setPositionData(receivedPositions);})
+        );
+      };
+
+
     return (
         <>
             <button
-                onClick={handlers.saveHistory}
+                onClick={saveHistory}
                 className={"clsOrangebutton"}
                 style={{ width: "fit-content" }}>
                 Upload to Google
             </button>
             <button
-                onClick={handlers.getHistory}
+                onClick={fetchHistory}
                 className={"css-blue-button"}
                 style={{ width: "fit-content" }}>
                 Fetch Trades
@@ -22,7 +41,7 @@ const History = ({ customClass, handlers, headers, data }) => {
                     <table className={customClass} >
                         <thead>
                             <tr>
-                                {headers.map((header, index) => {
+                                {positionData.headers.map((header, index) => {
                                     return <th title={header} key={header} className={customClass}>
                                         {header}
                                     </th>
@@ -31,7 +50,7 @@ const History = ({ customClass, handlers, headers, data }) => {
                         </thead>
                         <tbody>
                             {
-                                data.map((entry) => {
+                                positionData.positions.map((entry) => {
                                     return <tr onClick={() => setImage(entry[0])} style={{
                                         backgroundColor: entry[0] === imgData ? 'orange' : ''
                                     }}>

@@ -17,6 +17,7 @@ import "react-sliding-pane/dist/react-sliding-pane.css";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 
+import { createPostRequest } from "./utils";
 
 const darkTheme = createTheme({
   palette: {
@@ -25,26 +26,16 @@ const darkTheme = createTheme({
 });
 
 
-function createPostRequest(body) {
-  return {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer my-token',
-    },
-    body: body
-  };
-}
 
 function helperChange(value, updates, key) {
-  if(updates.includes(key)) {
-    return value[value.length-1]>=0 ? 'positive':'negative'
+  if (updates.includes(key)) {
+    return value[value.length - 1] >= 0 ? 'positive' : 'negative'
   }
   return ''
 }
 
 function mapTerminalData(data, updates) {
-  return Object.entries(data).map(([key, value]) => { return { id: key, items: value, updated: updates.includes(key), change: helperChange(value, updates ,key) } });
+  return Object.entries(data).map(([key, value]) => { return { id: key, items: value, updated: updates.includes(key), change: helperChange(value, updates, key) } });
 }
 
 function setUpdated(data) {
@@ -54,48 +45,46 @@ function setUpdated(data) {
 
 
 class Commander {
-  constructor(){
-     this.instrument = ""
-     this.selected = false
-     this.preview = false
-     this.trading = {}
+  constructor() {
+    this.instrument = ""
+    this.selected = false
+    this.preview = false
+    this.trading = {}
   }
 
-  setCommand(props)
-  {
-    if(props.preview !== undefined) {
+  setCommand(props) {
+    if (props.preview !== undefined) {
       this.preview = props.preview
     }
 
-    if(props.ask !== undefined && props.bid !== undefined && props.ask !== undefined && props.tp !== undefined) {
+    if (props.ask !== undefined && props.bid !== undefined && props.ask !== undefined && props.tp !== undefined) {
       this.trading.ask = props.ask
       this.trading.bid = props.bid
       this.trading.sl = props.sl
       this.trading.tp = props.tp
     }
 
-    if(props.instrument !== undefined) {
+    if (props.instrument !== undefined) {
       this.instrument = props.instrument
       this.selected = false
     }
 
-    if(this.preview) { 
-      if(!this.selected && this.instrument !== "") {
-        const requestOptions = createPostRequest(JSON.stringify({ 'command': 'select', data: this.instrument}))
-        fetch('/command', requestOptions).then(response =>response.json())
+    if (this.preview) {
+      if (!this.selected && this.instrument !== "") {
+        const requestOptions = createPostRequest(JSON.stringify({ 'command': 'select', data: this.instrument }))
+        fetch('/command', requestOptions).then(response => response.json())
         this.selected = true
-      } else if(this.selected && Object.keys(this.trading).length > 0) {
-        const requestOptions = createPostRequest(JSON.stringify({ 'command': 'preview', data: this.trading}))
-        fetch('/command', requestOptions).then(response =>response.json())
+      } else if (this.selected && Object.keys(this.trading).length > 0) {
+        const requestOptions = createPostRequest(JSON.stringify({ 'command': 'preview', data: this.trading }))
+        fetch('/command', requestOptions).then(response => response.json())
       }
     }
-    else{
+    else {
       this.selected = false
     }
   }
 }
 
-const theme = "clsStyle";
 const commander = new Commander();
 
 const App = () => {
@@ -103,11 +92,11 @@ const App = () => {
    * Terminal data is numbers, and symbol data is per symbol
    */
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
-  const [selected, setSelected] = React.useState({ instrument: '',  calculator: {} });
-  const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
-  const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
-  const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
+  const [selected, setSelected] = React.useState({ instrument: '', calculator: {} });
   const [paneState, setPaneState] = React.useState(false);
+  const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
+  const errorData = React.useRef({ error: 0, text: "" });
+  const THEME = "clsStyle";
 
 
 
@@ -131,24 +120,16 @@ const App = () => {
     );
   };
 
-
-  function fetchHistory() {
-    /**
-     * Fetch all positional Data
-     */
-    fetch("/history").then((response) =>
-      response.json().then((receivedPositions) => {
-        setPositionData(receivedPositions);
-      })
-    );
-  };
+  function setErrorData(props) {
+    errorData.current = props
+  }
 
   function fetchSymbol(instrument) {
     /**
      * Fetch symbol info
      */
-    setSelected(previousstate => ({instrument: instrument}))
-    setCommand({instrument: instrument})
+    setSelected(previousstate => ({ instrument: instrument }))
+    setCommand({ instrument: instrument })
 
     fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
       response.json().then((receivedSymbol) => {
@@ -158,39 +139,20 @@ const App = () => {
   };
 
 
-  function transmitSavePositions(selected) {
-    const requestOptions = createPostRequest("")
-    fetch('/save', requestOptions).then(response =>
-      response.json()).then(((receivedSymbolData) => { }));
-  };
-
-  function requestTrade(request) {
-    const requestOptions = createPostRequest(JSON.stringify(request))
-    fetch('/trade', requestOptions).then(response =>
-      response.json()).then(((idResponse) => {
-        if (idResponse.error !== 10009) {
-          throw new Error(`Result: [${idResponse.error}] ${idResponse.text} `);
-        }
-        setErrorData({
-          error: idResponse.error,
-          text: idResponse.text
-        });
-      }));
-  };
 
   function setCommand(props) {
     commander.setCommand(props)
   }
 
-  React.useEffect(() => {
-    /* Mount */
-    const interval = setInterval(() => {
-      fetchTerminalData(false);
-    }, 3000);
+  // React.useEffect(() => {
+  //   /* Mount */
+  //   const interval = setInterval(() => {
+  //     fetchTerminalData(false);
+  //   }, 3000);
 
-    /* Unmount */
-    return () => clearInterval(interval);
-  }, []);
+  //   /* Unmount */
+  //   return () => clearInterval(interval);
+  // }, []);
 
 
   return (
@@ -204,7 +166,7 @@ const App = () => {
               <Tab className="top-bar-tab">Trading</Tab>
               <Tab className="top-bar-tab">History</Tab>
             </TabList>
-            <MiscCheckbox customClass={"css-button-checkbox"} text="Sync" handler={(state)=> {setCommand({'preview':state})}} />
+            <MiscCheckbox customClass={"css-button-checkbox"} text="Sync" handler={(state) => { setCommand({ 'preview': state }) }} />
             <button className={"css-blue-button"} onClick={() => { fetchTerminalData(true) }}>Get Symbols</button>
             <button className={"css-blue-button"} onClick={() => setPaneState(true)}>Open Pane</button>
             <TopBar
@@ -221,10 +183,9 @@ const App = () => {
             />
           </nav>
           <TabPanel>
-
             <SlidingPane
-              customClass={theme}
-              overlayClassName={theme}
+              customClass={THEME}
+              overlayClassName={THEME}
               isOpen={paneState}
               title="Title"
               subtitle="Optional subtitle."
@@ -236,26 +197,26 @@ const App = () => {
             </SlidingPane>
             <nav>
               <nav className="cls100PContainer">
-                <Trader customClass={theme}
+                <Trader customClass={THEME}
                   account={terminalData.account}
                   symbol={symbolData.info}
                   headers={terminalData.op_headers}
                   data={mapTerminalData(terminalData.open, terminalData.updates)}
-                  handlers={{ requestTrade: requestTrade, setCommand: (ask, bid, sl, tp) => {  setCommand({ask, bid, sl, tp}); /* setSelected({calculator: {ask, bid, sl, tp }});  */ } }}
+                  handlers={{ setErrorData, setCommand: (ask, bid, sl, tp) => { setCommand({ ask, bid, sl, tp }); } }}
                 />
               </nav>
               <nav className="cls100PContainer">
                 <nav className="cls50PContainer">
                   <Charter
-                    customClass={theme}
+                    customClass={THEME}
                     symbol={symbolData.info}
                     instrument={selected.instrument}
-                    // calculator={selected.calculator}
+                  // calculator={calculator}
                   />
                 </nav>
                 <nav className="cls50PContainer">
                   <Symbols
-                    customClass={theme}
+                    customClass={THEME}
                     account={terminalData.account}
                     headers={terminalData.headers}
                     data={mapTerminalData(terminalData.instruments, terminalData.updates)}
@@ -266,14 +227,8 @@ const App = () => {
             </nav>
           </TabPanel>
           <TabPanel>
-            <History
-              customClass={theme}
-              handlers={{ getHistory: fetchHistory, saveHistory: transmitSavePositions }}
-              headers={positionData.headers}
-              data={positionData.positions}
-            />
+            <History customClass={THEME} />
           </TabPanel>
-          {/* </Tabs> */}
         </Tabs>
       </ThemeProvider>
     </main>
