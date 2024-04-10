@@ -12,7 +12,7 @@ function TopBar({customClass, company, balance, currency, login, server, profit,
               <td className={customClass}>Profit: {profit}</td>
               <td className={customClass}>Leverage: {leverage}</td>
               <td className={customClass}>Date: {date}</td>
-              <td className={customClass}>Last Error:{error}</td>
+              <td className={customClass}>Last Status:{error.error}[{error.text}]</td>
             </tr>
         </tbody>
     </table>

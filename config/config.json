@@ -7,10 +7,10 @@
 		"date": "2024-01-01 10:10:10"
 	},
 	"local": {
-		"dir": "frontend/public/trades"
+		"dir": "../frontend/public/trades"
 	},
 	"metatrader": {
-		"configuration": "config/start.ini",
+		"dir": "start.ini",
 		"process": "C:/Program Files/FxPro - MetaTrader 5/terminal64.exe"
 	}
 }

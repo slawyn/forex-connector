@@ -1,6 +1,7 @@
 import datetime
 from flask import Flask, request, render_template
 from google.driver import DriveFileController
+import sys
 
 from commander import Commander
 from trader.trader import Trader
@@ -278,6 +279,7 @@ def trade():
     takeprofit_sell = data.get("takeprofit_sell")
     comment = data.get("comment")
     result = app.trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
+    # result = [10009,'test']
     return {"error": result[0], "text": result[1]}
 
 
@@ -301,7 +303,7 @@ def command():
 
 if __name__ == "__main__":
     try:
-        app = App(Config("config/config.json"))
+        app = App(Config(sys.argv[1]))
         flask.run(debug=True)
     except Exception as e:
         log(e)

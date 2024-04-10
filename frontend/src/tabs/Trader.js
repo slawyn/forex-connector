@@ -34,6 +34,7 @@ function calculateInitialRisk(ask, bid, riskAmount, contractSize, pointValue, vo
 const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
     const INITIAL_RISK_PERCENTAGE = 1.00
     const INITIAL_RISK = INITIAL_RISK_PERCENTAGE / 100.0
+    const localSymbol = React.useRef();
     const [trade, setTrade] = React.useState({
         name: "",
         type: "",
@@ -55,21 +56,8 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
         conversion: false
     });
 
-    function requestTrade(request) {
-        const requestOptions = createPostRequest(JSON.stringify(request))
-        fetch('/trade', requestOptions).then(response =>
-          response.json()).then(((idResponse) => {
-            if (idResponse.error !== 10009) {
-              throw new Error(`Result: [${idResponse.error}] ${idResponse.text} `);
-            }
-            handlers.setErrorData({
-              error: idResponse.error,
-              text: idResponse.text
-            });
-          }));
-      };
-
-    React.useEffect(() => {
+    if(localSymbol.current !== symbol) {
+        localSymbol.current = symbol
         const risk = calculateInitialRisk(
             symbol.ask,
             symbol.bid,
@@ -103,17 +91,28 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             conversion: symbol.conversion,
             points: points
         }));
+        calculateParameters(symbol.ask, symbol.bid, trade.ratio, points)
+    }
 
-    }, [symbol, account.balance, trade.ratio, trade.risk, INITIAL_RISK]);
-    calculateParameters(trade.ask, trade.bid, trade.ratio, trade.points)
-
+    function requestTrade(request) {
+        const requestOptions = createPostRequest(JSON.stringify(request))
+        fetch('/trade', requestOptions).then(response =>
+          response.json()).then(((idResponse) => {
+            if (idResponse.error !== 10009) {
+              throw new Error(`Result: [${idResponse.error}] ${idResponse.text} `);
+            }
+            handlers.setErrorData({
+              error: idResponse.error,
+              text: idResponse.text
+            });
+          }));
+      };
 
     function calculateParameters(ask, bid, ratio, points) {
         const sl = [ask - points, bid + points];
         const tp = [ask + (points * ratio), bid - (points * ratio)];
         handlers.setCommand(ask, bid, sl, tp);
     }
-
 
     function handleVolumeChange(risk_volume) {
         const points = calculatePoints(
@@ -122,7 +121,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             trade.contract_size,
             trade.point_value,
             risk_volume,
-            symbol.conversion)
+            trade.conversion)
 
         setTrade((previousTrade) => ({
             ...previousTrade,
@@ -140,61 +139,59 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
         }));
     };
 
-    function handleRiskChange(value) {
+    function handleRiskChange(risk) {
         const points = calculatePoints(
             trade.ask,
-            value * 0.01 * trade.balance,
+            risk * 0.01 * trade.balance,
             trade.contract_size,
             trade.point_value,
             trade.risk_volume,
-            symbol.conversion)
+            trade.conversion)
 
         setTrade((previousTrade) => ({
             ...previousTrade,
-            risk: parseFloat(value),
+            risk: parseFloat(risk),
             points: points
         }));
 
         calculateParameters(trade.ask, trade.bid, trade.ratio, points)
     };
 
-    function handleRatioChange(value) {
+    function handleRatioChange(ratio) {
         const points = calculatePoints(
             trade.ask,
             trade.risk * 0.01 * trade.balance,
             trade.contract_size,
             trade.point_value,
             trade.risk_volume,
-            symbol.conversion)
+            trade.conversion)
 
         setTrade((previousTrade) => ({
             ...previousTrade,
-            ratio: parseFloat(value),
+            ratio: parseFloat(ratio),
             points: points
         }));
 
         calculateParameters(trade.ask, trade.bid, trade.ratio, points)
     };
 
-    function handleCommentChange(value) {
+    function handleCommentChange(comment) {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            comment: value
+            comment: comment
         }));
     };
 
-    function handleAskChange(value) {
-        const ask = parseFloat(value)
+    function handleAskChange(ask) {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            ask: ask
+            ask: parseFloat(ask)
         }));
 
         calculateParameters(ask, trade.bid, trade.ratio, trade.points)
     };
 
-    const handleBidChange = (value) => {
-        const bid = parseFloat(value)
+    const handleBidChange = (bid) => {
         setTrade((previousTrade) => ({
             ...previousTrade,
             bid: bid
@@ -205,7 +202,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
 
 
     function handleOpenTrade() {
-        var request = {
+        let request = {
             symbol: trade.name,
             position: 0,
             lot: trade.risk_volume,
@@ -222,18 +219,15 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
     };
 
     function generateComment(risk, text) {
-        var comment = `[R:${risk}%, ]` + text;
-        return comment;
+        return `[R:${risk}%, ]` + text;
     };
 
     function handleCloseTrade(type, name, position, volume, ask, bid) {
-
-        let close_type = getCorrespondingClosingType(type);
         let request = {
             symbol: name,
             position: position,
             lot: volume,
-            type: close_type,
+            type: getCorrespondingClosingType(type),
             entry_buy: ask,
             entry_sell: bid
         };

@@ -24,10 +24,8 @@ class Trader:
 
     def __init__(self, mt_config, mt_process):
         cmd = [mt_process, f"/config:{mt_config}"]
-        
         log(cmd)
         p = subprocess.Popen(cmd, start_new_session=True)
-
         # 1. Establish connection to the MetaTrader 5 terminal
         if self.reinit():
             self.ratio = 1
@@ -197,7 +195,6 @@ class Trader:
                 symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=initial_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME) 
 
             # Get rates
-            log(start_s, symbol.time, timestamp_start, current_s)
             rates = symbol.get_rates(timeframe=TIME_FRAME, start=start_s, end=current_s)
         
         return {time_frame:rates}

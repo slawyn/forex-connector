@@ -25,8 +25,6 @@ const darkTheme = createTheme({
   },
 });
 
-
-
 function helperChange(value, updates, key) {
   if (updates.includes(key)) {
     return value[value.length - 1] >= 0 ? 'positive' : 'negative'
@@ -42,14 +40,12 @@ function setUpdated(data) {
   return Object.keys(data)
 }
 
-
-
 class Commander {
   constructor() {
     this.instrument = ""
     this.selected = false
     this.preview = false
-    this.trading = {}
+    this.calculator = {}
   }
 
   setCommand(props) {
@@ -57,11 +53,11 @@ class Commander {
       this.preview = props.preview
     }
 
-    if (props.ask !== undefined && props.bid !== undefined && props.ask !== undefined && props.tp !== undefined) {
-      this.trading.ask = props.ask
-      this.trading.bid = props.bid
-      this.trading.sl = props.sl
-      this.trading.tp = props.tp
+    if (props.calculator !== undefined) {
+      this.calculator.ask = props.calculator.ask
+      this.calculator.bid = props.calculator.bid
+      this.calculator.sl = props.calculator.sl
+      this.calculator.tp = props.calculator.tp
     }
 
     if (props.instrument !== undefined) {
@@ -74,8 +70,8 @@ class Commander {
         const requestOptions = createPostRequest(JSON.stringify({ 'command': 'select', data: this.instrument }))
         fetch('/command', requestOptions).then(response => response.json())
         this.selected = true
-      } else if (this.selected && Object.keys(this.trading).length > 0) {
-        const requestOptions = createPostRequest(JSON.stringify({ 'command': 'preview', data: this.trading }))
+      } else if (this.selected && Object.keys(this.calculator).length > 0) {
+        const requestOptions = createPostRequest(JSON.stringify({ 'command': 'preview', data: this.calculator }))
         fetch('/command', requestOptions).then(response => response.json())
       }
     }
@@ -95,10 +91,8 @@ const App = () => {
   const [selected, setSelected] = React.useState({ instrument: '', calculator: {} });
   const [paneState, setPaneState] = React.useState(false);
   const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
-  const errorData = React.useRef({ error: 0, text: "" });
+  const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
   const THEME = "clsStyle";
-
-
 
   function fetchTerminalData(force) {
     /**
@@ -120,15 +114,10 @@ const App = () => {
     );
   };
 
-  function setErrorData(props) {
-    errorData.current = props
-  }
-
   function fetchSymbol(instrument) {
     /**
      * Fetch symbol info
      */
-    setSelected(previousstate => ({ instrument: instrument }))
     setCommand({ instrument: instrument })
 
     fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
@@ -138,25 +127,21 @@ const App = () => {
     );
   };
 
-
-
   function setCommand(props) {
     commander.setCommand(props)
+    setSelected((previous)=>({...previous,...props}))
   }
 
-  // React.useEffect(() => {
-  //   /* Mount */
-  //   const interval = setInterval(() => {
-  //     fetchTerminalData(false);
-  //   }, 3000);
+  React.useEffect(() => {
+    /* Mount */
+    const interval = setInterval(() => {
+      fetchTerminalData(false);
+    }, 3000);
 
-  //   /* Unmount */
-  //   return () => clearInterval(interval);
-  // }, []);
-
-
+    /* Unmount */
+    return () => clearInterval(interval);
+  }, []);
   return (
-
     <main className="App">
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
@@ -166,8 +151,8 @@ const App = () => {
               <Tab className="top-bar-tab">Trading</Tab>
               <Tab className="top-bar-tab">History</Tab>
             </TabList>
-            <MiscCheckbox customClass={"css-button-checkbox"} text="Sync" handler={(state) => { setCommand({ 'preview': state }) }} />
-            <button className={"css-blue-button"} onClick={() => { fetchTerminalData(true) }}>Get Symbols</button>
+            <MiscCheckbox customClass={"css-button-checkbox"} text="Sync" handler={(state) => { setCommand({ preview: state }) }} />
+            <button className={"css-blue-button"} onClick={() => fetchTerminalData(true)}>Get Symbols</button>
             <button className={"css-blue-button"} onClick={() => setPaneState(true)}>Open Pane</button>
             <TopBar
               customClass="top-bar"
@@ -179,7 +164,7 @@ const App = () => {
               profit={terminalData.account.profit}
               leverage={terminalData.account.leverage}
               date={terminalData.date}
-              error={errorData.error}
+              error={errorData}
             />
           </nav>
           <TabPanel>
@@ -202,7 +187,7 @@ const App = () => {
                   symbol={symbolData.info}
                   headers={terminalData.op_headers}
                   data={mapTerminalData(terminalData.open, terminalData.updates)}
-                  handlers={{ setErrorData, setCommand: (ask, bid, sl, tp) => { setCommand({ ask, bid, sl, tp }); } }}
+                  handlers={{ setErrorData, setCommand: (ask, bid, sl, tp) => { setCommand({calculator:{ ask, bid, sl, tp }}); } }}
                 />
               </nav>
               <nav className="cls100PContainer">
@@ -211,7 +196,7 @@ const App = () => {
                     customClass={THEME}
                     symbol={symbolData.info}
                     instrument={selected.instrument}
-                  // calculator={calculator}
+                    calculator={selected.calculator}
                   />
                 </nav>
                 <nav className="cls50PContainer">

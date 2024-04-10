@@ -31,13 +31,6 @@ function customHandleSelection({ seriesIndex, dataPointIndex, w }) {
     )
 }
 
-const areEqual = (prevProps, nextProps) => {
-    if (prevProps.heading === nextProps.heading) {
-        return true                                    // donot re-render
-    }
-    return false                                     // will re-render
-}
-
 const options = {
     plugins: { tooltip: {} },
     colors: ["#008000", "#00BBFF80", "#FFFF00", '#fc03ec', '#fc03ec', '#03fce7', '#03fce7'],
@@ -95,8 +88,7 @@ const formatChartData = (symbolrates) => {
 };
 
 const formatLineData = (symbolrates, value) => {
-    if(Object.keys(symbolrates).length>0)
-    {
+    if (Object.keys(symbolrates).length > 0) {
         const recentKey = Object.keys(symbolrates)[Object.keys(symbolrates).length - 1];
         return [{ x: new Date(parseInt(Object.keys(symbolrates)[0])), y: value }, { x: new Date(parseInt(recentKey)), y: value }]
     }
@@ -104,14 +96,13 @@ const formatLineData = (symbolrates, value) => {
 };
 
 /* Globals */
-const TIMEFRAMES = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000), "M5": (60 * 5 * 12 * 20 * 1000) };
 
-async function fetchRates(instrument, rates, handler) {
+async function fetchRates(timeframes, instrument, rates, handler) {
     let updated = []
 
     /* Gather promises */
     const base = new Date().getTime()
-    const promises = Object.entries(TIMEFRAMES).map(async ([timeframe, value]) => {
+    const promises = Object.entries(timeframes).map(async ([timeframe, value]) => {
         let start = Math.floor(base - (value))
         const end = Math.floor(base)
 
@@ -134,11 +125,10 @@ async function fetchRates(instrument, rates, handler) {
             for (let [symbolname, symbol] of Object.entries(symbols)) {
 
                 if (Object.keys(symbol).length > 0) {
-                    updated.push({ timeframe: timeframe, name: `${symbolname}#${timeframe}`, data: mergedFull[timeframe][symbolname] });
+                    updated.push({ timeframe: timeframe, name: `${symbolname}#${timeframe}`, data: mergedUpdates[timeframe][symbolname] });
                 }
             }
         }
-
         handler(mergedFull, updated.length > 0)
     })
 }
@@ -146,28 +136,36 @@ async function fetchRates(instrument, rates, handler) {
 
 const Charter = ({ customClass, calculator, symbol, instrument }) => {
     // console.log("Rendering Charter")
-
+    const TIMEFRAMES = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000), "M5": (60 * 5 * 12 * 20 * 1000) };
     const refs = React.useRef(Object.entries(TIMEFRAMES).map(() => React.createRef()));
     const localInstrument = React.useRef('')
     const localSymbol = React.useRef({})
     const rates = React.useRef({})
-    const localCalculator = React.useRef({sl:[],tp:[]})
+    const localCalculator = React.useRef({ sl: [], tp: [] })
     const interval = React.useRef(null)
+
+
+    function updateRates() {
+        if (localInstrument.current !== '') {
+            fetchRates(TIMEFRAMES, localInstrument.current, rates, (newRates, updated) => {
+                rates.current = newRates
+                if (updated) {
+                    updateChart()
+                }
+            })
+        }
+    }
+
 
     /* instrument changed */
     if (instrument !== localInstrument.current) {
         localInstrument.current = instrument
         // console.log("       :: Instrument ", localInstrument.current)
         updateChart()
-        fetchRates(localInstrument.current, rates, (newRates, updated) => {
-            rates.current = newRates
-            if (updated) {
-                updateChart()
-            }
-        })
+        updateRates()
     }
 
-    if(localCalculator.current !== calculator) {
+    if (localCalculator.current !== calculator) {
         localCalculator.current = calculator
         updateChart()
     }
@@ -184,7 +182,7 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
                 reference.current.chart.updateOptions({
                     yaxis: {
                         labels: {
-                            formatter: (value) => { return value.toFixed(digits)}
+                            formatter: (value) => { return value.toFixed(digits) }
                         }
                     },
                     title: {
@@ -225,11 +223,26 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
                                 type: 'line',
                                 data: formatLineData(currentchart, localSymbol.current.bid)
                             },
-                            // {
-                            //     name: 'sl0',
-                            //     type: 'line',
-                            //     data: formatLineData(currentchart, localCalculator.current.sl[0])
-                            // }
+                            {
+                                name: 'sl-buy',
+                                type: 'line',
+                                data: formatLineData(currentchart, localCalculator.current.sl[0])
+                            },
+                            {
+                                name: 'sl-sell',
+                                type: 'line',
+                                data: formatLineData(currentchart, localCalculator.current.sl[1])
+                            },
+                            {
+                                name: 'tp-buy',
+                                type: 'line',
+                                data: formatLineData(currentchart, localCalculator.current.tp[0])
+                            },
+                            {
+                                name: 'tp-sell',
+                                type: 'line',
+                                data: formatLineData(currentchart, localCalculator.current.tp[1])
+                            },
                         ]
                     )
                 }
@@ -241,16 +254,9 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
 
     /* Create the charts only once, and use updateSeries to update the values */
     const charts = React.useMemo(() => {
-        // interval.current = setInterval(() => {
-        //     if (localInstrument.current !== '') {
-        //         fetchRates(localInstrument.current, rates, (newRates, updated) => {
-        //             rates.current = newRates
-        //             if (updated) {
-        //                 updateChart()
-        //             }
-        //         })
-        //     }
-        // }, 3000)
+        interval.current = setInterval(() => {
+            updateRates()
+        }, 3000)
 
 
         let _charts = [];

@@ -39,7 +39,6 @@ const Calculator = ({ customClass, trade, handlers }) => {
                     </tr>
                 </thead>
                 <tbody>
-
                     <tr>
                         <td>
                             <FormControl fullWidth>
