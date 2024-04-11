@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, send_from_directory
 from google.driver import DriveFileController
 import sys
 
@@ -11,13 +11,13 @@ from trader.position import ClosedPosition, OpenPosition
 from trader.symbol import Symbol
 from config import Config
 from helpers import *
+import re
 
 # Configurable values
 CONFIG_ENABLE_TRADING = True
 
 # Flask variables
 flask = Flask(__name__)
-app = None
 
 
 def calculate_indicators(spread, open_price, bid, atr):
@@ -57,6 +57,9 @@ class App:
 
     def run(self):
         self.window.mainloop()
+
+    def fetch_resource(self, path):
+        return send_from_directory(self.config.get_export_folder(), path)
 
     def terminal_select(self, symbol):
         data = self.commander.send_instrument(symbol)
@@ -263,6 +266,14 @@ def get_symbol():
 def save():
     app.save_to_google()
     return {"id": 0}
+
+@flask.route('/<path:path>')
+def on_socket(path):
+    '''Socket on-fetch handler
+        ->path      : requested path
+        <-resource  : resource
+    '''
+    return app.fetch_resource(path)
 
 @flask.route('/trade', methods=['POST'])
 def trade():

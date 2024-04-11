@@ -1,26 +1,31 @@
 import React, { } from "react";
 import { createPostRequest } from "../utils";
-
+import { LazyLoadImage } from 'react-lazy-load-image-component';
 
 const History = ({ customClass }) => {
-    const [imgData, setImage] = React.useState("0");
     const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
+    const [selectedImage, setSelectedImage] = React.useState("0")
 
 
     function saveHistory(selected) {
         const requestOptions = createPostRequest("")
-        fetch('/save', requestOptions).then(response =>response.json()).then(((receivedSymbolData) => { }));
-      };
+        fetch('/save', requestOptions).then(response => response.json()).then(((receivedSymbolData) => { }));
+    };
 
     function fetchHistory() {
         /**
          * Fetch all positional Data
          */
         fetch("/history").then((response) =>
-          response.json().then((receivedPositions) => {setPositionData(receivedPositions);})
+            response.json().then((receivedPositions) => { setPositionData(receivedPositions); })
         );
-      };
+    };
 
+
+    React.useEffect(() => {
+        /* Fetch History on mount */
+        fetchHistory()
+      }, []);
 
     return (
         <>
@@ -28,7 +33,7 @@ const History = ({ customClass }) => {
                 onClick={saveHistory}
                 className={"clsOrangebutton"}
                 style={{ width: "fit-content" }}>
-                Upload to Google
+                Sync with Google
             </button>
             <button
                 onClick={fetchHistory}
@@ -51,8 +56,8 @@ const History = ({ customClass }) => {
                         <tbody>
                             {
                                 positionData.positions.map((entry) => {
-                                    return <tr onClick={() => setImage(entry[0])} style={{
-                                        backgroundColor: entry[0] === imgData ? 'orange' : ''
+                                    return <tr onClick={() => setSelectedImage(entry[0])} style={{
+                                        backgroundColor: entry[0] === selectedImage ? 'orange' : ''
                                     }}>
                                         {
                                             /** Map row line */
@@ -66,9 +71,9 @@ const History = ({ customClass }) => {
                         </tbody>
                     </table>
                 </nav>
-                <nav className="clsImageContainer" >
-                    <img src={`trades/${imgData}.png`} className="property-fitcontent"></img>
-                </nav>
+                <LazyLoadImage src={`${selectedImage}.png`}
+                    effect="blur"
+                />
             </nav>
         </>
     );

@@ -25,7 +25,7 @@ class Config:
         return self.dictionary["google"]["date"]
 
     def get_export_folder(self):
-        return os.path.join(self.dirname, self.dictionary["local"]["dir"])
+        return os.path.abspath(os.path.join(self.dirname, self.dictionary["local"]["dir"]))
     
     def get_metatrader_configuration(self):
         return os.path.join(self.dirname, self.dictionary["metatrader"]["dir"])
