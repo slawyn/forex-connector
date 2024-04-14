@@ -41,8 +41,8 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
         risk: INITIAL_RISK_PERCENTAGE,
         ratio: 2.25,
         ratio_step: 0.25,
-        bid: 0,
-        ask: 0,
+        bid: 0.0,
+        ask: 0.0,
         risk_volume: 0.0,
         volume_step: 0,
         risk_step: 0.25,
@@ -219,7 +219,11 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
     };
 
     function generateComment(risk, text) {
-        return `[R:${risk}%, ]` + text;
+        let comment = ''
+        if(text !== undefined) {
+            comment = text;
+        }
+        return `${risk}% ` + comment;
     };
 
     function handleCloseTrade(type, name, position, volume, ask, bid) {

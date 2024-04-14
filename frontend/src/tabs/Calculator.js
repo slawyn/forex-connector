@@ -110,6 +110,7 @@ const Calculator = ({ customClass, trade, handlers }) => {
                                 label="Ask"
                                 type="number"
                                 value={trade.ask}
+                                InputLabelProps={{ shrink: true }}
                                 onChange={(e) => { handlers.handleAskChange(e.target.value) }}
                                 variant="outlined"
                                 inputProps={{
@@ -123,6 +124,7 @@ const Calculator = ({ customClass, trade, handlers }) => {
                                 label="Bid"
                                 type="number"
                                 value={trade.bid}
+                                InputLabelProps={{ shrink: true }}
                                 onChange={(e) => { handlers.handleBidChange(e.target.value) }}
                                 helperText=""
                                 inputProps={{

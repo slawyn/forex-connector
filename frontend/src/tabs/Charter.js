@@ -33,7 +33,7 @@ function customHandleSelection({ seriesIndex, dataPointIndex, w }) {
 
 const options = {
     plugins: { tooltip: {} },
-    colors: ["#008000", "#00BBFF80", "#FFFF00", '#fc03ec', '#fc03ec', '#03fce7', '#03fce7'],
+    colors: ["#008000"],
     legend: { show: false },
     xaxis: { type: 'datetime' },
     series: [],
@@ -44,19 +44,13 @@ const options = {
         align: 'left',
     },
     stroke: {
-        width: [1, 2, 2, 1, 1, 1, 1],
-        dashArray: [0, 2, 2, 10, 10, 5, 5]
+        width: [1],
+        dashArray: [0]
     },
     tooltip: {
         shared: true,
         custom: [
-            customHandleSelection,
-            defaultHandleSelection,
-            defaultHandleSelection,
-            defaultHandleSelection,
-            defaultHandleSelection,
-            defaultHandleSelection,
-            defaultHandleSelection
+            customHandleSelection
         ]
     },
     markers: {
@@ -87,16 +81,8 @@ const formatChartData = (symbolrates) => {
     return Object.entries(symbolrates).map(([timestamp, object]) => { return { x: new Date(parseInt(timestamp)), y: [object.open, object.high, object.low, object.close] } })
 };
 
-const formatLineData = (symbolrates, value) => {
-    if (Object.keys(symbolrates).length > 0) {
-        const recentKey = Object.keys(symbolrates)[Object.keys(symbolrates).length - 1];
-        return [{ x: new Date(parseInt(Object.keys(symbolrates)[0])), y: value }, { x: new Date(parseInt(recentKey)), y: value }]
-    }
-    return []
-};
 
 /* Globals */
-
 async function fetchRates(timeframes, instrument, rates, handler) {
     let updated = []
 
@@ -109,7 +95,10 @@ async function fetchRates(timeframes, instrument, rates, handler) {
         /* If some rate data has already been fetched previously */
         if (timeframe in rates && (instrument in rates[timeframe])) {
             const timestamps = Object.keys(rates[timeframe][instrument])
-            start = timestamps[timestamps.length - 1]
+            if(timestamps.length >0)
+            {
+                start = timestamps[timestamps.length - 1]
+            }
         }
         return fetch(`/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`).then((response) => response.json());
     });
@@ -136,7 +125,16 @@ async function fetchRates(timeframes, instrument, rates, handler) {
 
 const Charter = ({ customClass, calculator, symbol, instrument }) => {
     // console.log("Rendering Charter")
-    const TIMEFRAMES = { "D1": (3600 * 24 * 35 * 1000), "H1": (3600 * 48 * 1000), "M5": (60 * 5 * 12 * 20 * 1000) };
+    const TIMEFRAMES = {
+        "D1": (60 * 60 * 24 * 60)*1000,
+        "H4": (60 * 60 * 4 * 48)*1000,
+        "H1": (60 * 60 * 1 * 24)*1000
+    };
+    const ANNOTATIONS = {
+        "D1": ['', '', '', ''],
+        "H4": ['', '', '', ''],
+        "H1": ["SL-long", "SL-short", "TP-short", "TP-long"]
+    };
     const refs = React.useRef(Object.entries(TIMEFRAMES).map(() => React.createRef()));
     const localInstrument = React.useRef('')
     const localSymbol = React.useRef({})
@@ -167,7 +165,7 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
 
     if (localCalculator.current !== calculator) {
         localCalculator.current = calculator
-        updateChart()
+        updateAnnotations()
     }
 
     if (localSymbol.current !== symbol) {
@@ -213,39 +211,91 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
                                 type: 'candlestick',
                                 data: formatChartData(currentchart)
                             },
-                            {
-                                name: 'ask',
-                                type: 'line',
-                                data: formatLineData(currentchart, localSymbol.current.ask)
-                            },
-                            {
-                                name: 'bid',
-                                type: 'line',
-                                data: formatLineData(currentchart, localSymbol.current.bid)
-                            },
-                            {
-                                name: 'sl-buy',
-                                type: 'line',
-                                data: formatLineData(currentchart, localCalculator.current.sl[0])
-                            },
-                            {
-                                name: 'sl-sell',
-                                type: 'line',
-                                data: formatLineData(currentchart, localCalculator.current.sl[1])
-                            },
-                            {
-                                name: 'tp-buy',
-                                type: 'line',
-                                data: formatLineData(currentchart, localCalculator.current.tp[0])
-                            },
-                            {
-                                name: 'tp-sell',
-                                type: 'line',
-                                data: formatLineData(currentchart, localCalculator.current.tp[1])
-                            },
                         ]
                     )
                 }
+            }
+        })
+    }
+    function updateAnnotations() {
+
+        /* Update all references */
+        refs.current.forEach((reference, _index) => {
+            if (reference.current) {
+                const timeframe = Object.keys(TIMEFRAMES)[_index]
+
+                /* Update annotations  */
+                const annomationNames = ANNOTATIONS[timeframe];
+                reference.current.chart.updateOptions({
+                    annotations: {
+                        yaxis: [
+                            {
+                                y: localSymbol.current.ask,
+                                y2: localSymbol.current.bid,
+                                borderColor: '#000',
+                                strokeDashArray: 2,
+                                fillColor: '#FEB019',
+                                width: '130%',
+                                label: {
+                                    text: ''
+                                },
+                            },
+                            {
+                                y: localCalculator.current.sl[0],
+                                borderColor: '#fc03ec',
+                                width: '130%',
+                                label: {
+                                    borderColor: '#fc03ec',
+                                    style: {
+                                        color: '#fff',
+                                        background: '#fc03ec00'
+                                    },
+                                    text: annomationNames[0]
+                                }
+                            },
+                            {
+                                y: localCalculator.current.sl[1],
+                                borderColor: '#fc03ec',
+                                width: '130%',
+                                label: {
+                                    borderColor: '#fc03ec',
+                                    style: {
+                                        color: '#fff',
+                                        background: '#fc03ec00'
+                                    },
+                                    text: annomationNames[1]
+                                }
+                            },
+                            {
+                                y: localCalculator.current.tp[0],
+                                borderColor: '#03fce7',
+                                width: '130%',
+                                label: {
+                                    borderColor: '#03fce7',
+                                    style: {
+                                        color: '#fff',
+                                        background: '#03fce700'
+                                    },
+                                    text: annomationNames[2]
+                                }
+                            },
+                            {
+                                y: localCalculator.current.tp[1],
+                                borderColor: '#03fce7',
+                                width: '130%',
+                                label: {
+                                    borderColor: '#03fce7',
+                                    style: {
+                                        color: '#fff',
+                                        background: '#03fce700'
+                                    },
+                                    text: annomationNames[3]
+                                }
+                            }
+                        ]
+                    }
+                });
+
             }
         })
     }
