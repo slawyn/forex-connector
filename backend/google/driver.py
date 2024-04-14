@@ -17,6 +17,9 @@ from helpers import *
 
 class DriveFileController:
     REQUEST_SCOPE = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    FIRST_COLUMN = 'A'
+    LAST_COLUMN = 'N'
+    LINK_COLUMN = 'O'
 
     def __init__(self, secrets, folderid, spreadsheet, worksheet, dir):
 
@@ -69,7 +72,7 @@ class DriveFileController:
 
         # Update rows and images
         # if position is not in the already saved list
-        images_lis = self.get_uploaded_images()
+        uploaded_images = self.get_uploaded_images()
         for pid in positions:
             pd = positions[pid]
 
@@ -78,20 +81,24 @@ class DriveFileController:
                 entry = pd.get_data_for_excel()
                 self.database.append(entry)
                 self.next_free_idx += 1
-                self.worksheet.update('A%d:M%d' % (self.next_free_idx, self.next_free_idx), [entry])
+                self.worksheet.update(f'{DriveFileController.FIRST_COLUMN}{self.next_free_idx}:{DriveFileController.LAST_COLUMN}{ self.next_free_idx}', [entry])
 
-            img_name = Chart().generate_chart(self.dir, pd.get_id(), pd.get_rates(), pd.get_limits(), pd.get_symbol_name(), pd.get_deals())
+            # Generate only if the image does not exist
+            img_name = Chart.get_name(pd.get_id())
+            chartpath = os.path.join(os.path.abspath(self.dir), img_name )
+            if not os.path.exists(chartpath):
+                Chart().generate_chart(chartpath, pd.get_id(), pd.get_rates(), pd.get_limits(), pd.get_symbol_name(), pd.get_deals())
 
-            # add only if image was not uploaded
-            if pid not in images_lis.keys():
+            # Add only if image was not uploaded
+            if pid not in uploaded_images.keys():
                 try:
-                    log(" Uploading %s" % img_name)
+                    log(f" Uploading {img_name}")
                     file = self.drive.CreateFile({'title': img_name, 'parents': [{'id': self.folderid}]})
                     file.SetContentFile(os.path.join(self.dir, img_name))
                     file.Upload()
 
                     # Add to the array
-                    images_lis[pid] = file["id"]
+                    uploaded_images[pid] = file["id"]
 
                     # Change Permissions so anyone with the link can view it
                     permission = file.InsertPermission({
@@ -102,27 +109,23 @@ class DriveFileController:
                     log(e)
 
         # Add Image links to the rows
-        links = self.worksheet.range('P1:P%d' % (self.next_free_idx))
+        links = self.worksheet.range(f'{DriveFileController.LINK_COLUMN}1:{DriveFileController.LINK_COLUMN}{self.next_free_idx}')
         for i in range(1, self.next_free_idx):
             row = self.database[i]
-            pid = str(row[0])
 
+            # Insert link if there is one
             link = links[i].value
-
-            # if there is no link
             if link == "":
-                if pid in images_lis:
-                    log(" Inserting \"Hyperlink\" into P%d" % (i+1))
-                    file = self.drive.CreateFile({'id': images_lis[pid], 'parents': [{'id': self.folderid}]})
+                value = 'none'
+                pid = str(row[0])
+                if pid in uploaded_images:
+                    file = self.drive.CreateFile({'id': uploaded_images[pid], 'parents': [{'id': self.folderid}]})
                     file.FetchMetadata(fetch_all=True)
                     link = file['alternateLink']
 
                     # if "www." not in link and "https://" in link:
-                    #    link = link.replace("https://","https://www.")
+                    #   link = link.replace("https://","https://www.")
                     value = '=HYPERLINK(\"%s\",\"<link>\")' % (link)
-                    self.worksheet.update_acell('P%d' % (i+1), value)
-                else:
-                    log(" Inserting \"none\" into P%d" % (i+1))
-                    self.worksheet.update_acell('P%d' % (i+1), "none")
-        '''
-        '''
+
+                log(f' Inserting {value} into {DriveFileController.LINK_COLUMN}{i+1}')
+                self.worksheet.update_acell(f'{DriveFileController.LINK_COLUMN}{i+1}', value)

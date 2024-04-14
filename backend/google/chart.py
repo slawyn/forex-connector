@@ -1,10 +1,6 @@
 
-import os
 from PIL import Image, ImageDraw, ImageFont
-import matplotlib.pyplot as plt
-import MetaTrader5 as mt5
-
-from trader.position import Rate
+from trader.rate import Rate
 from helpers import *
 
 # Draw Chart
@@ -37,7 +33,7 @@ class Chart():
     COLOR_PRICES = (255, 255, 255)
 
     TIMEFRAME_SEPARATORS = {"M1": 60, "M2": 30, "M3": 20, "M4": 15, "M5": 12, "M6": 10, "M10": 6, "M12": 5,
-                            "M15": 94, "M20": 9, "M30": 48, "H1": 24, "H2": 12, "H3": 8, "H4": 6, "H8": 9, "H12": 6, "D1": 7, "W1": 4}
+                            "M15": 94, "M20": 9, "M30": 48, "H1": 24, "H2": 12, "H3": 8, "H4": 6, "H6": 7, "H8": 9, "H12": 6, "D1": 7, "W1": 4}
 
     def __init__(self):
         # Handles
@@ -142,8 +138,11 @@ class Chart():
         mappedy = Chart.CHART_SIZEY-((posy*self.volume_scale))
         return mappedy
 
-    def generate_chart(self, dir, id, data, limits, symbol, deals):
-        chartname = "%s.png" % id
+    def get_name(id):
+        return "%s.png" % id
+    
+    def generate_chart(self, chartpath, id, data, limits, symbol, deals):
+        chartname = Chart.get_name(id)
 
         rates, period = data[0], data[1]
         sl, tp = limits[0], limits[1]
@@ -204,5 +203,4 @@ class Chart():
             self.draw_frame(symbol, bar_count, period)
 
         # Save
-        self.image.save(os.path.join(os.path.abspath(dir), chartname))
-        return chartname
+        self.image.save(chartpath)

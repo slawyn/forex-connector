@@ -5,24 +5,33 @@ import datetime
 import pytz
 
 
-def export(data):
-    log(f"EXPORTER:Started with {len(data)} Entries")
+class Exporter():
+    def __init__(self, symbol, datetime_start, datetime_end):
+        #timezone = pytz.timezone("Etc/UTC")
 
-    log(f"EXPORTER:Finished")
+        self.trader = Trader()
+        self.symbol = symbol
+        sym_names = [sym.name for sym in self.trader.get_symbols()]
+        if self.symbol not in sym_names:
+            raise Exception(f"Symbol <{symbol}> not found")
+        else:
+            self.date_start = datetime_start
+            self.date_end = datetime_end
+
+    def get_rates(self, now=False):
+        end_date = datetime.datetime.utcnow() if now else self.date_end
+        start_date = self.date_start
+        data = self.trader.get_rates_for_symbol(self.symbol, start_date, end_date)
+        return data
+
+    def get_ticks(self, now=False):
+        end_date = datetime.datetime.utcnow() if now else self.date_end
+        start_date = self.date_start
+        data = self.trader.get_ticks_for_symbol(self.symbol, start_date, end_date)
+        return data
 
 
+# Example of usage
 if __name__ == "__main__":
-    trader = Trader()
-    sym_names = [sym.name for sym in trader.get_symbols()]
-
-    selected_symbol = 'GOLD'
-
-    timezone = pytz.timezone("Etc/UTC")
-    utc_from = datetime.datetime(1991, 1, 10, tzinfo=timezone)
-    utc_to = datetime.datetime(2020, 2, 11, tzinfo=timezone)
-    now_msc = datetime.datetime.utcnow()
-
-    if selected_symbol in sym_names:
-        data = trader.get_rates_for_symbol(selected_symbol, utc_from, utc_to)
-        #data2 = trader.get_ticks_for_symbol(selected_symbol, utc_from, utc_to)
-        export(data)
+    exporter = Exporter('GOLD', datetime.datetime(2023, 2, 11), datetime.datetime(2023, 2, 12))
+    data = exporter.get_ticks()

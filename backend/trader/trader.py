@@ -3,22 +3,29 @@ import MetaTrader5 as mt5
 import time
 
 from trader.accountinfo import AccountInfo
-from trader.position import Position, OpenPosition, Rate
+from trader.position import ClosedPosition, OpenPosition
+from trader.rate import Rate
 from trader.symbol import Symbol
 from trader.request import TradeRequest
+from trader.trade_codes import ERROR_CODES
 from helpers import *
-
+import subprocess
 
 class Trader:
     TIMEFRAMES = ["M1", "M2", "M3", "M4", "M5", "M6", "M10", "M12", "M20", "M30", "H1", "H2", "H3", "H4", "H6", "H8", "H12", "D1", "W1", "MN1"]
     MT_TIMEFRAMES = [mt5.TIMEFRAME_M1, mt5.TIMEFRAME_M2, mt5.TIMEFRAME_M3, mt5.TIMEFRAME_M4, mt5.TIMEFRAME_M5, mt5.TIMEFRAME_M6, mt5.TIMEFRAME_M10, mt5.TIMEFRAME_M12, mt5.TIMEFRAME_M20, mt5.TIMEFRAME_M30,
                      mt5.TIMEFRAME_H1, mt5.TIMEFRAME_H2, mt5.TIMEFRAME_H3, mt5.TIMEFRAME_H4, mt5.TIMEFRAME_H6, mt5.TIMEFRAME_H8, mt5.TIMEFRAME_H12, mt5.TIMEFRAME_D1, mt5.TIMEFRAME_W1, mt5.TIMEFRAME_MN1]
 
+    MAX_BARS_COUNT = 110
+    OPTIMAL_BAR_COUNT = 70
     '''
         description: Used for communicating over the connector with mt5
     '''
 
-    def __init__(self):
+    def __init__(self, mt_config, mt_process):
+        cmd = [mt_process, f"/config:{mt_config}"]
+        log(cmd)
+        p = subprocess.Popen(cmd, start_new_session=True)
         # 1. Establish connection to the MetaTrader 5 terminal
         if self.reinit():
             self.ratio = 1
@@ -118,7 +125,7 @@ class Trader:
                 rates = mt5.copy_rates_range(pd.get_symbol_name(), time_frame, time_start, time_stop)
 
                 # Too big
-                if len(rates) > 110:
+                if len(rates) > Trader.MAX_BARS_COUNT:
                     period += 1
                     if period > len(Trader.MT_TIMEFRAMES):
                         log("ERROR: Plotting not possible, no bigger time frame available")
@@ -128,21 +135,21 @@ class Trader:
                     break
 
                 # Optimal
-                elif len(rates) > 70 or time_frame == Trader.MT_TIMEFRAMES[0]:
+                elif len(rates) > Trader.OPTIMAL_BAR_COUNT or time_frame == Trader.MT_TIMEFRAMES[0]:
                     pd.add_rates(rates, Trader.TIMEFRAMES[period])
                     break
-
-            # start, end, period = calculate_plot_range(pd.get_start_msc(), pd.get_end_msc())
-            # rates = mt5.copy_rates_range(pd.get_symbol_name(), Trader.TIMEFRAMES[period], start, end)
 
         return positions
 
     def get_tick(self, sym):
-        if sym != None:
+        ''' Gets tick for the symbol
+            sym: Symbol name 
+        '''
+        if sym == None:
+            raise ValueError("ERROR: Symbol cannot be None")
+        else:
             tick = mt5.symbol_info_tick(sym.name)
             return tick
-        else:
-            raise ValueError("ERROR: Symbol cannot be None")
 
     def get_symbols(self):
         ''' Collect Symbols '''
@@ -154,8 +161,44 @@ class Trader:
         return symbols
 
     def get_symbol(self, sym_name):
-        exported_symbol = self.symbols[sym_name]
-        return exported_symbol
+        return self.symbols.get(sym_name, None)
+
+    def update_rates_for_symbol(self, symbol, time_frame, start_s, end_s):
+        '''Add difference of rates to the symbol
+        '''
+        rates = {}
+        period = Trader.TIMEFRAMES.index(time_frame)
+        if start_s != end_s and period >=0:
+            TIME_FRAME = Trader.MT_TIMEFRAMES[period]
+            timestamp_start = datetime.datetime.fromtimestamp(start_s)
+            timestamp_end = datetime.datetime.fromtimestamp(end_s)
+            current_s = symbol.time
+
+            # Update initial
+            if symbol.get_timestamp_first(TIME_FRAME) == 0:
+                symbol.update_rates(self.get_rates_for_symbol(symbol.name,
+                                                              utc_from=timestamp_start,
+                                                              utc_to=timestamp_end,
+                                                              frame=TIME_FRAME),
+                                                              timeframe=TIME_FRAME)
+            # Update recent
+            symbol.update_rates(self.get_rates_for_symbol(symbol.name, 
+                                                          utc_from=timestamp_end, 
+                                                          utc_to=datetime.datetime.fromtimestamp(current_s),
+                                                          frame=TIME_FRAME),
+                                                          timeframe=TIME_FRAME)
+
+            
+            # Update before current start
+            initial_timestamp = datetime.datetime.fromtimestamp(symbol.get_timestamp_first(TIME_FRAME))
+            if timestamp_start < initial_timestamp:
+                symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=initial_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME) 
+
+            # Get rates
+            rates = symbol.get_rates(timeframe=TIME_FRAME, start=start_s, end=current_s)
+        
+        return {time_frame:rates}
+
 
     def get_updated_symbols_sorted(self):
         syms = []
@@ -169,7 +212,7 @@ class Trader:
             except:
                 pass
             finally:
-                if exported_symbol == None:
+                if exported_symbol is None:
                     exported_symbol = Symbol(sym, conversion=(sym.currency_profit != self.account_info.currency))
                     self.symbols[sym.name] = exported_symbol
 
@@ -181,57 +224,35 @@ class Trader:
 
     def get_symbols_by_wildcard(self, wildcard):
         syms = []
-        for s in self.get_symbols():
-            if wildcard in s:
-                syms.append(s)
+        for _sym in self.get_symbols():
+            if wildcard in _sym:
+                syms.append(_sym)
         return syms
 
-    def get_rates_for_symbol(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_D1):
+    def get_rates_for_symbol(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_H1):
         data = []
         try:
-            #info = mt5.symbol_info_tick(symbol_name)
-            #stop_msc = info.time_msc
             data = mt5.copy_rates_range(symbol_name, frame, utc_from, utc_to)
-            if data == None:
-                raise Exception()
+            code = mt5.last_error()[0]
+            if code != 1:
+                data = []
+                raise Exception(f"ERROR: During fetching of rates {symbol_name} {mt5.last_error()}")
         except Exception as e:
-            log(f"ERROR: Unknown symbol to get rates for {mt5.last_error()}")
+            log(e)
         return data
 
     def get_ticks_for_symbol(self, symbol_name, utc_from, utc_to):
         data = []
         try:
-            #info = mt5.symbol_info_tick(symbol_name)
             data = mt5.copy_ticks_range(symbol_name, utc_from, utc_to, mt5.COPY_TICKS_ALL)
-            if data == None:
-                raise Exception()
+            code = mt5.last_error()[0]
+            if code != 1:
+                data = []
+                raise Exception(f"ERROR: During fetching of ticks {symbol_name} {mt5.last_error()}")
         except Exception as e:
-            log(f"ERROR: Unknown symbol to get ticks for {mt5.last_error()}")
+            log(e)
+
         return data
-
-    def calculate_stoploss(self,  sym):
-        loss_profit = self.balance*(self.risk/100)
-        lot_min = sym.volume_min
-        lot_step = sym.volume_step
-        contractsforlot = sym.trade_contract_size
-        lots = lot_min
-        # lots * contracts per lot * pricediff = loss_profit
-
-        value_per_point = sym.trade_tick_value * sym.point/sym.trade_tick_size
-
-        if sym.digits == 3:
-            value_per_point /= 100.0
-
-        points = loss_profit/(contractsforlot * lots * value_per_point)
-
-        buy_stoploss = sym.bid - points
-        buy_takeprofit = sym.bid + self.ratio * points
-        sell_stoploss = sym.ask + points
-        sell_takeprofit = sym.ask - self.ratio * points
-
-        log("%s:[A:%f B:%f] %s %s %s %s" % (s.name, sym.ask, sym.bid, str(buy_stoploss), str(buy_takeprofit), str(sell_stoploss), str(sell_takeprofit)))
-        log("\tRisk: %f Diff: %f tickval=%f point=%f ticksize=%f" % (loss_profit, points, sym.trade_tick_value, sym.point, sym.trade_tick_size))
-        return [buy_stoploss, buy_takeprofit, sell_stoploss, sell_takeprofit]
 
     def get_history_positions(self, start_date, onlyfinished=True):
         history_deals = mt5.history_deals_get(start_date, datetime.datetime.now())
@@ -244,7 +265,7 @@ class Trader:
             # add deals to position
             pos_id = str(deal.position_id)
             if pos_id not in pos_temporary:
-                pos_temporary[pos_id] = Position(pos_id)
+                pos_temporary[pos_id] = ClosedPosition(pos_id)
                 pos_temporary[pos_id].add_deal(deal)
             else:
                 pos_temporary[pos_id].add_deal(deal)
@@ -275,10 +296,17 @@ class Trader:
         else:
             return pos_temporary
 
-    def trade(self, tradeRequest):
+    def trade(self, tradeRequest, trade=False):
         request = tradeRequest.get_request()
-        result = mt5.order_send(request)
-        if result != None:
-            log(result.retcode)
+        if not trade:
+            id, text = {0, ""}
         else:
-            log(mt5.last_error())
+            log(request)
+            result = mt5.order_send(request)
+            if result != None:
+                id, text = {result.retcode, ERROR_CODES[result.retcode]}
+            else:
+                retcode = mt5.last_error()
+                id, text = {retcode[0], retcode[1]}
+
+        return id, text

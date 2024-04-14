@@ -23,11 +23,14 @@ def convert_string_to_date(date):
     return datetime.datetime.fromisoformat(date)
 
 
-def log(s):
+def log(*s):
     '''
     Log function
     '''
-    print("%s ## %s" % (datetime.datetime.now().time(), s))
+    out = ""
+    for _s in s:
+        out +=str(_s)
+    print("%s ## %s" % (datetime.datetime.now().time(), out))
 
 
 def load_json(filename):

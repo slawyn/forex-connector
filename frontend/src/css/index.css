@@ -1,0 +1,278 @@
+input {
+  /* line-height: 6ex; */
+  color: white;
+  background-color: #effff000;
+  width: 60%;
+  text-align: left;
+}
+
+button {
+  display: block;
+  width: 100%;
+  border-color: rgb(0, 0, 0);
+  border: 2px;
+  font-style: italic;
+  transition-duration: 0.4s;
+  border-style: double;
+}
+
+.css-red-button:hover,
+.css-blue-button:hover,
+.clsOrangebutton:hover {
+  background-color: #effff000;
+  color: white;
+}
+
+.css-red-button {
+  background-color: red;
+}
+
+.css-blue-button {
+  background-color: rgb(0, 187, 255);
+  width: auto;
+}
+
+.clsOrangebutton {
+  background-color: rgb(226, 84, 8);
+}
+
+.clsStyle {
+  font-size:8pt;
+  font-family: 'Consolas';
+  border-collapse: collapse;
+  width: fit-content;
+  font-style: italic;
+}
+
+.clsStyle input {
+  color: azure;
+}
+
+.clsStyle td {
+  padding: 0px 5px 5px 0px;
+}
+
+.clsStyle th {
+  background-color: blueviolet;
+  border: 2px;
+  border-color: aliceblue;
+}
+.clsStyle td:nth-child(1)
+{
+  font-weight: bold;
+  border: 1px solid rgb(136, 150, 244);
+}
+
+
+.clsStyle td:nth-child(8),
+.clsStyle td:nth-child(9){
+  border: 1px solid rgb(19, 169, 199);
+}
+
+.clsStyle tr:nth-child(even) {
+  background: #413f3f;
+}
+
+.clsStyle td:nth-child(even) {
+  background: #413f3f60;
+}
+
+.clsStyle tr:hover {
+  background: rgb(115, 42, 0);
+  cursor: pointer;
+}
+
+.clsStyle th:hover {
+  background: rgb(154, 9, 164);
+}
+
+.clsBorderless th
+{
+  font-size:8pt;
+  font-family: 'Consolas';
+  border-collapse: collapse;
+  width: fit-content;
+  font-style: italic;
+  background-color: blueviolet;
+}
+
+.clsBorderless th:hover {
+  background: rgb(154, 9, 164);
+}
+
+.cls100PContainer {
+  font-size: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.cls50PContainer {
+  display: inline-block;
+  vertical-align: top;
+  align-self: start;
+  width: 50%
+}
+
+.clsHistoryContainer {
+  display: inline-block;
+  vertical-align: top;
+  margin: 0px;
+  padding: 0px;
+  overflow-y: auto;
+  min-width: fit-content;
+}
+.clsGlobalContainer {
+  display: flex;
+}
+
+.clsImageContainer {
+  vertical-align: top;
+  margin: 0px;
+  padding: 0px;
+  max-width: fit-content;
+}
+
+.clsTraderContainer {
+  display: inline-block;
+  vertical-align: top;
+  font-size: 13pt;
+  width: 50%;
+}
+
+.clsHeaderContainer {
+  display: flex;
+}
+
+.clsCalculator {
+  vertical-align: top;
+  font-size: 13pt;
+  border: #da5a11;
+  border-style: solid;
+  border-width: 2pt;
+  margin: 0px 10px 10px 10px;
+}
+
+
+.clsSymbolProperties
+{
+  background-color: blueviolet;
+  border: 1px solid silver;
+  font-size: small;
+  margin-bottom: 200px;
+}
+
+.clsPositionsTable {
+  vertical-align: top;
+  font-size: 13pt;
+  border: #ff5100;
+  border-style: solid;
+  border-width: 2pt;
+  margin: 10px
+}
+
+.input-wrapper {
+  position: relative;
+  font-size: small;
+  border: 1px solid gray;
+  border-radius: 2px;
+  display: flex;
+}
+
+.orangeTag {
+  position: relative;
+  background-color: orange;
+  color: black;
+  font-size: large;
+  margin: 1px;
+  width: 40%;
+}
+
+.redTag {
+  position: relative;
+  background-color: rgb(177, 22, 22);
+  color: black;
+  font-size: large;
+  margin: 1px;
+  width: 40%;
+}
+
+
+.blueTag {
+  position: relative;
+  background-color: rgb(12, 146, 255);
+  color: black;
+  font-size: large;
+  margin: 1px;
+  width: 40%;
+}
+
+.apexcharts-tooltip  {
+  background: #ffffff00 !important;
+}
+
+.top-bar{
+  font-size:10pt;
+  font-family: 'Consolas';
+  border-collapse: collapse;
+  width: fit-content;
+  font-style: italic;
+}
+
+.top-bar td {
+  padding-left:20px;
+  padding-right:20px;
+}
+
+.top-bar td:nth-child(even) {
+  background: #26a5ff60;
+}
+
+.top-bar tr:hover {
+  background: rgb(115, 42, 0);
+  cursor: pointer;
+}
+
+.css-button-checkbox{
+  width: auto;
+}
+
+.css-button-checkbox:hover{
+  width: auto;
+  background-color: #effff000;
+  color:white
+}
+
+.css-button-checkbox.active{
+  background-color: #da5a11;
+}
+
+.top-bar-tabs {
+  font-size:10pt;
+  font-family: 'Consolas';
+  border-collapse: collapse;
+  width: fit-content;
+  font-style: italic;
+  margin:0px;
+  padding:0px;
+  display: flex;
+}
+
+.top-bar-tab {
+  cursor: pointer;
+  padding: 0px 10px;
+}
+
+.top-bar-tab:hover {
+  background:#da5a11
+}
+
+.property-fullsize
+{
+  width:100%;
+  height:100%;
+}
+
+.property-fitcontent
+{
+  width:fit-content;
+}

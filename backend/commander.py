@@ -9,17 +9,18 @@ class Commander():
 
     def __init__(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.instrument = ""
 
     def connect(self):
         error = False
         try:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server.connect((Commander.HOST, Commander.PORT))
-            log("STATUS: Commander connected")
+            log("Cmmander[OK]: connected")
             time.sleep(0.2)
         except Exception as e:
             error = True
-            log("ERROR: Commander failed connect")
+            log("Commander[ERROR]: failed connect")
         return error
 
     def disconnect(self):
@@ -31,11 +32,11 @@ class Commander():
         data = bytes(string, 'ascii')
         try:
             self.server.sendall(data)
-            log(f"STATUS: Commander sent {string}")
+            log(f"Commander[OK]: {string}")
         except Exception as e:
             print(e)
             error = True
-            log(f"ERROR: Commander failed {string}")
+            log(f"Commander[ERROR]: {string}")
 
         return rdata, error
 
@@ -57,7 +58,12 @@ class Commander():
         rdata = []
         if not self.ping():
             rdata, error = self.send_receive(f"INSTRUMENT:{instrument}\r\n")
+            if not error:
+                self.instrument = instrument
         return rdata
+    
+    def get_selected_instrument(self):
+        return self.instrument
 
     def send_test(self):
         self.send_instrument("#Euro50")

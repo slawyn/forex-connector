@@ -1,8 +1,9 @@
 from helpers import load_json
-
+import os
 
 class Config:
     def __init__(self, filename):
+        self.dirname = os.path.dirname(filename)
         self.dictionary = load_json(filename)
 
     def get_google_secrets_file(self):
@@ -24,4 +25,10 @@ class Config:
         return self.dictionary["google"]["date"]
 
     def get_export_folder(self):
-        return self.dictionary["local"]["dir"]
+        return os.path.abspath(os.path.join(self.dirname, self.dictionary["local"]["dir"]))
+    
+    def get_metatrader_configuration(self):
+        return os.path.join(self.dirname, self.dictionary["metatrader"]["dir"])
+    
+    def get_metatrader_process(self): 
+        return self.dictionary["metatrader"]["process"]
