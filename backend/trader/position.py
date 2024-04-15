@@ -93,6 +93,8 @@ class ClosedPosition:
     HEADER = ["ID",
               "SYMBOL",
               "VOLUME",
+              "OPEN",
+              "CLOSE",
               "PROFIT",
               "TYPE",
               "COMMENT"
@@ -327,6 +329,8 @@ class ClosedPosition:
         data.append(self.id)
         data.append(self.symbol)
         data.append(self.volume_total)
+        data.append(self.price_open_avg)
+        data.append(self.price_close_avg)
         data.append(self.profit_total)
         data.append(self.sell_or_buy)
         data.append(self.comment)

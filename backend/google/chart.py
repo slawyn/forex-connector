@@ -5,6 +5,8 @@ from helpers import *
 
 # Draw Chart
 
+def create_point(basex, basey, offsetx, offsety, percentage=1.0):
+    return (basex+offsetx*percentage, basey+offsety*percentage)
 
 class Chart():
     CHART_SIZEY = 1080
@@ -62,6 +64,7 @@ class Chart():
             price = "%2.5f" % (maxprice-i*step)
             self.draw.text((Chart.CHART_OFFSET_PRICESX + 20, (Chart.CHART_OFFSET_TOPY+Chart.CHART_OFFSET_EXTRA)+i*offsetstep), price, font=self.font_prices, fill=Chart.COLOR_PRICES)
 
+
     def draw_arrow_up(self, posx, posy):
         point0 = (posx+self.bar_width/2,    posy+0)                 # Center
         point1 = (posx-self.bar_width/2,    posy+self.bar_width)    # Left
@@ -71,10 +74,11 @@ class Chart():
         self.draw.rectangle([posx+self.bar_width/4, posy+self.bar_width, posx+self.bar_width*3/4, posy+self.bar_width*2], fill=Chart.COLOR_ARROW_BUY)
 
     def draw_arrow_down(self, posx, posy):
-        point0 = (posx+self.bar_width/2,    posy+0)                 # Center
-        point1 = (posx-self.bar_width/2,    posy-self.bar_width)    # Left
-        point2 = (posx+self.bar_width*3/2,  posy-self.bar_width)    # Right
 
+        # Center, Left, Right
+        point0 = create_point(posx, posy, self.bar_width/2, 0)
+        point1 = create_point(posx, posy, -self.bar_width/2, -self.bar_width)
+        point2 = create_point(posx, posy, self.bar_width*3/2, -self.bar_width)
         self.draw.polygon([point0, point1, point2], fill=Chart.COLOR_ARROW_SELL)
         self.draw.rectangle([posx+self.bar_width/4, posy-self.bar_width, posx+self.bar_width*3/4, posy-self.bar_width*2], fill=Chart.COLOR_ARROW_SELL)
 

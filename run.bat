@@ -10,7 +10,7 @@ if "%ERRORLEVEL%"=="0" (
     echo %WINDOW_NAME% " already running!"
 ) else (
     echo  %WINDOW_NAME% [python ./backend/proxy.py %CONFIG%]
-    start %WINDOW_NAME% python ./backend/proxy.py %CONFIG%
+    start %WINDOW_NAME% /b python ./backend/proxy.py %CONFIG%
 )
 
 :: Start react
