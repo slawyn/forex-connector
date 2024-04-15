@@ -118,13 +118,14 @@ const App = () => {
     /**
      * Fetch symbol info
      */
-    setCommand({ instrument: instrument })
-
-    fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
+    if(instrument !== undefined && instrument !== '')
+    {
+      fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
       response.json().then((receivedSymbol) => {
         setSymbolData(receivedSymbol);
       })
     );
+  }
   };
 
   function setCommand(props) {
@@ -136,6 +137,10 @@ const App = () => {
     /* Mount */
     const interval = setInterval(() => {
       fetchTerminalData(false);
+
+      /* Fetch selected symbol data, periodically */
+      fetchSymbol(selected.instrument)
+      
     }, 3000);
 
     /* Unmount */
@@ -197,6 +202,7 @@ const App = () => {
                     symbol={symbolData.info}
                     instrument={selected.instrument}
                     calculator={selected.calculator}
+                    
                   />
                 </nav>
                 <nav className="cls50PContainer">
@@ -205,7 +211,7 @@ const App = () => {
                     account={terminalData.account}
                     headers={terminalData.headers}
                     data={mapTerminalData(terminalData.instruments, terminalData.updates)}
-                    handlers={{ setId: fetchSymbol }}
+                    handlers={{ setId: (id) => {fetchSymbol(id); setCommand({ instrument: id })} }}
                   />
                 </nav>
               </nav>

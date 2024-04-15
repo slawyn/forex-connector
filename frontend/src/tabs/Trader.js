@@ -20,7 +20,7 @@ function calculateInitialRisk(ask, bid, riskAmount, contractSize, pointValue, vo
         pointValue = 1 / ask;
     }
 
-    const INITIAL_SPREAD_AMOUNT = 10
+    const INITIAL_SPREAD_AMOUNT = 5
     const priceRisk = (ask - bid) * INITIAL_SPREAD_AMOUNT
     const riskLot = (riskAmount / (contractSize * pointValue * priceRisk));
     const initialRiskLot = Math.trunc(riskLot / volumeStep) * volumeStep

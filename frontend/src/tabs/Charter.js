@@ -128,16 +128,16 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
     const TIMEFRAMES = {
         "D1": (60 * 60 * 24 * 60)*1000,
         "H4": (60 * 60 * 4 * 48)*1000,
-        "H1": (60 * 60 * 1 * 24)*1000
+        "M20": (60 * 60 * 1 * 24)*1000
     };
     const ANNOTATIONS = {
         "D1": ['', '', '', ''],
         "H4": ['', '', '', ''],
-        "H1": ["SL-long", "SL-short", "TP-short", "TP-long"]
+        "M20": ["SL-long", "SL-short", "TP-short", "TP-long"]
     };
     const refs = React.useRef(Object.entries(TIMEFRAMES).map(() => React.createRef()));
     const localInstrument = React.useRef('')
-    const localSymbol = React.useRef({})
+    const localSymbol = React.useRef({digits:0, ask:0, bid:0})
     const rates = React.useRef({})
     const localCalculator = React.useRef({ sl: [], tp: [] })
     const interval = React.useRef(null)
@@ -168,19 +168,28 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
         updateAnnotations()
     }
 
-    if (localSymbol.current !== symbol) {
-        localSymbol.current = symbol
-        // console.log("       :: Symbol ", localSymbol.current)
+    if (localSymbol.current.digits !== symbol.digits) {
+        localSymbol.current.digits = symbol.digits
+        updateOptions(TIMEFRAMES, localSymbol.current.digits)
+        updateAnnotations()
+    }
 
-        /* Update all ask and bid references */
+    if (localSymbol.current.ask !== symbol.ask || localSymbol.bid !== symbol.bid) {
+        localSymbol.current.ask = symbol.ask
+        localSymbol.current.bid = symbol.bid
+        updateAnnotations()
+    }
+
+    function updateOptions(timeframes, digits)
+    {
+        // console.log("       :: Symbol ", localSymbol.current)
         refs.current.forEach((reference, _index) => {
             if (reference.current) {
-                const timeframe = Object.keys(TIMEFRAMES)[_index]
-                const digits = localSymbol.digits
+                const timeframe = Object.keys(timeframes)[_index]
                 reference.current.chart.updateOptions({
                     yaxis: {
                         labels: {
-                            formatter: (value) => { return value.toFixed(digits) }
+                            formatter: (value) => value//{ return value.toFixed(digits) }
                         }
                     },
                     title: {
@@ -231,8 +240,15 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
                         yaxis: [
                             {
                                 y: localSymbol.current.ask,
-                                y2: localSymbol.current.bid,
-                                borderColor: '#000',
+                                strokeDashArray: 2,
+                                fillColor: '#FEB019',
+                                width: '130%',
+                                label: {
+                                    text: ''
+                                },
+                            },
+                            {
+                                y: localSymbol.current.bid,
                                 strokeDashArray: 2,
                                 fillColor: '#FEB019',
                                 width: '130%',
@@ -242,56 +258,64 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
                             },
                             {
                                 y: localCalculator.current.sl[0],
-                                borderColor: '#fc03ec',
+                                y2: localCalculator.current.bid,
                                 width: '130%',
+                                fillColor: '#fc03ec80',
                                 label: {
+                                    text: annomationNames[0],
                                     borderColor: '#fc03ec',
+                                    offsetX: -300,
                                     style: {
                                         color: '#fff',
-                                        background: '#fc03ec00'
+                                        background: '#00000000'
                                     },
-                                    text: annomationNames[0]
                                 }
                             },
                             {
-                                y: localCalculator.current.sl[1],
-                                borderColor: '#fc03ec',
+                                y2: localCalculator.current.sl[1],
+                                y: localCalculator.current.ask,
                                 width: '130%',
+                                fillColor: '#fc03ec80',
                                 label: {
+                                    text: annomationNames[1],
                                     borderColor: '#fc03ec',
+                                    offsetX: -300,
                                     style: {
                                         color: '#fff',
-                                        background: '#fc03ec00'
+                                        background: '#00000000'
                                     },
-                                    text: annomationNames[1]
                                 }
                             },
-                            {
-                                y: localCalculator.current.tp[0],
-                                borderColor: '#03fce7',
-                                width: '130%',
-                                label: {
-                                    borderColor: '#03fce7',
-                                    style: {
-                                        color: '#fff',
-                                        background: '#03fce700'
-                                    },
-                                    text: annomationNames[2]
-                                }
-                            },
-                            {
-                                y: localCalculator.current.tp[1],
-                                borderColor: '#03fce7',
-                                width: '130%',
-                                label: {
-                                    borderColor: '#03fce7',
-                                    style: {
-                                        color: '#fff',
-                                        background: '#03fce700'
-                                    },
-                                    text: annomationNames[3]
-                                }
-                            }
+                           {
+                               y: localCalculator.current.tp[0],
+                               y2: localCalculator.current.sl[1],
+                               fillColor: '#03FCE7FF',
+                               width: '130%',
+                               label: {
+                                   text: annomationNames[2],
+                                   borderColor: '#03FCE7',
+                                   offsetX: -300,
+                                   style: {
+                                       color: '#fff',
+                                       background: '#00000000'
+                                   },
+                               }
+                           },
+                           {
+                               y: localCalculator.current.tp[1],
+                               y2: localCalculator.current.sl[0],
+                               fillColor: '#03FCE7FF',
+                               width: '130%',
+                               label: {
+                                   text: annomationNames[3],
+                                   borderColor: '#03FCE7',
+                                   offsetX: -300,
+                                   style: {
+                                       color: '#fff',
+                                       background: '#00000000'
+                                   },
+                               }
+                           }
                         ]
                     }
                 });
