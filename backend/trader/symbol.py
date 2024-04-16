@@ -58,7 +58,6 @@ class Symbol:
 
         # calculate point value, does not always work
         self.point_value = (self.tick_value * sym.point)/self.step
-
         self.price_change = ((self.bid-self.session_open)/(self.session_open+0.00000001))*100.0
 
         ##

@@ -130,14 +130,14 @@ class ClosedPosition:
         self.comment = ""
 
     def add_rates(self, rates, period):
-        '''Rates and period
-        '''
+        """Rates and period
+        """
         self.period = period
         self.rates = [Rate(rate) for rate in rates]
 
     def add_deal(self, deal):
-        '''Add deal to position
-        '''
+        """Add deal to position
+        """
         self.swap_total = self.swap_total + deal.swap
         self.profit_total = self.profit_total + deal.profit
         self.volume_total += deal.volume
@@ -156,8 +156,8 @@ class ClosedPosition:
         diff_volume = self.opening_volume - self.closing_volume
 
     def add_orders(self, orders):
-        '''Add orders to position
-        '''
+        """Add orders to position
+        """
         # Check if stop loss has been set, if not set it to a value by parsing other orders regarding this position
         # Problem some data doesn't have stop loss or take profit data in the database, although it is set in metatrader. Don't know why
         if orders != None:
@@ -169,13 +169,13 @@ class ClosedPosition:
                     self.price_tp = order.tp
 
     def set_symbol_info(self, sym):
-        '''Add symbol info to position
-        '''
+        """Add symbol info to position
+        """
         self.symbol_info = sym
 
     def get_symbol_name(self):
-        '''Gets
-        '''
+        """Gets
+        """
         return self.opening_deals[0].symbol
 
     def get_id(self):
@@ -204,8 +204,8 @@ class ClosedPosition:
         return result
 
     def calculate(self):
-        '''Calculate
-        '''
+        """Calculate
+        """
         # closed only if difference is less than 0.01
         self.price_open_avg = self.price_open_avg/self.opening_volume
         self.price_close_avg = self.price_close_avg/self.closing_volume
@@ -241,8 +241,8 @@ class ClosedPosition:
         self.comment = self.opening_deals[0].comment
 
     def get_data_for_excel(self):
-        '''Create Data Set for Excel
-        '''
+        """Create Data Set for Excel
+        """
         data = []
 
         # 0
@@ -291,9 +291,9 @@ class ClosedPosition:
         return data
 
     def print_data(self):
-        '''
+        """
         Print data
-        '''
+        """
         log("## %s[%s] {%s} ###################" % (self.id, self.symbol, self.sell_or_buy))
         log("\t%-20s %-2f" % ("{SL}:", self.price_sl))
         log("\t%-20s %-2f" % ("{TP}:", self.price_tp))

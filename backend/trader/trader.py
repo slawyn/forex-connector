@@ -18,34 +18,29 @@ class Trader:
 
     MAX_BARS_COUNT = 110
     OPTIMAL_BAR_COUNT = 70
-    '''
+    """
         description: Used for communicating over the connector with mt5
-    '''
+    """
 
     def __init__(self, mt_config, mt_process):
         cmd = [mt_process, f"/config:{mt_config}"]
         log(cmd)
         p = subprocess.Popen(cmd, start_new_session=True)
         # 1. Establish connection to the MetaTrader 5 terminal
-        if self.reinit():
-            self.ratio = 1
-            self.risk = 2
+        if self._initialize():
             self.symbols = {}
             self.open_positions = {}
             self.account_info = AccountInfo(mt5.account_info())
             self.update_account_info()
 
-    def reinit(self):
-        if not mt5.initialize():
+    def _initialize(self):
+        if mt5.account_info() is None and not mt5.initialize():
             raise ValueError("initialize() failed, error code =" + str(mt5.last_error()))
         else:
             return True
 
-    def needs_reconnect(self):
-        return mt5.account_info() != None
-
     def update_account_info(self):
-        ''' Collect Essential Account Information '''
+        """ Collect Essential Account Information """
         acc_info = mt5.account_info()
         self.account_info.set_data(mt5.account_info())
 
@@ -62,14 +57,12 @@ class Trader:
             self.filter_function = lambda sym: True
 
     def get_orders(self):
-        ''' Get Orders '''
-        if self.needs_reconnect():
-            self.reinit()
+        """ Get Orders """
+        self._initialize()
         return mt5.orders_get()
 
     def get_atr(self, sym):
-        if self.needs_reconnect():
-            self.reinit()
+        self._initialize()
 
         info = mt5.symbol_info_tick(sym.name)
         stop_msc = info.time_msc
@@ -80,12 +73,9 @@ class Trader:
         return atr
 
     def get_open_positions(self):
-        positions = mt5.positions_get()
-
-        # Add to open positions
+        """Get Open Positions"""
         all_available = []
-        for pos in positions:
-            notFound = False
+        for pos in mt5.positions_get():
             all_available.append(pos.ticket)
             try:
                 open_position = self.open_positions[pos.ticket]
@@ -101,7 +91,7 @@ class Trader:
         return self.open_positions
 
     def get_closed_positions(self, start_date):
-        ''' Return the current positions. Position=0 --> Buy '''
+        """ Return the current positions. Position=0 --> Buy """
         positions = self.get_history_positions(start_date)
 
         # prepare positions for drawing
@@ -142,30 +132,26 @@ class Trader:
         return positions
 
     def get_tick(self, sym):
-        ''' Gets tick for the symbol
+        """ Gets tick for the symbol
             sym: Symbol name 
-        '''
+        """
         if sym == None:
             raise ValueError("ERROR: Symbol cannot be None")
         else:
             tick = mt5.symbol_info_tick(sym.name)
             return tick
 
-    def get_symbols(self):
-        ''' Collect Symbols '''
-        symbols = mt5.symbols_get()
-        if symbols == None or len(symbols) == 0:
-            mt5.initialize()
-            symbols = []
-
-        return symbols
+    def _get_symbols(self):
+        """ Collect Symbols """
+        if self._initialize():
+            return mt5.symbols_get()
+        return []
 
     def get_symbol(self, sym_name):
         return self.symbols.get(sym_name, None)
 
     def update_rates_for_symbol(self, symbol, time_frame, start_s, end_s):
-        '''Add difference of rates to the symbol
-        '''
+        """Add difference of rates to the symbol"""
         rates = {}
         period = Trader.TIMEFRAMES.index(time_frame)
         if start_s != end_s and period >=0:
@@ -200,31 +186,25 @@ class Trader:
         return {time_frame:rates}
 
 
-    def get_updated_symbols_sorted(self):
+    def get_symbols(self, sorted=True):
         syms = []
-        for sym in self.get_symbols():
-            exported_symbol = None
+        for sym in self._get_symbols():
+            if not (sym.name in self.symbols):
+                self.symbols[sym.name] = Symbol(sym, conversion=(sym.currency_profit != self.account_info.currency))
 
-            # check if symbol is none
-            try:
-                exported_symbol = self.symbols[sym.name]
-                exported_symbol.update(sym)
-            except:
-                pass
-            finally:
-                if exported_symbol is None:
-                    exported_symbol = Symbol(sym, conversion=(sym.currency_profit != self.account_info.currency))
-                    self.symbols[sym.name] = exported_symbol
+            exported_symbol = self.symbols[sym.name]
+            exported_symbol.update(sym)
 
             if self.get_tick(sym) != None and self.filter_function(sym):
                 syms.append(exported_symbol)
 
-        syms.sort(key=lambda x: x.name)
+        if sorted:
+            syms.sort(key=lambda x: x.name)
         return syms
 
     def get_symbols_by_wildcard(self, wildcard):
         syms = []
-        for _sym in self.get_symbols():
+        for _sym in self._get_symbols():
             if wildcard in _sym:
                 syms.append(_sym)
         return syms
@@ -255,10 +235,9 @@ class Trader:
         return data
 
     def get_history_positions(self, start_date, onlyfinished=True):
-        history_deals = mt5.history_deals_get(start_date, datetime.datetime.now())
-
         pos_temporary = {}
         pos_finished = {}
+        history_deals = mt5.history_deals_get(start_date, datetime.datetime.now())
         for deal in history_deals:
             mt5.history_deals_get(start_date, datetime.datetime.now())
 
@@ -297,10 +276,10 @@ class Trader:
             return pos_temporary
 
     def trade(self, tradeRequest, trade=False):
-        request = tradeRequest.get_request()
         if not trade:
             id, text = {0, ""}
         else:
+            request = tradeRequest.get_request()
             log(request)
             result = mt5.order_send(request)
             if result != None:

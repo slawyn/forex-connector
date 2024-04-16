@@ -5,8 +5,8 @@ class RatesContainer:
         self.rates = {}
 
     def add_rates(self, rates, time_frame):
-        '''Extend the rates
-        '''
+        """Extend the rates
+        """
         if time_frame not in self.rates:
             self.rates[time_frame] = {}
 
@@ -41,8 +41,8 @@ class Rate:
         return self.time
 
     def get_min_max(rates):
-        '''Find min and max for price and volume
-        '''
+        """Find min and max for price and volume
+        """
 
         # Find highest and lowest
         price_max = 0

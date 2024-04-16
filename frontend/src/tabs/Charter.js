@@ -140,7 +140,6 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
     const localSymbol = React.useRef({digits:0, ask:0, bid:0})
     const rates = React.useRef({})
     const localCalculator = React.useRef({ sl: [], tp: [] })
-    const interval = React.useRef(null)
 
 
     function updateRates() {
@@ -178,6 +177,7 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
         localSymbol.current.ask = symbol.ask
         localSymbol.current.bid = symbol.bid
         updateAnnotations()
+        updateRates()
     }
 
     function updateOptions(timeframes, digits)
@@ -328,11 +328,6 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
 
     /* Create the charts only once, and use updateSeries to update the values */
     const charts = React.useMemo(() => {
-        interval.current = setInterval(() => {
-            updateRates()
-        }, 3000)
-
-
         let _charts = [];
         refs.current.forEach((value, index) => {
 

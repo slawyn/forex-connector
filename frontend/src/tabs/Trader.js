@@ -98,13 +98,13 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
         const requestOptions = createPostRequest(JSON.stringify(request))
         fetch('/trade', requestOptions).then(response =>
           response.json()).then(((idResponse) => {
+            handlers.setErrorData({
+            error: idResponse.error,
+            text: idResponse.text
+            });
             if (idResponse.error !== 10009) {
               throw new Error(`Result: [${idResponse.error}] ${idResponse.text} `);
             }
-            handlers.setErrorData({
-              error: idResponse.error,
-              text: idResponse.text
-            });
           }));
       };
 

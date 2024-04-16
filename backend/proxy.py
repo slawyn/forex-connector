@@ -2,6 +2,7 @@ import datetime
 from flask import Flask, request, render_template, send_from_directory
 from google.driver import DriveFileController
 import sys
+import traceback
 
 from commander import Commander
 from trader.trader import Trader
@@ -11,21 +12,17 @@ from trader.position import ClosedPosition, OpenPosition
 from trader.symbol import Symbol
 from config import Config
 from helpers import *
-import re
 
 # Configurable values
 CONFIG_ENABLE_TRADING = True
 
 # Flask variables
-flask = Flask(__name__)
-
-
 def calculate_indicators(spread, open_price, bid, atr):
     ratio = (spread/atr)*100
     atr_reserve = (open_price-bid)/atr*100
     signal = (abs(atr_reserve) - ratio)
     if signal > 0:
-        if atr_reserve>0:
+        if atr_reserve > 0:
             direction = "[Sell]"
         else:
             direction = "[Buy]"
@@ -34,7 +31,38 @@ def calculate_indicators(spread, open_price, bid, atr):
         formatted_signal = ""
 
     return (formatted_signal, ratio, atr_reserve)
-class App:
+
+
+def convert_timestamp_to_string(timestamp_sec):
+    seconds = int(timestamp_sec % 60)
+    minutes = int(timestamp_sec/60 % 60)
+    hours = int(timestamp_sec/60/60)
+    return f"{hours:02}: {minutes:02}: {seconds:02}"
+
+
+def make_pretty(styler):
+    """Sets up a pretty styler
+       styler: styler object
+    """
+    styler.format_index(lambda v: v.strftime("%A"))
+    styler.background_gradient(axis=None, vmin=1, vmax=5, cmap="YlGnBu")
+    return styler
+
+
+def get_with_terminal_info(force=False):
+    """Updates table with instruments
+    """
+    instr_headers, instr = app.get_symbols(filter=force)
+    account = app.get_account_info()
+    op_headers, open_positions = app._get_open_positions()
+    return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account": account, "op_headers": op_headers, "open": open_positions}
+
+
+def is_it_true(value):
+    return value.lower() == 'true'
+
+
+class App(Flask):
     COL_INSTRUMENT = 'INSTRUMENT'
     COL_BASE = 'CURRENCY'
     COL_DESCRIPTION = 'DESCRIPTION'
@@ -49,28 +77,21 @@ class App:
     COL_CHANGE = 'CHANGE[%]'
     COLUMNS = [COL_INSTRUMENT, COL_BASE, COL_DESCRIPTION, COL_ASK, COL_BID, COL_SPREAD, COL_ATR, COL_WEDGE, COL_AVAIL, COL_SIGNAL, COL_UPDATE, COL_CHANGE]
 
-    def __init__(self, config):
-        self.config = config
-        self.trader = Trader(config.get_metatrader_configuration(), config.get_metatrader_process())
-        self.commander = Commander()
-        self._set_filter("currency")
+    def __init__(self):
+        super().__init__(__name__)
 
-    def run(self):
-        self.window.mainloop()
+    def initialize(self, cfg):
+        self.cfg = cfg
+        self.trader = Trader(cfg.get_metatrader_configuration(), cfg.get_metatrader_process())
+        self.commander = Commander()
 
     def fetch_resource(self, path):
-        return send_from_directory(self.config.get_export_folder(), path)
-
-    def terminal_select(self, symbol):
-        data = self.commander.send_instrument(symbol)
-
-    def terminal_preview(self, ask, bid, sl, tp):
-        data = self.commander.send_drawlines([str(ask), str(bid), str(sl[0]), str(sl[1]), str(tp[0]), str(tp[1])])
+        return send_from_directory(self.cfg.get_export_folder(), path)
 
     def save_to_google(self):
         self.trader.update_history_info()
 
-    def _set_filter(self, filter):
+    def set_filter(self, filter):
         self.trader.set_filter(filter)
 
     def get_symbol(self, instrument):
@@ -90,10 +111,9 @@ class App:
                 "company": info.company,
                 "server": info.server,
                 "login": info.login}
-    
+
     def trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
-        ''' Send trade to terminal
-        '''
+        """ Send trade to terminal"""
         ACTIONS = {
             "market_buy":  [TradeRequest.get_type_market_buy(), entry_buy, stoploss_buy, takeprofit_buy],
             "limit_buy":   [TradeRequest.get_type_limit_buy(), entry_buy, stoploss_buy, takeprofit_buy],
@@ -115,29 +135,29 @@ class App:
         return return_info
 
     def save_to_google(self):
-        ''' Collect Information and add to excel sheet
-        '''
-        drive_handle = DriveFileController(self.config.get_google_secrets_file(),
-                                           self.config.get_google_folder_id(),
-                                           self.config.get_google_spreadsheet(),
-                                           self.config.get_google_worksheet(),
-                                           self.config.get_export_folder())
-        start_date = convert_string_to_date(self.config.get_google_startdate())
+        """ Collect Information and add to excel sheet
+        """
+        drive_handle = DriveFileController(self.cfg.get_google_secrets_file(),
+                                           self.cfg.get_google_folder_id(),
+                                           self.cfg.get_google_spreadsheet(),
+                                           self.cfg.get_google_worksheet(),
+                                           self.cfg.get_export_folder())
+        start_date = convert_string_to_date(self.cfg.get_google_startdate())
         positions = self.trader.get_closed_positions(start_date)
         drive_handle.update_google_sheet(positions)
         return []
 
     def get_history_positions(self):
-        '''Gets closed positions from terminal
-        '''
-        start_date = convert_string_to_date(self.config.get_google_startdate())
+        """Gets closed positions from terminal
+        """
+        start_date = convert_string_to_date(self.cfg.get_google_startdate())
         positions = self.trader.get_history_positions(start_date, onlyfinished=False)
         json_positions = [positions[p].get_info() for p in positions]
         return ClosedPosition.get_info_header(), json_positions
 
     def _get_open_positions(self):
-        ''' Get Open Positions from terminal
-        '''
+        """ Get Open Positions from terminal
+        """
         TYPES = {
             TradeRequest.get_type_market_buy(): "market_buy",
             TradeRequest.get_type_limit_buy(): "limit_buy",
@@ -157,12 +177,11 @@ class App:
         return OpenPosition.get_info_header(), diff_positions
 
     def get_symbols(self, filter):
-        '''Builds a list of instruments based on filter
-        '''
+        """Builds a list of instruments based on filter"""
         react_data = {}
 
         ##
-        syms = self.trader.get_updated_symbols_sorted()
+        syms = self.trader.get_symbols()
         for idx in range(len(syms)):
             sym = syms[idx]
 
@@ -193,46 +212,20 @@ class App:
 
         return App.COLUMNS,  react_data
 
-
-def convert_timestamp_to_string(timestamp_sec):
-    seconds = int(timestamp_sec % 60)
-    minutes = int(timestamp_sec/60 % 60)
-    hours = int(timestamp_sec/60/60)
-    return f"{hours:02}: {minutes:02}: {seconds:02}"
-
-
-def make_pretty(styler):
-    '''Sets up a pretty styler
-       styler: styler object
-    '''
-    styler.format_index(lambda v: v.strftime("%A"))
-    styler.background_gradient(axis=None, vmin=1, vmax=5, cmap="YlGnBu")
-    return styler
-
-
-def get_with_terminal_info(force=False):
-    '''Updates table with instruments
-    '''
-    instr_headers, instr = app.get_symbols(filter=force)
-    account = app.get_account_info()
-    op_headers, open_positions = app._get_open_positions()
-    return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account": account, "op_headers": op_headers, "open": open_positions}
-
-
-def is_it_true(value):
-  return value.lower() == 'true'
-
-@flask.route('/update', methods=['GET'])
+app = App()
+@app.route('/update', methods=['GET'])
 def get_update():
     force = request.args.get("force", default=False, type=is_it_true)
     return get_with_terminal_info(force=force)
 
-@flask.route('/history', methods=['GET'])
+
+@app.route('/history', methods=['GET'])
 def get_history():
     headers, positions = app.get_history_positions()
     return {"positions": positions, "headers": headers}
 
-@flask.route('/rates', methods=['GET'])
+
+@app.route('/rates', methods=['GET'])
 def get_rates():
     instrument = request.args.get("instrument", default='', type=str)
     start_ms = request.args.get("start", default=0, type=int)
@@ -241,43 +234,49 @@ def get_rates():
     rates = []
     if instrument != '':
         rates = app.get_rates(instrument, time_frame, start_ms, end_ms)
-    
+
     return json.dumps(rates)
 
-@flask.route('/symbol', methods=['GET'])
+
+@app.route('/symbol', methods=['GET'])
 def get_symbol():
     symbol = app.get_symbol(request.args.get("instrument", ""))
     if symbol is not None:
         return {"info": {"name": symbol.get_name(),
-                        "step": symbol.get_step(),
-                        "ask": symbol.get_ask(),
-                        "bid": symbol.get_bid(),
-                        "volume_step": symbol.get_volume_step(),
-                        "point_value": symbol.get_point_value(),
-                        "contract_size": symbol.get_contract_size(),
-                        "digits": symbol.get_digits(),
-                        "tick_size": symbol.get_step(),
-                        "tick_value": symbol.get_tick_value(),
-                        "conversion": symbol.get_conversion()
-                        }
+                         "step": symbol.get_step(),
+                         "ask": symbol.get_ask(),
+                         "bid": symbol.get_bid(),
+                         "volume_step": symbol.get_volume_step(),
+                         "point_value": symbol.get_point_value(),
+                         "contract_size": symbol.get_contract_size(),
+                         "digits": symbol.get_digits(),
+                         "tick_size": symbol.get_step(),
+                         "tick_value": symbol.get_tick_value(),
+                         "conversion": symbol.get_conversion()
+                         }
                 }
     return {}
 
-@flask.route('/save', methods=['POST'])
+
+@app.route('/save', methods=['POST'])
 def save():
+    """Save to Google"""
     app.save_to_google()
     return {"id": 0}
 
-@flask.route('/<path:path>')
+
+@app.route('/<path:path>')
 def on_socket(path):
-    '''Socket on-fetch handler
+    """Socket on-fetch handler
         ->path      : requested path
         <-resource  : resource
-    '''
+    """
     return app.fetch_resource(path)
 
-@flask.route('/trade', methods=['POST'])
+
+@app.route('/trade', methods=['POST'])
 def trade():
+    """"""
     data = request.get_json()
     symbol = data.get("symbol")
     position = data.get("position")
@@ -295,27 +294,28 @@ def trade():
     return {"error": result[0], "text": result[1]}
 
 
-
-@flask.route('/command', methods=['POST'])
+@app.route('/command', methods=['POST'])
 def command():
     data = request.get_json()
     type = data.get("command")
     if type == "select":
-        status = app.terminal_select(data.get("data"))
- 
+        status = app.commander.send_instrument(data.get("data"))
+
     elif type == "preview":
         preview = data.get("data")
         sl = preview.get("sl")
         tp = preview.get("tp")
         ask = preview.get("ask")
         bid = preview.get("bid")
-        status = app.terminal_preview(ask, bid, sl, tp)
+        status = app.commander.send_drawlines([str(ask), str(bid), str(sl[0]), str(sl[1]), str(tp[0]), str(tp[1])])
 
     return {}
 
+
 if __name__ == "__main__":
     try:
-        app = App(Config(sys.argv[1]))
-        flask.run(debug=True)
+        app.initialize(Config(sys.argv[1]))
+        app.set_filter("currency")
+        app.run(debug=True)
     except Exception as e:
-        log(e)
+        log(traceback.format_exc())
