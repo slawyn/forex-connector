@@ -105,6 +105,7 @@ class App:
             "close_buy":  [TradeRequest.get_type_market_sell(), entry_sell, None, None]
         }
 
+        return_info = [-1, 'Unknown error']
         try:
             action = ACTIONS[type]
             tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3], position, comment)
