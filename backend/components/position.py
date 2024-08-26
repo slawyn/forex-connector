@@ -1,7 +1,7 @@
 import datetime
 
 from helpers import log
-from trader.rate import Rate
+from components.rate import Rate
 
 
 class OpenPosition:
@@ -260,7 +260,7 @@ class ClosedPosition:
         data.append(self.symbol)
 
         # 4
-        data.append(self.volume_total)
+        data.append(self.closing_volume)
 
         # 5
         data.append(self.sell_or_buy)
@@ -304,7 +304,7 @@ class ClosedPosition:
         log("\t%-20s %-2f" % ("{Average Open}:", self.price_open_avg))
         log("\t%-20s %-2f" % ("{Average Close}:", self.price_close_avg))
 
-        log("\t%-20s %-2f" % ("{Total Volume}:", self.volume_total))
+        log("\t%-20s %-2f" % ("{Total Volume}:", self.closing_volume))
         log("\t%-20s %-2f" % ("{Total Swap}:", self.swap_total))
         log("\t%-20s %-2f" % ("{Total Profit}:", self.profit_total))
 
@@ -328,7 +328,7 @@ class ClosedPosition:
 
         data.append(self.id)
         data.append(self.symbol)
-        data.append(self.volume_total)
+        data.append(self.closing_volume)
         data.append(self.price_open_avg)
         data.append(self.price_close_avg)
         data.append(self.profit_total)
@@ -344,7 +344,7 @@ class ClosedPosition:
                 "price_tp": self.price_tp,
                 "price_open_avg": self.price_open_avg,
                 "price_close_avg": self.price_close_avg,
-                "volume": self.volume_total,
+                "volume": self.closing_volume,
                 "swap": self.swap_total,
                 "profit": self.profit_total,
                 "opened": [],

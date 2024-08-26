@@ -1,15 +1,15 @@
 import datetime
 import MetaTrader5 as mt5
 import time
+import subprocess
 
-from trader.accountinfo import AccountInfo
-from trader.position import ClosedPosition, OpenPosition
-from trader.rate import Rate
+from components.accountinfo import AccountInfo
+from components.position import ClosedPosition, OpenPosition
+from components.rate import Rate
 from trader.symbol import Symbol
 from trader.request import TradeRequest
-from trader.trade_codes import ERROR_CODES
+from trader.codes import ERROR_CODES
 from helpers import *
-import subprocess
 
 class Trader:
     TIMEFRAMES = ["M1", "M2", "M3", "M4", "M5", "M6", "M10", "M12", "M20", "M30", "H1", "H2", "H3", "H4", "H6", "H8", "H12", "D1", "W1", "MN1"]
@@ -24,8 +24,9 @@ class Trader:
 
     def __init__(self, mt_config, mt_process):
         cmd = [mt_process, f"/config:{mt_config}"]
-        log(cmd)
         p = subprocess.Popen(cmd, start_new_session=True)
+        log("INFO", cmd)
+
         # 1. Establish connection to the MetaTrader 5 terminal
         if self._initialize():
             self.symbols = {}
@@ -35,24 +36,20 @@ class Trader:
 
     def _initialize(self):
         if mt5.account_info() is None and not mt5.initialize():
-            raise ValueError("initialize() failed, error code =" + str(mt5.last_error()))
+            raise ValueError("ERROR: initialize() failed, error code =" + str(mt5.last_error()))
         else:
             return True
 
     def update_account_info(self):
         """ Collect Essential Account Information """
-        acc_info = mt5.account_info()
         self.account_info.set_data(mt5.account_info())
 
     def get_account_info(self):
         return self.account_info
 
-    def _filter_currency(self, sym):
-        return sym.currency_base == self.account_info.currency or sym.currency_profit == self.account_info.currency
-
     def set_filter(self, filter):
         if filter == "currency":
-            self.filter_function = self._filter_currency
+            self.filter_function = lambda sym: sym.currency_base == self.account_info.currency or sym.currency_profit == self.account_info.currency
         else:
             self.filter_function = lambda sym: True
 
@@ -131,10 +128,8 @@ class Trader:
 
         return positions
 
-    def get_tick(self, sym):
-        """ Gets tick for the symbol
-            sym: Symbol name 
-        """
+    def get_tick(self, sym: Symbol):
+        """ Gets tick for the symbol"""
         if sym == None:
             raise ValueError("ERROR: Symbol cannot be None")
         else:
@@ -150,7 +145,7 @@ class Trader:
     def get_symbol(self, sym_name):
         return self.symbols.get(sym_name, None)
 
-    def update_rates_for_symbol(self, symbol, time_frame, start_s, end_s):
+    def update_rates_for_symbol(self, symbol: Symbol, time_frame, start_s, end_s):
         """Add difference of rates to the symbol"""
         rates = {}
         period = Trader.TIMEFRAMES.index(time_frame)
@@ -269,7 +264,7 @@ class Trader:
             pd.calculate()
             pd.print_data()
 
-        log("Entry Count:%d" % len(pos_finished))
+        log("INFO: Entry Count:%d" % len(pos_finished))
         if onlyfinished:
             return pos_finished
         else:

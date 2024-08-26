@@ -1,6 +1,7 @@
 import MetaTrader5 as mt5
-from trader.rate import RatesContainer
 import datetime
+
+from components.rate import RatesContainer
 
 def app(text):
     with open("test.txt", "a") as myfile:
@@ -42,7 +43,9 @@ class Symbol:
                 outs[timestamp*1000] = {"open":rate.open,
                                 "high":rate.high,
                                 "low":rate.low,
-                                "close":rate.close}
+                                "close":rate.close,
+                                "volume":rate.volume
+                                }
         return {self.name: outs}
 
     def update(self, sym):

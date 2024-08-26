@@ -35,7 +35,7 @@ class Rate:
         self.high = rate[Rate.IDX_HIGH]
         self.low = rate[Rate.IDX_LOW]
         self.close = rate[Rate.IDX_CLOSE]
-        self.volume = rate[Rate.IDX_VOLUME]
+        self.volume = int(rate[Rate.IDX_VOLUME])
 
     def get_timestamp(self):
         return self.time

@@ -223,7 +223,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
         if(text !== undefined) {
             comment = text;
         }
-        return `${risk}% ` + comment;
+        return `R${risk}%G${trade.ratio}%` + comment;
     };
 
     function handleCloseTrade(type, name, position, volume, ask, bid) {

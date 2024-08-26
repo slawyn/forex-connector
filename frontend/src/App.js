@@ -9,10 +9,9 @@ import Trader from "./tabs/Trader";
 import History from "./tabs/History";
 import Charter from "./tabs/Charter"
 import TopBar from "./tabs/TopBar";
+import SlidingPane from "./tabs/elements/SlidingPane";
 import MiscCheckbox from "./Misc";
 
-import SlidingPane from "react-sliding-pane";
-import "react-sliding-pane/dist/react-sliding-pane.css";
 
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
@@ -93,6 +92,7 @@ const App = () => {
   const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
   const THEME = "clsStyle";
+  const SLIDING_PANE_THEME = "sliding-pane";
 
   function fetchTerminalData(force) {
     /**
@@ -158,7 +158,7 @@ const App = () => {
             </TabList>
             <MiscCheckbox customClass={"css-button-checkbox"} text="Sync" handler={(state) => { setCommand({ preview: state }) }} />
             <button className={"css-blue-button"} onClick={() => fetchTerminalData(true)}>Get Symbols</button>
-            <button className={"css-blue-button"} onClick={() => setPaneState(true)}>Open Pane</button>
+            <button className={"css-blue-button"} onClick={() => setPaneState(!paneState)}>Show Symbols</button>
             <TopBar
               customClass="top-bar"
               company={terminalData.account.company}
@@ -174,16 +174,16 @@ const App = () => {
           </nav>
           <TabPanel>
             <SlidingPane
-              customClass={THEME}
-              overlayClassName={THEME}
+              customClass={SLIDING_PANE_THEME}
               isOpen={paneState}
-              title="Title"
-              subtitle="Optional subtitle."
-              onRequestClose={() => { setPaneState(false) }}
+              child = {<Symbols
+                customClass={THEME}
+                account={terminalData.account}
+                headers={terminalData.headers}
+                data={mapTerminalData(terminalData.instruments, terminalData.updates)}
+                handlers={{ setId: (id) => {fetchSymbol(id); setCommand({ instrument: id })} }}
+              />}
             >
-              <ThemeProvider theme={darkTheme}>
-                <CssBaseline />
-              </ThemeProvider>
             </SlidingPane>
             <nav>
               <nav className="cls100PContainer">
@@ -196,22 +196,13 @@ const App = () => {
                 />
               </nav>
               <nav className="cls100PContainer">
-                <nav className="cls50PContainer">
+                <nav className="cls100PContainer">
                   <Charter
                     customClass={THEME}
                     symbol={symbolData.info}
                     instrument={selected.instrument}
                     calculator={selected.calculator}
                     
-                  />
-                </nav>
-                <nav className="cls50PContainer">
-                  <Symbols
-                    customClass={THEME}
-                    account={terminalData.account}
-                    headers={terminalData.headers}
-                    data={mapTerminalData(terminalData.instruments, terminalData.updates)}
-                    handlers={{ setId: (id) => {fetchSymbol(id); setCommand({ instrument: id })} }}
                   />
                 </nav>
               </nav>

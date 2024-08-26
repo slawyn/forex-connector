@@ -37,7 +37,7 @@ button {
 }
 
 .clsStyle {
-  font-size:8pt;
+  font-size:12pt;
   font-family: 'Consolas';
   border-collapse: collapse;
   width: fit-content;
@@ -70,12 +70,15 @@ button {
 }
 
 .clsStyle tr:nth-child(even) {
-  background: #413f3f;
+  background: #2c0101;
 }
 
-.clsStyle td:nth-child(even) {
-  background: #413f3f60;
+.clsStyle tr:nth-child(odd) {
+  background: #000000;
 }
+
+
+.
 
 .clsStyle tr:hover {
   background: rgb(115, 42, 0);
@@ -275,4 +278,11 @@ button {
 .property-fitcontent
 {
   width:fit-content;
+}
+
+.sliding-pane {
+  width: fit-content;
+  height: 90%;
+  z-index: 999;
+  position: absolute;
 }

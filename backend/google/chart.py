@@ -1,6 +1,6 @@
 
 from PIL import Image, ImageDraw, ImageFont
-from trader.rate import Rate
+from components.rate import Rate
 from helpers import *
 
 # Draw Chart

@@ -1,8 +1,6 @@
 import MetaTrader5 as mt5
 
-
 # https://www.mql5.com/en/docs/constants/errorswarnings/enum_trade_return_codes
-
 ERROR_CODES = {
     mt5.TRADE_RETCODE_REQUOTE:  	"Requote",
     mt5.TRADE_RETCODE_REJECT:  	"Request rejected",

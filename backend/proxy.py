@@ -1,15 +1,12 @@
-import datetime
 from flask import Flask, request, render_template, send_from_directory
 from google.driver import DriveFileController
 import sys
 import traceback
 
-from commander import Commander
+from trader.commander import Commander
 from trader.trader import Trader
 from trader.request import TradeRequest
-from trader.accountinfo import AccountInfo
-from trader.position import ClosedPosition, OpenPosition
-from trader.symbol import Symbol
+from components.position import ClosedPosition, OpenPosition
 from config import Config
 from helpers import *
 
@@ -98,6 +95,8 @@ class App(Flask):
         return self.trader.get_symbol(instrument)
 
     def get_rates(self, instrument, time_frame, start_ms, end_ms):
+        if instrument == '':
+            return {}
         symbol = self.trader.get_symbol(instrument)
         return self.trader.update_rates_for_symbol(symbol, time_frame, start_ms/1000, end_ms/1000)
 
@@ -231,9 +230,7 @@ def get_rates():
     start_ms = request.args.get("start", default=0, type=int)
     end_ms = request.args.get("end", default=0, type=int)
     time_frame = request.args.get("timeframe", default="D1", type=str)
-    rates = []
-    if instrument != '':
-        rates = app.get_rates(instrument, time_frame, start_ms, end_ms)
+    rates = app.get_rates(instrument, time_frame, start_ms, end_ms)
 
     return json.dumps(rates)
 
