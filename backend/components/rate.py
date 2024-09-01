@@ -17,10 +17,11 @@ class RatesContainer:
         return self.rates[time_frame]
 
     def get_timestamp_first(self, time_frame):
-        if time_frame in self.rates and len(self.rates[time_frame])>0:
+        if time_frame in self.rates and len(self.rates[time_frame]) > 0:
             return list(self.rates[time_frame].keys())[-1]
         return 0
-    
+
+
 class Rate:
     IDX_TIME = 0
     IDX_OPEN = 1
@@ -86,3 +87,11 @@ class Rate:
         except Exception as e:
             print(e)
         return atr
+
+    def to_json(self):
+        return {"open": self.open,
+                "high": self.high,
+                "low": self.low,
+                "close": self.close,
+                "volume": self.volume
+                }

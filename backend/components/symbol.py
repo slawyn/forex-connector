@@ -1,14 +1,5 @@
-import MetaTrader5 as mt5
-import datetime
-
 from components.rate import RatesContainer
 
-def app(text):
-    with open("test.txt", "a") as myfile:
-        myfile.write(str(text) + "\n\n")
-
-
-RATES_TIMESTAMP = 0
 class Symbol:
     EXCEPTED_FIXED = "JPY"
 
@@ -34,19 +25,8 @@ class Symbol:
     def update_rates(self, rates, timeframe):
         self.rates_container.add_rates(rates, timeframe)
 
-    def get_rates(self, timeframe, start, end):
-        rates = self.rates_container.get_rates(timeframe)
-        outs = {}
-        for timestamp in sorted(list(rates.keys())):
-            if start<=timestamp<=end:
-                rate = rates[timestamp]
-                outs[timestamp*1000] = {"open":rate.open,
-                                "high":rate.high,
-                                "low":rate.low,
-                                "close":rate.close,
-                                "volume":rate.volume
-                                }
-        return {self.name: outs}
+    def get_rates(self, timeframe):
+        return self.rates_container.get_rates(timeframe)
 
     def update(self, sym):
         self.updated = (self.time != sym.time)
@@ -117,15 +97,6 @@ class Symbol:
 
     def is_updated(self):
         return self.updated
-
-    def get_frame_type_m1():
-        return mt5.TIMEFRAME_M1
-
-    def get_frame_type_h1():
-        return mt5.TIMEFRAME_H1
-
-    def get_frame_type_d1():
-        return mt5.TIMEFRAME_D1
 
     def calculate_stoploss(self, risk_amount, risk_lot):
         point_value = self.point_value

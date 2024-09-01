@@ -3,8 +3,6 @@ import time
 import os
 import json
 
-import pandas as pd
-from pandas.plotting import register_matplotlib_converters
 
 DAY_MSC = 86400000
 WEEK = DAY_MSC * 7
@@ -17,16 +15,12 @@ MINUTES3 = HOURS1/20
 
 
 def convert_string_to_date(date):
-    """
-    Date conversion function
-    """
+    """Date conversion function"""
     return datetime.datetime.fromisoformat(date)
 
 
 def log(*s):
-    """
-    Log function
-    """
+    """Log function"""
     out = ""
     for _s in s:
         out +=str(_s)
@@ -34,9 +28,7 @@ def log(*s):
 
 
 def load_json(filename):
-    """
-    Load Json config
-    """
+    """Load Json config"""
     with open(filename, "r") as f:
         config = json.load(f)
 
@@ -59,9 +51,7 @@ def time_go_back_n_weeks(date_msc, n):
 
 
 def calculate_plot_range(start_msc, end_msc):
-    """
-    Works for instruments that trade on weekdays. Not used
-    """
+    """Works for instruments that trade on weekdays. Not used"""
     TIME_FRAMES = [["W1", WEEK], ["MN1", MONTH], ["D1", DAY_MSC], ["H4", HOURS4], ["H1", HOURS1], ["M30", MINUTES30], ["M15", MINUTES15], ["M3", MINUTES3]]
     barcount = 110
 

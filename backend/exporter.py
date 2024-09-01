@@ -21,7 +21,7 @@ class Exporter():
     def get_rates(self, now=False):
         end_date = datetime.datetime.utcnow() if now else self.date_end
         start_date = self.date_start
-        data = self.trader.get_rates_for_symbol(self.symbol, start_date, end_date)
+        data = self.trader.get_mt5_rates(self.symbol, start_date, end_date)
         return data
 
     def get_ticks(self, now=False):

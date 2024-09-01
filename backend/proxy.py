@@ -1,19 +1,22 @@
-from flask import Flask, request, render_template, send_from_directory
+from flask import Flask, request, send_from_directory
 from google.driver import DriveFileController
 import sys
 import traceback
+import time
+import math
 
-from trader.commander import Commander
+from commander.commander import Commander
 from trader.trader import Trader
 from trader.request import TradeRequest
 from components.position import ClosedPosition, OpenPosition
 from config import Config
 from helpers import *
+from datetime import datetime
 
 # Configurable values
 CONFIG_ENABLE_TRADING = True
 
-# Flask variables
+
 def calculate_indicators(spread, open_price, bid, atr):
     ratio = (spread/atr)*100
     atr_reserve = (open_price-bid)/atr*100
@@ -30,25 +33,8 @@ def calculate_indicators(spread, open_price, bid, atr):
     return (formatted_signal, ratio, atr_reserve)
 
 
-def convert_timestamp_to_string(timestamp_sec):
-    seconds = int(timestamp_sec % 60)
-    minutes = int(timestamp_sec/60 % 60)
-    hours = int(timestamp_sec/60/60)
-    return f"{hours:02}: {minutes:02}: {seconds:02}"
-
-
-def make_pretty(styler):
-    """Sets up a pretty styler
-       styler: styler object
-    """
-    styler.format_index(lambda v: v.strftime("%A"))
-    styler.background_gradient(axis=None, vmin=1, vmax=5, cmap="YlGnBu")
-    return styler
-
-
 def get_with_terminal_info(force=False):
-    """Updates table with instruments
-    """
+    """Updates table with instruments"""
     instr_headers, instr = app.get_symbols(filter=force)
     account = app.get_account_info()
     op_headers, open_positions = app._get_open_positions()
@@ -94,22 +80,14 @@ class App(Flask):
     def get_symbol(self, instrument):
         return self.trader.get_symbol(instrument)
 
-    def get_rates(self, instrument, time_frame, start_ms, end_ms):
+    def get_rates(self, instrument, time_frame, start_ms, end_ms, json=False):
         if instrument == '':
-            return {}
+            return []
         symbol = self.trader.get_symbol(instrument)
-        return self.trader.update_rates_for_symbol(symbol, time_frame, start_ms/1000, end_ms/1000)
+        return self.trader.get_rates(symbol, time_frame, int(start_ms), int(end_ms), json)
 
     def get_account_info(self):
-        self.trader.update_account_info()
-        info = self.trader.get_account_info()
-        return {"balance": info.balance,
-                "currency": info.currency,
-                "profit": "%2.2f" % info.profit,
-                "leverage": info.leverage,
-                "company": info.company,
-                "server": info.server,
-                "login": info.login}
+        return self.trader.get_account_info().to_json()
 
     def trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
         """ Send trade to terminal"""
@@ -128,7 +106,7 @@ class App(Flask):
         try:
             action = ACTIONS[type]
             tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3], position, comment)
-            return_info = self.trader.trade(tr, CONFIG_ENABLE_TRADING)
+            return_info = self.trader.trade(tr.get_request(), CONFIG_ENABLE_TRADING)
         except Exception as e:
             print("Exception", e)
         return return_info
@@ -151,8 +129,7 @@ class App(Flask):
         """
         start_date = convert_string_to_date(self.cfg.get_google_startdate())
         positions = self.trader.get_history_positions(start_date, onlyfinished=False)
-        json_positions = [positions[p].get_info() for p in positions]
-        return ClosedPosition.get_info_header(), json_positions
+        return ClosedPosition.get_info_header(), [positions[p].get_info() for p in positions]
 
     def _get_open_positions(self):
         """ Get Open Positions from terminal
@@ -211,7 +188,64 @@ class App(Flask):
 
         return App.COLUMNS,  react_data
 
+
 app = App()
+
+
+@app.route('/metrics', methods=['POST'])
+def grafana_metrics():
+    data = []
+    syms = app.trader.get_symbols()
+    labels = [{"label":ts,"value":ts} for ts in app.trader.get_timeframes()]
+    for sym in syms:
+        data.append({
+            "value": sym.get_name(),
+            "payloads": [
+                {
+                    "name": "timeframe",
+                    "type": "select",
+                    "options": labels
+                }, {
+                    "name": "instanceId",
+                    "type": "multi-select"
+                }]
+        })
+
+    return data
+
+
+@app.route('/query', methods=['POST'])
+def grafana_query():
+    rq_data = request.get_json()
+    # print(rq_data)
+
+    rq_key_range = rq_data.get("range")
+    instruments = [target.get("target") for target in rq_data.get("targets")]
+    payloads = [target.get("payload") for target in rq_data.get("targets")]
+    _interval = rq_data.get("intervalMs")
+
+
+    _from_timestamp_ms = datetime.strptime(rq_key_range.get("from"), '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()*1000
+    _totimestamp_ms = datetime.strptime(rq_key_range.get("to"), '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()*1000
+
+    data = []
+    for instrument, payload in zip(instruments, payloads):
+        timeframe = payload.get("timeframe")
+        highs, lows, opens, closes = [], [], [], []
+        for timestamp_ms, rate in app.get_rates(instrument, timeframe, _from_timestamp_ms, _totimestamp_ms).items():
+            highs.append([rate.high, timestamp_ms])
+            lows.append([rate.low, timestamp_ms])
+            opens.append([rate.open, timestamp_ms])
+            closes.append([rate.close, timestamp_ms])
+
+        data.append({"target": "high", "datapoints": highs})
+        data.append({"target": "low", "datapoints": lows})
+        data.append({"target": "open", "datapoints": opens})
+        data.append({"target": "close", "datapoints": closes})
+
+    return data
+
+
 @app.route('/update', methods=['GET'])
 def get_update():
     force = request.args.get("force", default=False, type=is_it_true)
@@ -230,50 +264,48 @@ def get_rates():
     start_ms = request.args.get("start", default=0, type=int)
     end_ms = request.args.get("end", default=0, type=int)
     time_frame = request.args.get("timeframe", default="D1", type=str)
-    rates = app.get_rates(instrument, time_frame, start_ms, end_ms)
+    return json.dumps({
+        time_frame:
+        {
+            instrument: app.get_rates(instrument, time_frame, start_ms, end_ms, json=True)
 
-    return json.dumps(rates)
+        }})
 
 
 @app.route('/symbol', methods=['GET'])
 def get_symbol():
     symbol = app.get_symbol(request.args.get("instrument", ""))
     if symbol is not None:
-        return {"info": {"name": symbol.get_name(),
-                         "step": symbol.get_step(),
-                         "ask": symbol.get_ask(),
-                         "bid": symbol.get_bid(),
-                         "volume_step": symbol.get_volume_step(),
-                         "point_value": symbol.get_point_value(),
-                         "contract_size": symbol.get_contract_size(),
-                         "digits": symbol.get_digits(),
-                         "tick_size": symbol.get_step(),
-                         "tick_value": symbol.get_tick_value(),
-                         "conversion": symbol.get_conversion()
-                         }
+        return {"info":
+                {"name": symbol.get_name(),
+                 "step": symbol.get_step(),
+                 "ask": symbol.get_ask(),
+                 "bid": symbol.get_bid(),
+                 "volume_step": symbol.get_volume_step(),
+                 "point_value": symbol.get_point_value(),
+                 "contract_size": symbol.get_contract_size(),
+                 "digits": symbol.get_digits(),
+                 "tick_size": symbol.get_step(),
+                 "tick_value": symbol.get_tick_value(),
+                 "conversion": symbol.get_conversion()
+                 }
                 }
     return {}
 
 
 @app.route('/save', methods=['POST'])
 def save():
-    """Save to Google"""
     app.save_to_google()
     return {"id": 0}
 
 
 @app.route('/<path:path>')
 def on_socket(path):
-    """Socket on-fetch handler
-        ->path      : requested path
-        <-resource  : resource
-    """
     return app.fetch_resource(path)
 
 
 @app.route('/trade', methods=['POST'])
 def trade():
-    """"""
     data = request.get_json()
     symbol = data.get("symbol")
     position = data.get("position")
@@ -287,7 +319,6 @@ def trade():
     takeprofit_sell = data.get("takeprofit_sell")
     comment = data.get("comment")
     result = app.trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
-    # result = [10009,'test']
     return {"error": result[0], "text": result[1]}
 
 

@@ -6,8 +6,7 @@ import subprocess
 from components.accountinfo import AccountInfo
 from components.position import ClosedPosition, OpenPosition
 from components.rate import Rate
-from trader.symbol import Symbol
-from trader.request import TradeRequest
+from components.symbol import Symbol
 from trader.codes import ERROR_CODES
 from helpers import *
 
@@ -32,7 +31,7 @@ class Trader:
             self.symbols = {}
             self.open_positions = {}
             self.account_info = AccountInfo(mt5.account_info())
-            self.update_account_info()
+            self._update_account_info()
 
     def _initialize(self):
         if mt5.account_info() is None and not mt5.initialize():
@@ -40,11 +39,12 @@ class Trader:
         else:
             return True
 
-    def update_account_info(self):
+    def _update_account_info(self):
         """ Collect Essential Account Information """
         self.account_info.set_data(mt5.account_info())
 
     def get_account_info(self):
+        self._update_account_info()
         return self.account_info
 
     def set_filter(self, filter):
@@ -52,6 +52,9 @@ class Trader:
             self.filter_function = lambda sym: sym.currency_base == self.account_info.currency or sym.currency_profit == self.account_info.currency
         else:
             self.filter_function = lambda sym: True
+
+    def get_timeframes(self):
+        return Trader.TIMEFRAMES
 
     def get_orders(self):
         """ Get Orders """
@@ -133,8 +136,7 @@ class Trader:
         if sym == None:
             raise ValueError("ERROR: Symbol cannot be None")
         else:
-            tick = mt5.symbol_info_tick(sym.name)
-            return tick
+            return mt5.symbol_info_tick(sym.name)
 
     def _get_symbols(self):
         """ Collect Symbols """
@@ -145,25 +147,28 @@ class Trader:
     def get_symbol(self, sym_name):
         return self.symbols.get(sym_name, None)
 
-    def update_rates_for_symbol(self, symbol: Symbol, time_frame, start_s, end_s):
+    def get_rates(self, symbol: Symbol, time_frame, start_ms, end_ms, json=False):
         """Add difference of rates to the symbol"""
         rates = {}
         period = Trader.TIMEFRAMES.index(time_frame)
-        if start_s != end_s and period >=0:
+        if start_ms != end_ms and period >=0:
             TIME_FRAME = Trader.MT_TIMEFRAMES[period]
+            start_s = start_ms / 1000
+            end_s = end_ms/1000
+
             timestamp_start = datetime.datetime.fromtimestamp(start_s)
             timestamp_end = datetime.datetime.fromtimestamp(end_s)
             current_s = symbol.time
 
             # Update initial
             if symbol.get_timestamp_first(TIME_FRAME) == 0:
-                symbol.update_rates(self.get_rates_for_symbol(symbol.name,
+                symbol.update_rates(self.get_mt5_rates(symbol.name,
                                                               utc_from=timestamp_start,
                                                               utc_to=timestamp_end,
                                                               frame=TIME_FRAME),
                                                               timeframe=TIME_FRAME)
             # Update recent
-            symbol.update_rates(self.get_rates_for_symbol(symbol.name, 
+            symbol.update_rates(self.get_mt5_rates(symbol.name, 
                                                           utc_from=timestamp_end, 
                                                           utc_to=datetime.datetime.fromtimestamp(current_s),
                                                           frame=TIME_FRAME),
@@ -173,13 +178,19 @@ class Trader:
             # Update before current start
             initial_timestamp = datetime.datetime.fromtimestamp(symbol.get_timestamp_first(TIME_FRAME))
             if timestamp_start < initial_timestamp:
-                symbol.update_rates(self.get_rates_for_symbol(symbol.name, utc_from=timestamp_start, utc_to=initial_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME) 
+                symbol.update_rates(self.get_mt5_rates(symbol.name, utc_from=timestamp_start, utc_to=initial_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME) 
 
-            # Get rates
-            rates = symbol.get_rates(timeframe=TIME_FRAME, start=start_s, end=current_s)
-        
-        return {time_frame:rates}
 
+            _rates = symbol.get_rates(timeframe=TIME_FRAME)
+            for timestamp_s in sorted(list(_rates.keys())):
+                if start_s <= timestamp_s <= current_s:
+                    timestamp_ms = timestamp_s*1000
+                    if json:
+                        rates[timestamp_ms] = _rates[timestamp_s].to_json()
+                    else:
+                        rates[timestamp_ms] = _rates[timestamp_s]
+
+        return rates
 
     def get_symbols(self, sorted=True):
         syms = []
@@ -204,7 +215,7 @@ class Trader:
                 syms.append(_sym)
         return syms
 
-    def get_rates_for_symbol(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_H1):
+    def get_mt5_rates(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_H1):
         data = []
         try:
             data = mt5.copy_rates_range(symbol_name, frame, utc_from, utc_to)
@@ -274,7 +285,7 @@ class Trader:
         if not trade:
             id, text = {0, ""}
         else:
-            request = tradeRequest.get_request()
+            request = tradeRequest
             log(request)
             result = mt5.order_send(request)
             if result != None:

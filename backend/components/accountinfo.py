@@ -10,3 +10,12 @@ class AccountInfo:
         self.company = acc.company
         self.server = acc.server
         self.login = acc.login
+
+    def to_json(self):
+        return {"balance": self.balance,
+                "currency": self.currency,
+                "profit": "%2.2f" % self.profit,
+                "leverage": self.leverage,
+                "company": self.company,
+                "server": self.server,
+                "login": self.login}

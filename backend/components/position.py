@@ -44,7 +44,7 @@ class OpenPosition:
         self.price_current = pos.price_current
         self.swap = pos.swap
 
-    def get_json(self):
+    def to_json(self):
         data = {
             "id": self.id,
             "time": self.time,
@@ -291,9 +291,7 @@ class ClosedPosition:
         return data
 
     def print_data(self):
-        """
-        Print data
-        """
+        """Print data"""
         log("## %s[%s] {%s} ###################" % (self.id, self.symbol, self.sell_or_buy))
         log("\t%-20s %-2f" % ("{SL}:", self.price_sl))
         log("\t%-20s %-2f" % ("{TP}:", self.price_tp))
@@ -337,7 +335,7 @@ class ClosedPosition:
 
         return data
 
-    def get_json(self):
+    def to_json(self):
         data = {"id": self.id,
                 "symbol": self.opening_deals[0].symbol,
                 "price_sl": self.price_sl,
