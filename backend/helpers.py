@@ -38,6 +38,9 @@ def load_json(filename):
 def get_current_date():
     return datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
+def convert_date_to_timestamp_ms(date):
+    return datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()*1000
+
 
 def get_millisecond_timestamp_for_date(arg_date):
     date = arg_date - datetime.datetime(1970, 1, 1)

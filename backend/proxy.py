@@ -12,6 +12,7 @@ from components.position import ClosedPosition, OpenPosition
 from config import Config
 from helpers import *
 from datetime import datetime
+from grafana import Grafana
 
 # Configurable values
 CONFIG_ENABLE_TRADING = True
@@ -67,6 +68,11 @@ class App(Flask):
         self.cfg = cfg
         self.trader = Trader(cfg.get_metatrader_configuration(), cfg.get_metatrader_process())
         self.commander = Commander()
+        self.grafana = Grafana(
+            cb_get_timeframes= self.trader.get_timeframes,
+            cb_get_instruments= lambda: [sym.name for sym in self.trader.get_symbols()],
+            cb_get_rates= self.get_rates
+        )
 
     def fetch_resource(self, path):
         return send_from_directory(self.cfg.get_export_folder(), path)
@@ -189,98 +195,34 @@ class App(Flask):
         return App.COLUMNS,  react_data
 
 
+
+
 app = App()
-
-
 @app.route('/metrics', methods=['POST'])
-def grafana_metrics():
-    data = []
-    syms = app.trader.get_symbols()
-    labels = [{"label":ts,"value":ts} for ts in app.trader.get_timeframes()]
-    instruments = [{"label":sym.get_name(),"value":sym.get_name()} for sym in app.trader.get_symbols()]
-    data = [{
-            "value": "Data",
-            "payloads": [
-                {
-                    "name": "timeframe",
-                    "type": "select",
-                    "options": labels
-                },
-                {
-                    "name": "instrument",
-                    "type": "select",
-                    "options": instruments
-                }]
-    }]
-
-    return data
+def on_metrics():
+    return app.grafana.get_metrics()
 
 @app.route('/variable', methods=['POST'])
-def grafana_variable():
-    rq_data = request.get_json()
-    variable = rq_data.get("payload").get("target")
-    if variable == "instrument":
-        response = []
-        for symbol in app.trader.get_symbols():
-            name = symbol.get_name()
-            response.append({"__text": name , "__value":name})
-        return response
-    elif variable == "timeframe":
-        response = []
-        for timeframe in app.trader.get_timeframes():
-            response.append({"__text": timeframe , "__value":timeframe})
-        return response
-    return []
+def on_variable():
+    return app.grafana.get_variable(request.get_json())
 
 @app.route('/query', methods=['POST'])
-def grafana_query():
-    rq_data = request.get_json()
-    print(rq_data)
-
-    rq_key_range = rq_data.get("range")
-    instruments = [target.get("target") for target in rq_data.get("targets")]
-    payloads =  rq_data.get("targets")[0].get("payload")
-    timeframe = payloads.get("timeframe")
-    instrument = payloads.get("instrument")
-
-    _interval = rq_data.get("intervalMs")
-
-
-    _from_timestamp_ms = datetime.strptime(rq_key_range.get("from"), '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()*1000
-    _totimestamp_ms = datetime.strptime(rq_key_range.get("to"), '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()*1000
-
-    data = []
-    highs, lows, opens, closes, volumes = [], [], [], [], []
-    for timestamp_ms, rate in app.get_rates(instrument, timeframe, _from_timestamp_ms, _totimestamp_ms).items():
-        highs.append([rate.high, timestamp_ms])
-        lows.append([rate.low, timestamp_ms])
-        opens.append([rate.open, timestamp_ms])
-        closes.append([rate.close, timestamp_ms])
-        volumes.append([rate.volume, timestamp_ms])
-
-    data.append({"target": "high", "datapoints": highs})
-    data.append({"target": "low", "datapoints": lows})
-    data.append({"target": "open", "datapoints": opens})
-    data.append({"target": "close", "datapoints": closes})
-    data.append({"target": "volume", "datapoints": volumes})
-
-    return data
-
+def on_query():
+    return app.grafana.get_query(request.get_json())
 
 @app.route('/update', methods=['GET'])
-def get_update():
+def on_update():
     force = request.args.get("force", default=False, type=is_it_true)
     return get_with_terminal_info(force=force)
 
-
 @app.route('/history', methods=['GET'])
-def get_history():
+def on_history():
     headers, positions = app.get_history_positions()
     return {"positions": positions, "headers": headers}
 
 
 @app.route('/rates', methods=['GET'])
-def get_rates():
+def on_rates():
     instrument = request.args.get("instrument", default='', type=str)
     start_ms = request.args.get("start", default=0, type=int)
     end_ms = request.args.get("end", default=0, type=int)
@@ -294,7 +236,7 @@ def get_rates():
 
 
 @app.route('/symbol', methods=['GET'])
-def get_symbol():
+def on_symbol():
     symbol = app.get_symbol(request.args.get("instrument", ""))
     if symbol is not None:
         return {"info":
@@ -315,18 +257,18 @@ def get_symbol():
 
 
 @app.route('/save', methods=['POST'])
-def save():
+def on_save():
     app.save_to_google()
     return {"id": 0}
 
 
 @app.route('/<path:path>')
-def on_socket(path):
+def on_resource(path):
     return app.fetch_resource(path)
 
 
 @app.route('/trade', methods=['POST'])
-def trade():
+def on_trade():
     data = request.get_json()
     symbol = data.get("symbol")
     position = data.get("position")
@@ -344,7 +286,7 @@ def trade():
 
 
 @app.route('/command', methods=['POST'])
-def command():
+def on_command():
     data = request.get_json()
     type = data.get("command")
     if type == "select":
