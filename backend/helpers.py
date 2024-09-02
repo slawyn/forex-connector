@@ -34,6 +34,8 @@ def load_json(filename):
 
     return config
 
+def is_it_true(value):
+    return value.lower() == 'true'
 
 def get_current_date():
     return datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")

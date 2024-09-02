@@ -2,8 +2,6 @@ from flask import Flask, request, send_from_directory
 from google.driver import DriveFileController
 import sys
 import traceback
-import time
-import math
 
 from commander.commander import Commander
 from trader.trader import Trader
@@ -11,7 +9,6 @@ from trader.request import TradeRequest
 from components.position import ClosedPosition, OpenPosition
 from config import Config
 from helpers import *
-from datetime import datetime
 from grafana import Grafana
 
 # Configurable values
@@ -32,18 +29,6 @@ def calculate_indicators(spread, open_price, bid, atr):
         formatted_signal = ""
 
     return (formatted_signal, ratio, atr_reserve)
-
-
-def get_with_terminal_info(force=False):
-    """Updates table with instruments"""
-    instr_headers, instr = app.get_symbols(filter=force)
-    account = app.get_account_info()
-    op_headers, open_positions = app._get_open_positions()
-    return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account": account, "op_headers": op_headers, "open": open_positions}
-
-
-def is_it_true(value):
-    return value.lower() == 'true'
 
 
 class App(Flask):
@@ -69,9 +54,9 @@ class App(Flask):
         self.trader = Trader(cfg.get_metatrader_configuration(), cfg.get_metatrader_process())
         self.commander = Commander()
         self.grafana = Grafana(
-            cb_get_timeframes= self.trader.get_timeframes,
-            cb_get_instruments= lambda: [sym.name for sym in self.trader.get_symbols()],
-            cb_get_rates= self.get_rates
+            cb_get_timeframes=self.trader.get_timeframes,
+            cb_get_instruments=lambda: [sym.name for sym in self.trader.get_symbols()],
+            cb_get_rates=self.get_rates
         )
 
     def fetch_resource(self, path):
@@ -195,25 +180,31 @@ class App(Flask):
         return App.COLUMNS,  react_data
 
 
-
-
 app = App()
+
+
 @app.route('/metrics', methods=['POST'])
 def on_metrics():
     return app.grafana.get_metrics()
+
 
 @app.route('/variable', methods=['POST'])
 def on_variable():
     return app.grafana.get_variable(request.get_json())
 
+
 @app.route('/query', methods=['POST'])
 def on_query():
     return app.grafana.get_query(request.get_json())
 
+
 @app.route('/update', methods=['GET'])
 def on_update():
     force = request.args.get("force", default=False, type=is_it_true)
-    return get_with_terminal_info(force=force)
+    instr_headers, instr = app.get_symbols(filter=force)
+    op_headers, open_positions = app._get_open_positions()
+    return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account":  app.get_account_info(), "op_headers": op_headers, "open": open_positions}
+
 
 @app.route('/history', methods=['GET'])
 def on_history():
@@ -227,12 +218,10 @@ def on_rates():
     start_ms = request.args.get("start", default=0, type=int)
     end_ms = request.args.get("end", default=0, type=int)
     time_frame = request.args.get("timeframe", default="D1", type=str)
-    return json.dumps({
-        time_frame:
-        {
-            instrument: app.get_rates(instrument, time_frame, start_ms, end_ms, json=True)
-
-        }})
+    return {time_frame:
+            {
+                instrument: app.get_rates(instrument, time_frame, start_ms, end_ms, json=True)
+            }}
 
 
 @app.route('/symbol', methods=['GET'])
