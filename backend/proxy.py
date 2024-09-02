@@ -197,31 +197,52 @@ def grafana_metrics():
     data = []
     syms = app.trader.get_symbols()
     labels = [{"label":ts,"value":ts} for ts in app.trader.get_timeframes()]
-    for sym in syms:
-        data.append({
-            "value": sym.get_name(),
+    instruments = [{"label":sym.get_name(),"value":sym.get_name()} for sym in app.trader.get_symbols()]
+    data = [{
+            "value": "Data",
             "payloads": [
                 {
                     "name": "timeframe",
                     "type": "select",
                     "options": labels
-                }, {
-                    "name": "instanceId",
-                    "type": "multi-select"
+                },
+                {
+                    "name": "instrument",
+                    "type": "select",
+                    "options": instruments
                 }]
-        })
+    }]
 
     return data
 
+@app.route('/variable', methods=['POST'])
+def grafana_variable():
+    rq_data = request.get_json()
+    variable = rq_data.get("payload").get("target")
+    if variable == "instrument":
+        response = []
+        for symbol in app.trader.get_symbols():
+            name = symbol.get_name()
+            response.append({"__text": name , "__value":name})
+        return response
+    elif variable == "timeframe":
+        response = []
+        for timeframe in app.trader.get_timeframes():
+            response.append({"__text": timeframe , "__value":timeframe})
+        return response
+    return []
 
 @app.route('/query', methods=['POST'])
 def grafana_query():
     rq_data = request.get_json()
-    # print(rq_data)
+    print(rq_data)
 
     rq_key_range = rq_data.get("range")
     instruments = [target.get("target") for target in rq_data.get("targets")]
-    payloads = [target.get("payload") for target in rq_data.get("targets")]
+    payloads =  rq_data.get("targets")[0].get("payload")
+    timeframe = payloads.get("timeframe")
+    instrument = payloads.get("instrument")
+
     _interval = rq_data.get("intervalMs")
 
 
@@ -229,19 +250,19 @@ def grafana_query():
     _totimestamp_ms = datetime.strptime(rq_key_range.get("to"), '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()*1000
 
     data = []
-    for instrument, payload in zip(instruments, payloads):
-        timeframe = payload.get("timeframe")
-        highs, lows, opens, closes = [], [], [], []
-        for timestamp_ms, rate in app.get_rates(instrument, timeframe, _from_timestamp_ms, _totimestamp_ms).items():
-            highs.append([rate.high, timestamp_ms])
-            lows.append([rate.low, timestamp_ms])
-            opens.append([rate.open, timestamp_ms])
-            closes.append([rate.close, timestamp_ms])
+    highs, lows, opens, closes, volumes = [], [], [], [], []
+    for timestamp_ms, rate in app.get_rates(instrument, timeframe, _from_timestamp_ms, _totimestamp_ms).items():
+        highs.append([rate.high, timestamp_ms])
+        lows.append([rate.low, timestamp_ms])
+        opens.append([rate.open, timestamp_ms])
+        closes.append([rate.close, timestamp_ms])
+        volumes.append([rate.volume, timestamp_ms])
 
-        data.append({"target": "high", "datapoints": highs})
-        data.append({"target": "low", "datapoints": lows})
-        data.append({"target": "open", "datapoints": opens})
-        data.append({"target": "close", "datapoints": closes})
+    data.append({"target": "high", "datapoints": highs})
+    data.append({"target": "low", "datapoints": lows})
+    data.append({"target": "open", "datapoints": opens})
+    data.append({"target": "close", "datapoints": closes})
+    data.append({"target": "volume", "datapoints": volumes})
 
     return data
 
