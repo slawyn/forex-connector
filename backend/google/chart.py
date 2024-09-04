@@ -2,7 +2,7 @@
 from PIL import Image, ImageDraw, ImageFont
 from components.rate import Rate
 from helpers import *
-
+import pandas
 # Draw Chart
 
 def create_point(basex, basey, offsetx, offsety, percentage=1.0):
@@ -176,7 +176,7 @@ class Chart():
                 high = self.calculate_bar_y_coordinate(rate.high-price_min)
                 low = self.calculate_bar_y_coordinate(rate.low-price_min)
                 volume = self.calculate_volume_y_coordinate(rate.volume)
-                timestamp = pd.to_datetime(rate.time, unit='s')
+                timestamp = pandas.to_datetime(rate.time, unit='s')
 
                 # Draw separators and dates
                 if baridx == 0:
