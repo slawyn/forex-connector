@@ -1,31 +1,26 @@
 export function mergeArray(array) {
-    let merged = {}
-    array.forEach((dictionary, index) => {
-        merged = mergeDict(merged, dictionary)
-    })
-    return merged
-}
-
+    return array.reduce((merged, dictionary) => mergeDict(merged, dictionary), {});
+  }
+  
 export function mergeDict(previous, next) {
-    for (let [key, value] of Object.entries(next)) {
-        if (key in previous && value instanceof Object) {
-            previous[key] = mergeDict(previous[key], value)
-        }
-        else {
-            previous[key] = value
-        }
+    for (const [key, value] of Object.entries(next)) {
+      if (key in previous && typeof value === 'object' && value !== null) {
+        previous[key] = mergeDict(previous[key], value);
+      } else {
+        previous[key] = value;
+      }
     }
-    return previous
-}
-
+    return previous;
+  }
+  
 export function createPostRequest(body) {
     return {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer my-token',
+        Authorization: 'Bearer my-token',
       },
-      body: body
+      body: JSON.stringify(body), // Ensure body is a string
     };
   }
-  
+

@@ -77,9 +77,6 @@ button {
   background: #000000;
 }
 
-
-.
-
 .clsStyle tr:hover {
   background: rgb(115, 42, 0);
   cursor: pointer;
@@ -286,3 +283,15 @@ button {
   z-index: 999;
   position: absolute;
 }
+
+.chart-candlestick
+{
+  display: block;
+}
+
+.chart-bar
+{
+  display: block;
+}
+
+

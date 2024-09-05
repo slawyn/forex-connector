@@ -1,8 +1,8 @@
 
-import performance from "./../Performance";
 import React from "react";
-import ReactApexChart from "react-apexcharts";
+import Chart from "./Chart.js";
 import { mergeArray, mergeDict } from "../utils";
+import Grid from "./elements/Grid.js"
 
 function defaultHandleSelection({ seriesIndex, dataPointIndex, w }) {
     return w.globals.series[seriesIndex][dataPointIndex]
@@ -29,6 +29,41 @@ function customHandleSelection({ seriesIndex, dataPointIndex, w }) {
         '</span></nav>' +
         '</nav>'
     )
+}
+
+const optionsBar = {
+    chart: {
+        height: '160px',
+        type: 'bar',
+        toolbar: {
+            show: false
+        }
+    },
+    dataLabels: {
+        enabled: false
+    },
+    plotOptions: {
+        bar: {
+            columnWidth: '80%',
+            colors: {
+                ranges: [{
+                    from: -1000,
+                    to: 0,
+                    color: '#F15B46'
+                }, {
+                    from: 1,
+                    to: 10000,
+                    color: '#FEB019'
+                }],
+
+            },
+        }
+    },
+    stroke: {
+        width: 0
+    },
+    xaxis: { type: 'datetime' },
+    series: [],
 }
 
 const options = {
@@ -60,7 +95,8 @@ const options = {
         enabled: false
     },
     chart: {
-        type: 'line',
+        height: '160px',
+        type: 'candlestick',
         animations: {
             enabled: false,
             easing: 'linear',
@@ -77,8 +113,12 @@ const options = {
     }
 };
 
-const formatChartData = (symbolrates) => {
+const mapRatesData = (symbolrates) => {
     return Object.entries(symbolrates).map(([timestamp, object]) => { return { x: new Date(parseInt(timestamp)), y: [object.open, object.high, object.low, object.close] } })
+};
+
+const mapVolumesData = (symbolrates) => {
+    return Object.entries(symbolrates).map(([timestamp, object]) => { return { x: new Date(parseInt(timestamp)), y: object.volume } })
 };
 
 
@@ -95,8 +135,7 @@ async function fetchRates(timeframes, instrument, rates, handler) {
         /* If some rate data has already been fetched previously */
         if (timeframe in rates && (instrument in rates[timeframe])) {
             const timestamps = Object.keys(rates[timeframe][instrument])
-            if(timestamps.length >0)
-            {
+            if (timestamps.length > 0) {
                 start = timestamps[timestamps.length - 1]
             }
         }
@@ -122,22 +161,43 @@ async function fetchRates(timeframes, instrument, rates, handler) {
     })
 }
 
+function calculateDeltas(timeframe, bars) {
+    const millisecondsInSecond = 1000
+    const secondsInMinute = 60;
+    const minutesInHour = 60;
+    const hoursInDay = 24;
+    const deltaTable = {
+        "D1": millisecondsInSecond * secondsInMinute * minutesInHour * hoursInDay,
+        "H4": millisecondsInSecond * secondsInMinute * minutesInHour * 4,
+        "M20": millisecondsInSecond * secondsInMinute * 20,
+        "M5": millisecondsInSecond * secondsInMinute * 5,
+
+    }
+
+    return deltaTable[timeframe] * bars
+}
+
+function createConfig(annotations) {
+    let config = {};
+    Object.keys(annotations).forEach(function (key) {
+        config[key] = calculateDeltas(key, 60)
+    });
+    return config;
+}
 
 const Charter = ({ customClass, calculator, symbol, instrument }) => {
-    // console.log("Rendering Charter")
-    const TIMEFRAMES = {
-        "D1": (60 * 60 * 24 * 60)*1000,
-        "H4": (60 * 60 * 4 * 48)*1000,
-        "M20": (60 * 60 * 1 * 24)*1000
-    };
     const ANNOTATIONS = {
         "D1": ['', '', '', ''],
         "H4": ['', '', '', ''],
-        "M20": ["SL-long", "SL-short", "TP-short", "TP-long"]
+        "M20": ['', '', '', ''],
+        "M5": ["SL-long", "SL-short", "TP-short", "TP-long"]
     };
+
+    const TIMEFRAMES = createConfig(ANNOTATIONS)
+
     const refs = React.useRef(Object.entries(TIMEFRAMES).map(() => React.createRef()));
     const localInstrument = React.useRef('')
-    const localSymbol = React.useRef({digits:0, ask:0, bid:0})
+    const localSymbol = React.useRef({ digits: 0, ask: 0, bid: 0 })
     const rates = React.useRef({})
     const localCalculator = React.useRef({ sl: [], tp: [] })
 
@@ -180,23 +240,12 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
         updateRates()
     }
 
-    function updateOptions(timeframes, digits)
-    {
-        // console.log("       :: Symbol ", localSymbol.current)
+    function updateOptions(timeframes, digits) {
+        console.log("       :: Symbol ", localSymbol.current)
         refs.current.forEach((reference, _index) => {
             if (reference.current) {
                 const timeframe = Object.keys(timeframes)[_index]
-                reference.current.chart.updateOptions({
-                    yaxis: {
-                        labels: {
-                            formatter: (value) => value//{ return value.toFixed(digits) }
-                        }
-                    },
-                    title: {
-                        align: 'left',
-                        text: `${instrument}#${timeframe}`
-                    }
-                })
+                reference.current.updateFormat(instrument, timeframe)
             }
         })
     }
@@ -213,15 +262,8 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
                     // console.log("       :: Drawing Chart", timeframe, localInstrument.current, localSymbol)
 
                     const currentchart = rates[timeframe][localInstrument.current]
-                    reference.current.chart.updateSeries(
-                        [
-                            {
-                                name: 'candles',
-                                type: 'candlestick',
-                                data: formatChartData(currentchart)
-                            },
-                        ]
-                    )
+                    reference.current.updateData(mapRatesData(currentchart), mapVolumesData(currentchart))
+
                 }
             }
         })
@@ -234,92 +276,11 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
                 const timeframe = Object.keys(TIMEFRAMES)[_index]
 
                 /* Update annotations  */
-                const annomationNames = ANNOTATIONS[timeframe];
-                reference.current.chart.updateOptions({
-                    annotations: {
-                        yaxis: [
-                            {
-                                y: localSymbol.current.ask,
-                                strokeDashArray: 2,
-                                fillColor: '#FEB019',
-                                width: '130%',
-                                label: {
-                                    text: ''
-                                },
-                            },
-                            {
-                                y: localSymbol.current.bid,
-                                strokeDashArray: 2,
-                                fillColor: '#FEB019',
-                                width: '130%',
-                                label: {
-                                    text: ''
-                                },
-                            },
-                            {
-                                y: localCalculator.current.sl[0],
-                                y2: localCalculator.current.bid,
-                                width: '130%',
-                                fillColor: '#fc03ec80',
-                                label: {
-                                    text: annomationNames[0],
-                                    borderColor: '#fc03ec',
-                                    offsetX: -300,
-                                    style: {
-                                        color: '#fff',
-                                        background: '#00000000'
-                                    },
-                                }
-                            },
-                            {
-                                y2: localCalculator.current.sl[1],
-                                y: localCalculator.current.ask,
-                                width: '130%',
-                                fillColor: '#fc03ec80',
-                                label: {
-                                    text: annomationNames[1],
-                                    borderColor: '#fc03ec',
-                                    offsetX: -300,
-                                    style: {
-                                        color: '#fff',
-                                        background: '#00000000'
-                                    },
-                                }
-                            },
-                           {
-                               y: localCalculator.current.tp[0],
-                               y2: localCalculator.current.sl[1],
-                               fillColor: '#03FCE7FF',
-                               width: '130%',
-                               label: {
-                                   text: annomationNames[2],
-                                   borderColor: '#03FCE7',
-                                   offsetX: -300,
-                                   style: {
-                                       color: '#fff',
-                                       background: '#00000000'
-                                   },
-                               }
-                           },
-                           {
-                               y: localCalculator.current.tp[1],
-                               y2: localCalculator.current.sl[0],
-                               fillColor: '#03FCE7FF',
-                               width: '130%',
-                               label: {
-                                   text: annomationNames[3],
-                                   borderColor: '#03FCE7',
-                                   offsetX: -300,
-                                   style: {
-                                       color: '#fff',
-                                       background: '#00000000'
-                                   },
-                               }
-                           }
-                        ]
-                    }
-                });
-
+                reference.current.updateAnnotations(localSymbol.current.ask,
+                    localSymbol.current.bid,
+                    localCalculator.current.sl,
+                    localCalculator.current.tp,
+                    ANNOTATIONS[timeframe]);
             }
         })
     }
@@ -328,46 +289,13 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
 
     /* Create the charts only once, and use updateSeries to update the values */
     const charts = React.useMemo(() => {
-        let _charts = [];
-        refs.current.forEach((value, index) => {
+        return refs.current.map((reference, index) => (
+            <Chart key={index} ref={reference} index={index} optionsCandle={options} optionsBar={optionsBar} />
+        ));
+    }, [refs]);
 
-            const series = []
-            const reference = refs.current[index]
-
-            /** rearrange */
-            if (_charts.length % 2 === 1) {
-                _charts.push(
-                    <nav className="cls100PContainer">
-                        <nav className="cls50PContainer">
-                            {_charts.pop()}
-                        </nav>
-                        <nav className="cls50PContainer">
-                            <ReactApexChart ref={reference} key={index} options={options} series={series} />
-                        </nav>
-                    </nav>)
-                _charts.push(<></>)
-
-            }
-            /* 100 % chart */
-            else if (refs.current.length === index + 1) {
-                _charts.push(
-                    <nav className="cls100PContainer">
-                        <ReactApexChart ref={reference} key={index} options={options} series={series} />
-                    </nav>)
-            }
-            /* 50% chart */
-            else {
-                _charts.push(<ReactApexChart ref={reference} key={index} options={options} series={series} />)
-            }
-        })
-        return _charts;
-    }, [refs])
-
-    return (
-        <>
-            {charts}
-        </>
-    )
+    return <Grid items={charts} />;
+    // return <>{charts}</>;
 }
 
 // Charter.whyDidYouRender = true
