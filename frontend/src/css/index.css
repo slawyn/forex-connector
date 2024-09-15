@@ -28,8 +28,10 @@ button {
 }
 
 .css-blue-button {
-  background-color: rgb(0, 187, 255);
+  background-color: rgb(0, 187, 255) !important; 
+  color: #000000;
   width: auto;
+  cursor: pointer;
 }
 
 .clsOrangebutton {
@@ -42,6 +44,7 @@ button {
   border-collapse: collapse;
   width: fit-content;
   font-style: italic;
+  cursor: pointer;
 }
 
 .clsStyle input {
@@ -94,6 +97,11 @@ button {
   width: fit-content;
   font-style: italic;
   background-color: blueviolet;
+}
+
+.clsBorderless tr:hover {
+  background: rgb(115, 42, 0);
+  cursor: pointer;
 }
 
 .clsBorderless th:hover {

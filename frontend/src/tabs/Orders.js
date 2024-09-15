@@ -10,10 +10,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 
 
-const Orders = ({customClass, headers, data, handlers}) => {
+const Orders = ({ customClass, headers, data, handlers }) => {
     const [dialogData, setDiagloData] = React.useState({ type: "", state: false, id: 0, name: "", volume: 0, ask: 0, bid: 0 });
 
-    function handleCloseConfirmed ()  {
+    function handleCloseConfirmed() {
         setDiagloData((previousTrade) => ({
             ...previousTrade,
             state: false
@@ -21,14 +21,14 @@ const Orders = ({customClass, headers, data, handlers}) => {
         handlers.handleCloseTrade(dialogData.type, dialogData.name, dialogData.id, dialogData.volume);
     };
 
-    function handleCloseRejected  () {
+    function handleCloseRejected() {
         setDiagloData((previousTrade) => ({
             ...previousTrade,
             state: false
         }));
     };
 
-    function handleOpenDialog (name, id, volume, type, ask, bid) {
+    function handleOpenDialog(name, id, volume, type, ask, bid) {
 
         setDiagloData((previousTrade) => ({
             id: id,
@@ -64,11 +64,11 @@ const Orders = ({customClass, headers, data, handlers}) => {
                     </Button>
                 </DialogActions>
             </Dialog>
-            <table className={customClass} style={{ width: "100%" }}>
+            <table className="clsBorderless" style={{ width: "100%" }}>
                 <thead>
                     <tr>
                         {headers.map((header, index) => {
-                            return <th title={header} key={header} className={customClass}>
+                            return <th title={header} key={header} className="clsBorderless">
                                 {header}
                             </th>
                         })}
@@ -77,8 +77,7 @@ const Orders = ({customClass, headers, data, handlers}) => {
                 <tbody>
                     {
                         data.map((row) => {
-
-                            return <tr onClick={() => handleOpenDialog(row.items[1], row.items[0], row.items[row.items.length - 1], row.items[3], row.items[8], row.items[9])}>
+                            return <tr className={customClass} style={{ color: "aqua" }} onClick={() => handleOpenDialog(row.items[1], row.items[0], row.items[row.items.length - 1], row.items[3], row.items[8], row.items[9])}>
                                 {
                                     /** Map row line */
                                     row.items.map((cellData) => {
