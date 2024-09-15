@@ -31,72 +31,71 @@ function customHandleSelection({ seriesIndex, dataPointIndex, w }) {
     )
 }
 
-const optionsBar = {
-    chart: {
-        height: '160px',
+const optionsCandle = {
+    series: [{
+        name: 'candles',
+        type: 'candlestick',
+        data: []
+    }, {
+        name: 'volumes',
         type: 'bar',
-        toolbar: {
-            show: false
-        }
-    },
-    dataLabels: {
-        enabled: false
-    },
+        data: []
+    }],
     plotOptions: {
+        candlestick: {
+            colors: {
+                upward: '#00B746',  // Color for bullish (rising) candles
+                downward: '#EF403C' // Color for bearish (falling) candles
+            }
+        },
         bar: {
             columnWidth: '80%',
             colors: {
-                ranges: [{
-                    from: -1000,
-                    to: 0,
-                    color: '#F15B46'
-                }, {
-                    from: 1,
-                    to: 10000,
-                    color: '#FEB019'
-                }],
+                ranges: [
+                    {
+                        from: 0,
+                        to: 1000000000,
+                        color: '#FEB01920'
+                    }],
+                backgroundBarOpacity: 0.3,
 
             },
         }
     },
-    stroke: {
-        width: 0
-    },
-    xaxis: { type: 'datetime' },
-    series: [],
-}
-
-const options = {
     plugins: { tooltip: {} },
-    colors: ["#008000"],
     legend: { show: false },
-    xaxis: { type: 'datetime' },
-    series: [],
     fill: {
-        type: ['gradient']
+        type: 'solid'
     },
     title: {
         align: 'left',
     },
     stroke: {
-        width: [1],
-        dashArray: [0]
+        width: 1,  // Sets the candlestick border width (usually 1 is ideal)
+        colors: ['#000'],  // Remove shadow effect by using a single color
     },
     tooltip: {
         shared: true,
         custom: [
-            customHandleSelection
+            customHandleSelection,
+            defaultHandleSelection
         ]
+    },
+    grid: {
+        borderColor: '#e0e0e020',   // Light color for the grid lines
+        strokeDashArray: 10,       // Thinner dashed lines
+        xaxis: {
+            lines: {
+                show: true,            // Show vertical grid lines
+                color: '#ff0000',      // Color of the vertical grid lines (set to red in this example)
+                strokeDashArray: 0     // Solid vertical lines (set to 2 for dashed lines)
+            }
+        }
     },
     markers: {
         size: 0
     },
-    dataLabels: {
-        enabled: false
-    },
     chart: {
-        height: '160px',
-        type: 'candlestick',
         animations: {
             enabled: false,
             easing: 'linear',
@@ -109,8 +108,47 @@ const options = {
                 enabled: true,
                 speed: 350
             }
+        },
+        stacked: false, // Ensure charts are not stacked
+    },
+    xaxis: {
+        type: 'datetime',
+        labels: {
+            show: true  // This hides the x-axis labels
         }
-    }
+    },
+    yaxis: [
+        {
+            seriesName: 'candles',
+            title: {
+                text: 'Price'
+            },
+            labels: {
+                formatter: function (value) {
+                    return `${value}`;  // Custom format for price
+                }
+            },
+            tooltip: {
+                enabled: true
+            },
+        },
+        {
+            opposite: true,  // Volume on the opposite side (right)
+            seriesName: 'volumes',
+            title: {
+                text: 'Volume'
+            },
+            labels: {
+                formatter: function (value) {
+                    return value + " units";  // Custom format for volume
+                }
+            },
+            tooltip: {
+                enabled: true
+            },
+        }
+    ],
+
 };
 
 const mapRatesData = (symbolrates) => {
@@ -217,7 +255,6 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
     /* instrument changed */
     if (instrument !== localInstrument.current) {
         localInstrument.current = instrument
-        // console.log("       :: Instrument ", localInstrument.current)
         updateChart()
         updateRates()
     }
@@ -259,8 +296,6 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
 
                 /* Draw if chart is available */
                 if (timeframe in rates && localInstrument.current in rates[timeframe] && Object.keys(rates[timeframe][localInstrument.current] > 0)) {
-                    // console.log("       :: Drawing Chart", timeframe, localInstrument.current, localSymbol)
-
                     const currentchart = rates[timeframe][localInstrument.current]
                     reference.current.updateData(mapRatesData(currentchart), mapVolumesData(currentchart))
 
@@ -290,12 +325,11 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
     /* Create the charts only once, and use updateSeries to update the values */
     const charts = React.useMemo(() => {
         return refs.current.map((reference, index) => (
-            <Chart key={index} ref={reference} index={index} optionsCandle={options} optionsBar={optionsBar} />
+            <Chart key={index} ref={reference} index={index} optionsCandle={optionsCandle} />
         ));
     }, [refs]);
 
     return <Grid items={charts} />;
-    // return <>{charts}</>;
 }
 
 // Charter.whyDidYouRender = true

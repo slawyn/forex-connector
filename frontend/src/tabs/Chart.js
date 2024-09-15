@@ -7,10 +7,8 @@ export default class Chart extends React.Component {
     constructor(props) {
         super(props)
         this.refCandle = React.createRef();
-        this.refBar = React.createRef();
         this.index = props.index
         this.optionsCandle = props.optionsCandle
-        this.optionsBar = props.optionsBar
     }
 
     updateData(candleData, volumeData) {
@@ -19,28 +17,22 @@ export default class Chart extends React.Component {
                 name: 'candles',
                 type: 'candlestick',
                 data: candleData
-            }]
-        )
-        this.refBar.current.chart.updateSeries(
-            [{
+            },
+            {
                 name: 'volumes',
                 type: 'bar',
                 data: volumeData
-            }]
+            }
+            ]
         )
     }
 
     updateFormat(instrument, timeframe) {
         this.refCandle.current.chart.updateOptions({
-            yaxis: {
-                labels: {
-                    formatter: (value) => value//{ return value.toFixed(digits) }
-                }
-            },
             title: {
                 align: 'left',
                 text: `${instrument}#${timeframe}`
-            }
+            },
         })
     }
 
@@ -70,7 +62,7 @@ export default class Chart extends React.Component {
                         y: sl[0],
                         y2: bid,
                         width: '130%',
-                        fillColor: '#fc03ec80',
+                        fillColor: '#fc03ec50',
                         label: {
                             text: names[0],
                             borderColor: '#fc03ec',
@@ -134,12 +126,7 @@ export default class Chart extends React.Component {
     render() {
         return (
             <div height="800px">
-                <nav className='chart-candlestick'>
-                    <ReactApexChart height="400px" ref={this.refCandle} key={this.index} options={this.optionsCandle} series={[]} />
-                </nav>
-                <nav className='chart-bar'>
-                    <ReactApexChart height="100px" ref={this.refBar} key={this.index} options={this.optionsBar} series={[]} />
-                </nav>
+                <ReactApexChart height="500px" ref={this.refCandle} key={this.index} options={this.optionsCandle} series={this.optionsCandle.series} />
             </div>
         )
     }
