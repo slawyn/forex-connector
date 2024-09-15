@@ -5,7 +5,6 @@ import traceback
 
 from commander.commander import Commander
 from trader.trader import Trader
-from trader.request import TradeRequest
 from components.position import ClosedPosition, OpenPosition
 from config import Config
 from helpers import *
@@ -51,7 +50,7 @@ class App(Flask):
 
     def initialize(self, cfg):
         self.cfg = cfg
-        self.trader = Trader(cfg.get_metatrader_configuration(), cfg.get_metatrader_process())
+        self.trader = Trader(cfg.get_metatrader_configuration(), cfg.get_metatrader_process(), CONFIG_ENABLE_TRADING)
         self.commander = Commander()
         self.grafana = Grafana(
             cb_get_timeframes=self.trader.get_timeframes,
@@ -80,31 +79,8 @@ class App(Flask):
     def get_account_info(self):
         return self.trader.get_account_info().to_json()
 
-    def trade(self, symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position):
-        """ Send trade to terminal"""
-        ACTIONS = {
-            "market_buy":  [TradeRequest.get_type_market_buy(), entry_buy, stoploss_buy, takeprofit_buy],
-            "limit_buy":   [TradeRequest.get_type_limit_buy(), entry_buy, stoploss_buy, takeprofit_buy],
-            "stop_buy":    [TradeRequest.get_type_stop_buy(), entry_buy, stoploss_buy, takeprofit_buy],
-            "market_sell": [TradeRequest.get_type_market_sell(), entry_sell, stoploss_sell, takeprofit_sell],
-            "limit_sell":  [TradeRequest.get_type_limit_sell(), entry_sell, stoploss_sell, takeprofit_sell],
-            "stop_sell":   [TradeRequest.get_type_stop_sell(), entry_sell, stoploss_sell, takeprofit_sell],
-            "close_sell":  [TradeRequest.get_type_market_buy(), entry_buy, None, None],
-            "close_buy":  [TradeRequest.get_type_market_sell(), entry_sell, None, None]
-        }
-
-        return_info = [-1, 'Unknown error']
-        try:
-            action = ACTIONS[type]
-            tr = TradeRequest(symbol, lot, action[0], action[1], action[2], action[3], position, comment)
-            return_info = self.trader.trade(tr.get_request(), CONFIG_ENABLE_TRADING)
-        except Exception as e:
-            print("Exception", e)
-        return return_info
-
     def save_to_google(self):
-        """ Collect Information and add to excel sheet
-        """
+        """ Collect Information and add to excel sheet"""
         drive_handle = DriveFileController(self.cfg.get_google_secrets_file(),
                                            self.cfg.get_google_folder_id(),
                                            self.cfg.get_google_spreadsheet(),
@@ -115,35 +91,18 @@ class App(Flask):
         drive_handle.update_google_sheet(positions)
         return []
 
-    def get_history_positions(self):
-        """Gets closed positions from terminal
-        """
+    def show_closed_positions(self):
+        """Gets closed positions with headers"""
         start_date = convert_string_to_date(self.cfg.get_google_startdate())
         positions = self.trader.get_history_positions(start_date, onlyfinished=False)
         return ClosedPosition.get_info_header(), [positions[p].get_info() for p in positions]
 
-    def _get_open_positions(self):
-        """ Get Open Positions from terminal
-        """
-        TYPES = {
-            TradeRequest.get_type_market_buy(): "market_buy",
-            TradeRequest.get_type_limit_buy(): "limit_buy",
-            TradeRequest.get_type_stop_buy(): "stop_buy",
-            TradeRequest.get_type_market_sell(): "market_sell",
-            TradeRequest.get_type_limit_sell(): "limit_sell",
-            TradeRequest.get_type_stop_sell(): "stop_sell",
-        }
-
+    def show_open_positions(self):
+        """Gets open positions with headers"""
         positions = self.trader.get_open_positions()
-        diff_positions = {}
-        for p in positions:
-            pos = positions[p]
-            if pos.updated or True:
-                diff_positions[pos.id] = pos.get_info(types_map=TYPES)
+        return OpenPosition.get_info_header(), [positions[p].get_info() for p in positions]
 
-        return OpenPosition.get_info_header(), diff_positions
-
-    def get_symbols(self, filter):
+    def show_symbols(self, filter):
         """Builds a list of instruments based on filter"""
         react_data = {}
 
@@ -201,14 +160,14 @@ def on_query():
 @app.route('/update', methods=['GET'])
 def on_update():
     force = request.args.get("force", default=False, type=is_it_true)
-    instr_headers, instr = app.get_symbols(filter=force)
-    op_headers, open_positions = app._get_open_positions()
+    instr_headers, instr = app.show_symbols(filter=force)
+    op_headers, open_positions = app.show_open_positions()
     return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account":  app.get_account_info(), "op_headers": op_headers, "open": open_positions}
 
 
 @app.route('/history', methods=['GET'])
 def on_history():
-    headers, positions = app.get_history_positions()
+    headers, positions = app.show_closed_positions()
     return {"positions": positions, "headers": headers}
 
 
@@ -261,16 +220,15 @@ def on_trade():
     data = request.get_json()
     symbol = data.get("symbol")
     position = data.get("position")
+    pending = data.get("pending", False)
     lot = data.get("lot")
     type = data.get("type")
-    entry_buy = data.get("entry_buy")
-    entry_sell = data.get("entry_sell")
-    stoploss_buy = data.get("stoploss_buy")
-    stoploss_sell = data.get("stoploss_sell")
-    takeprofit_buy = data.get("takeprofit_buy")
-    takeprofit_sell = data.get("takeprofit_sell")
+    price = data.get("price")
+    stoplimit = data.get("stoplimit")
+    stoploss = data.get("stoploss")
+    takeprofit = data.get("takeprofit")
     comment = data.get("comment")
-    result = app.trade(symbol, lot, type, entry_buy, entry_sell, stoploss_buy, stoploss_sell, takeprofit_buy, takeprofit_sell, comment, position)
+    result = app.trader.trade(symbol, lot, type, price, stoplimit, stoploss, takeprofit, comment, pending, position)
     return {"error": result[0], "text": result[1]}
 
 

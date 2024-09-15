@@ -1,14 +1,15 @@
 import datetime
 import MetaTrader5 as mt5
 import time
-import subprocess
 
-from components.accountinfo import AccountInfo
+
+from components.account import Account
 from components.position import ClosedPosition, OpenPosition
 from components.rate import Rate
 from components.symbol import Symbol
-from trader.codes import ERROR_CODES
 from helpers import *
+from trader.request import TradeRequest
+from trader.mt5api import MetatraderApi
 
 class Trader:
     TIMEFRAMES = ["M1", "M2", "M3", "M4", "M5", "M6", "M10", "M12", "M20", "M30", "H1", "H2", "H3", "H4", "H6", "H8", "H12", "D1", "W1", "MN1"]
@@ -21,71 +22,53 @@ class Trader:
         description: Used for communicating over the connector with mt5
     """
 
-    def __init__(self, mt_config, mt_process):
-        cmd = [mt_process, f"/config:{mt_config}"]
-        p = subprocess.Popen(cmd, start_new_session=True)
-        log("INFO", cmd)
+    def __init__(self, mt_config, mt_process, is_trading_enabled=False):
+        self.is_trading_enabled = is_trading_enabled
+        self.mt5api = MetatraderApi(mt_process, mt_config)
+        self.symbols = {}
+        self.open_positions = {}
 
         # 1. Establish connection to the MetaTrader 5 terminal
-        if self._initialize():
-            self.symbols = {}
-            self.open_positions = {}
-            self.account_info = AccountInfo(mt5.account_info())
-            self._update_account_info()
-
-    def _initialize(self):
-        if mt5.account_info() is None and not mt5.initialize():
-            raise ValueError("ERROR: initialize() failed, error code =" + str(mt5.last_error()))
-        else:
-            return True
-
-    def _update_account_info(self):
-        """ Collect Essential Account Information """
-        self.account_info.set_data(mt5.account_info())
+        if self.mt5api.is_connection_present():
+            self.account = Account(self.mt5api.get_account())
 
     def get_account_info(self):
-        self._update_account_info()
-        return self.account_info
+        self.account.update(self.mt5api.get_account())
+        return self.account
 
     def set_filter(self, filter):
         if filter == "currency":
-            self.filter_function = lambda sym: sym.currency_base == self.account_info.currency or sym.currency_profit == self.account_info.currency
+            self.filter_function = lambda sym: sym.currency_base == self.account.currency or sym.currency_profit == self.account.currency
         else:
             self.filter_function = lambda sym: True
 
     def get_timeframes(self):
         return Trader.TIMEFRAMES
 
-    def get_orders(self):
-        """ Get Orders """
-        self._initialize()
-        return mt5.orders_get()
 
     def get_atr(self, sym):
-        self._initialize()
-
-        info = mt5.symbol_info_tick(sym.name)
-        stop_msc = info.time_msc
-        start_msc = time_go_back_n_weeks(stop_msc, 2)
-        rates = mt5.copy_rates_range(sym.name, mt5.TIMEFRAME_D1, start_msc/1000, stop_msc/1000)
-        atr = Rate.calculate_average_true_range(rates)
-
-        return atr
+        if self.mt5api.is_connection_present():
+            info = mt5.symbol_info_tick(sym.name)
+            stop_msc = info.time_msc
+            start_msc = time_go_back_n_weeks(stop_msc, 2)
+            rates = mt5.copy_rates_range(sym.name, mt5.TIMEFRAME_D1, start_msc/1000, stop_msc/1000)
+            return Rate.calculate_average_true_range(rates)
+        return -1
 
     def get_open_positions(self):
         """Get Open Positions"""
-        all_available = []
-        for pos in mt5.positions_get():
-            all_available.append(pos.ticket)
+        tickets = []
+        for pos in self.mt5api.get_open_positions():
+            tickets.append(pos.ticket)
             try:
                 open_position = self.open_positions[pos.ticket]
                 open_position.update(pos)
             except:
-                self.open_positions[pos.ticket] = OpenPosition(pos)
+                self.open_positions[pos.ticket] = OpenPosition(pos,  self.mt5api.resolve_type_mt5_to_api(pos.type))
 
         # Remove positions which are not open anymore
         for k in list(self.open_positions.keys()):
-            if k not in all_available:
+            if k not in tickets:
                 del self.open_positions[k]
 
         return self.open_positions
@@ -140,7 +123,7 @@ class Trader:
 
     def _get_symbols(self):
         """ Collect Symbols """
-        if self._initialize():
+        if self.mt5api.is_connection_present():
             return mt5.symbols_get()
         return []
 
@@ -162,13 +145,13 @@ class Trader:
 
             # Update initial
             if symbol.get_timestamp_first(TIME_FRAME) == 0:
-                symbol.update_rates(self.get_mt5_rates(symbol.name,
+                symbol.update_rates(self.mt5api.get_rates(symbol.name,
                                                               utc_from=timestamp_start,
                                                               utc_to=timestamp_end,
                                                               frame=TIME_FRAME),
                                                               timeframe=TIME_FRAME)
             # Update recent
-            symbol.update_rates(self.get_mt5_rates(symbol.name, 
+            symbol.update_rates(self.mt5api.get_rates(symbol.name, 
                                                           utc_from=timestamp_end, 
                                                           utc_to=datetime.datetime.fromtimestamp(current_s),
                                                           frame=TIME_FRAME),
@@ -178,7 +161,7 @@ class Trader:
             # Update before current start
             initial_timestamp = datetime.datetime.fromtimestamp(symbol.get_timestamp_first(TIME_FRAME))
             if timestamp_start < initial_timestamp:
-                symbol.update_rates(self.get_mt5_rates(symbol.name, utc_from=timestamp_start, utc_to=initial_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME) 
+                symbol.update_rates(self.mt5api.get_rates(symbol.name, utc_from=timestamp_start, utc_to=initial_timestamp, frame=TIME_FRAME), timeframe=TIME_FRAME) 
 
 
             _rates = symbol.get_rates(timeframe=TIME_FRAME)
@@ -196,7 +179,7 @@ class Trader:
         syms = []
         for sym in self._get_symbols():
             if not (sym.name in self.symbols):
-                self.symbols[sym.name] = Symbol(sym, conversion=(sym.currency_profit != self.account_info.currency))
+                self.symbols[sym.name] = Symbol(sym, conversion=(sym.currency_profit != self.account.currency))
 
             exported_symbol = self.symbols[sym.name]
             exported_symbol.update(sym)
@@ -214,31 +197,6 @@ class Trader:
             if wildcard in _sym:
                 syms.append(_sym)
         return syms
-
-    def get_mt5_rates(self, symbol_name, utc_from, utc_to, frame=mt5.TIMEFRAME_H1):
-        data = []
-        try:
-            data = mt5.copy_rates_range(symbol_name, frame, utc_from, utc_to)
-            code = mt5.last_error()[0]
-            if code != 1:
-                data = []
-                raise Exception(f"ERROR: During fetching of rates {symbol_name} {mt5.last_error()}")
-        except Exception as e:
-            log(e)
-        return data
-
-    def get_ticks_for_symbol(self, symbol_name, utc_from, utc_to):
-        data = []
-        try:
-            data = mt5.copy_ticks_range(symbol_name, utc_from, utc_to, mt5.COPY_TICKS_ALL)
-            code = mt5.last_error()[0]
-            if code != 1:
-                data = []
-                raise Exception(f"ERROR: During fetching of ticks {symbol_name} {mt5.last_error()}")
-        except Exception as e:
-            log(e)
-
-        return data
 
     def get_history_positions(self, start_date, onlyfinished=True):
         pos_temporary = {}
@@ -281,17 +239,11 @@ class Trader:
         else:
             return pos_temporary
 
-    def trade(self, tradeRequest, trade=False):
-        if not trade:
-            id, text = {0, ""}
-        else:
-            request = tradeRequest
-            log(request)
-            result = mt5.order_send(request)
-            if result != None:
-                id, text = {result.retcode, ERROR_CODES[result.retcode]}
-            else:
-                retcode = mt5.last_error()
-                id, text = {retcode[0], retcode[1]}
-
-        return id, text
+    def trade(self, symbol, lot, type, price, stoplimit, stoploss, takeprofit, comment, pending=False, position=0):
+        if not self.is_trading_enabled:
+            return {0, ""}
+        
+        mt5_type = self.mt5api.resolve_type_api_to_mt5(type)
+        trade_request = TradeRequest(symbol, lot, mt5_type, price, stoplimit, stoploss, takeprofit, position, pending, comment)
+        return_info = self.mt5api.trade(trade_request.get_request())
+        return return_info

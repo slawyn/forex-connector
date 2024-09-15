@@ -49,12 +49,12 @@ const Calculator = ({ customClass, trade, handlers }) => {
                                     label="Order type"
                                     value={trade.type}
                                     onChange={(e) => { handlers.handleTypeChange(e.target.value) }}>
-                                    <MenuItem value={'market_buy'}>Market.Buy</MenuItem>
-                                    <MenuItem value={'limit_buy'}>Limit.Buy</MenuItem>
-                                    <MenuItem value={'stop_buy'}>Stop.Buy</MenuItem>
-                                    <MenuItem value={'market_sell'}>Market.Sell</MenuItem>
-                                    <MenuItem value={'limit_sell'}>Limit.Sell</MenuItem>
-                                    <MenuItem value={'stop_sell'}>Stop.Sell</MenuItem>
+                                    <MenuItem value={'market_buy'}>market_buy</MenuItem>
+                                    <MenuItem value={'limit_buy'}>limit_buy</MenuItem>
+                                    <MenuItem value={'stop_buy'}>stop_buy</MenuItem>
+                                    <MenuItem value={'market_sell'}>market_sell</MenuItem>
+                                    <MenuItem value={'limit_sell'}>limit_sell</MenuItem>
+                                    <MenuItem value={'stop_sell'}>stop_sell</MenuItem>
                                 </Select>
                             </FormControl>
                         </td>

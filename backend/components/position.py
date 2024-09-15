@@ -20,10 +20,10 @@ class OpenPosition:
               "VOLUME"
               ]
 
-    def __init__(self, pos):
+    def __init__(self, pos, type):
         self.id = pos.ticket
         self.time = datetime.datetime.fromtimestamp(pos.time).strftime('%Y-%m-%d %H:%M')
-        self.type = pos.type
+        self.type = type
         self.magic = pos.magic
         self.identifier = pos.identifier
         self.reason = pos.reason
@@ -65,17 +65,12 @@ class OpenPosition:
     def get_info_header():
         return OpenPosition.HEADER
 
-    def get_info(self, types_map={}):
+    def get_info(self):
         data = []
-
-        type = self.type
-        if type in types_map:
-            type = types_map[type]
-
         data.append(self.id)
         data.append(self.symbol)
         data.append(self.time)
-        data.append(type)
+        data.append(self.type)
         data.append(self.magic)
         data.append(self.comment)
         data.append(f"{self.profit:.2f}")

@@ -13,13 +13,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 const Orders = ({customClass, headers, data, handlers}) => {
     const [dialogData, setDiagloData] = React.useState({ type: "", state: false, id: 0, name: "", volume: 0, ask: 0, bid: 0 });
 
-
     function handleCloseConfirmed ()  {
         setDiagloData((previousTrade) => ({
             ...previousTrade,
             state: false
         }));
-        handlers.handleCloseTrade(dialogData.type, dialogData.name, dialogData.id, dialogData.volume, dialogData.ask, dialogData.bid);
+        handlers.handleCloseTrade(dialogData.type, dialogData.name, dialogData.id, dialogData.volume);
     };
 
     function handleCloseRejected  () {

@@ -1,8 +1,8 @@
-class AccountInfo:
+class Account:
     def __init__(self, acc):
-        self.set_data(acc)
+        self.update(acc)
 
-    def set_data(self, acc):
+    def update(self, acc):
         self.balance = acc.balance
         self.currency = acc.currency
         self.profit = acc.profit
