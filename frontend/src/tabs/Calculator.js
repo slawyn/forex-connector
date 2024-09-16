@@ -19,7 +19,7 @@ function getCorrespondingClosingType(type) {
     return close_type;
 };
 
-const Calculator = ({ customClass, trade, handlers }) => {
+const Calculator = ({ customClass, types, trade, handlers }) => {
     return (
         <>
             <table className={customClass}>
@@ -47,12 +47,11 @@ const Calculator = ({ customClass, trade, handlers }) => {
                                     label="Order type"
                                     value={trade.type}
                                     onChange={(e) => { handlers.handleTypeChange(e.target.value) }}>
-                                    <MenuItem value={'market_buy'}>market_buy</MenuItem>
-                                    <MenuItem value={'limit_buy'}>limit_buy</MenuItem>
-                                    <MenuItem value={'stop_buy'}>stop_buy</MenuItem>
-                                    <MenuItem value={'market_sell'}>market_sell</MenuItem>
-                                    <MenuItem value={'limit_sell'}>limit_sell</MenuItem>
-                                    <MenuItem value={'stop_sell'}>stop_sell</MenuItem>
+                                    {
+                                        types.map((type) => {
+                                            return <MenuItem value={type}>{type}</MenuItem>
+                                        })
+                                    }
                                 </Select>
                             </FormControl>
                         </td>

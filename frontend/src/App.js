@@ -86,8 +86,8 @@ const App = () => {
   /**
    * Terminal data is numbers, and symbol data is per symbol
    */
+  const selected = React.useRef({ instrument: '', calculator: {} });
   const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
-  const [selected, setSelected] = React.useState({ instrument: '', calculator: {} });
   const [paneState, setPaneState] = React.useState(false);
   const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
@@ -114,23 +114,22 @@ const App = () => {
     );
   };
 
-  function fetchSymbol(instrument) {
+  function fetchSymbolData(instrument) {
     /**
      * Fetch symbol info
      */
-    if(instrument !== undefined && instrument !== '')
-    {
+    if (instrument !== undefined && instrument !== '') {
       fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
-      response.json().then((receivedSymbol) => {
-        setSymbolData(receivedSymbol);
-      })
-    );
-  }
+        response.json().then((receivedSymbol) => {
+          setSymbolData(receivedSymbol);
+        })
+      );
+    }
   };
 
   function setCommand(props) {
     commander.setCommand(props)
-    setSelected((previous)=>({...previous,...props}))
+    selected.current = { ...selected.current, ...props }
   }
 
   React.useEffect(() => {
@@ -139,8 +138,8 @@ const App = () => {
       fetchTerminalData(false);
 
       /* Fetch selected symbol data, periodically */
-      fetchSymbol(selected.instrument)
-      
+      fetchSymbolData(selected.current.instrument)
+
     }, 3000);
 
     /* Unmount */
@@ -176,37 +175,27 @@ const App = () => {
             <SlidingPane
               customClass={SLIDING_PANE_THEME}
               isOpen={paneState}
-              child = {<Symbols
+              child={<Symbols
                 customClass={THEME}
                 account={terminalData.account}
                 headers={terminalData.headers}
                 data={mapTerminalData(terminalData.instruments, terminalData.updates)}
-                handlers={{ setId: (id) => {fetchSymbol(id); setCommand({ instrument: id })} }}
+                handlers={{ setId: (id) => { fetchSymbolData(id); setCommand({ instrument: id }) } }}
               />}
             >
             </SlidingPane>
-            <nav>
-              <nav className="cls100PContainer">
-                <Trader customClass={THEME}
-                  account={terminalData.account}
-                  symbol={symbolData.info}
-                  headers={terminalData.op_headers}
-                  data={mapTerminalData(terminalData.open, terminalData.updates)}
-                  handlers={{ setErrorData, setCommand: (ask, bid, sl, tp) => { setCommand({calculator:{ ask, bid, sl, tp }}); } }}
-                />
-              </nav>
-              <nav className="cls100PContainer">
-                <nav className="cls100PContainer">
-                  <Charter
-                    customClass={THEME}
-                    symbol={symbolData.info}
-                    instrument={selected.instrument}
-                    calculator={selected.calculator}
-                    
-                  />
-                </nav>
-              </nav>
-            </nav>
+            <Trader customClass={THEME}
+              account={terminalData.account}
+              symbol={symbolData.info}
+              headers={terminalData.op_headers}
+              data={mapTerminalData(terminalData.open, terminalData.updates)}
+              handlers={{ setErrorData, setCommand: (ask, bid, sl, tp) => { setCommand({ calculator: { ask, bid, sl, tp } }); } }}
+            />
+            <Charter
+              symbol={symbolData.info}
+              instrument={selected.current.instrument}
+              calculator={selected.current.calculator}
+            />
           </TabPanel>
           <TabPanel>
             <History customClass={THEME} />

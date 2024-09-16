@@ -77,6 +77,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
     const INITIAL_RISK_PERCENTAGE = 1.00
     const INITIAL_RISK = INITIAL_RISK_PERCENTAGE / 100.0
     const localSymbol = React.useRef();
+    const localFreezePrice = React.useRef(false);
     const [trade, setTrade] = React.useState({
         name: "",
         type: "",
@@ -99,7 +100,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
     });
 
     if (localSymbol.current !== symbol) {
-        localSymbol.current = symbol
+
         const risk = calculateInitialRisk(
             symbol.ask,
             symbol.bid,
@@ -117,23 +118,40 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             risk,
             symbol.conversion)
 
-        setTrade((previousTrade) => ({
-            ...previousTrade,
-            name: symbol.name,
-            bid: symbol.bid,
-            ask: symbol.ask,
-            risk_volume: risk,
-            volume_step: symbol.volume_step,
-            balance: account.balance,
-            point_value: symbol.point_value,
-            contract_size: symbol.contract_size,
-            digits: symbol.digits,
-            tick_size: symbol.tick_size,
-            tick_value: round(symbol.tick_value, 4),
-            conversion: symbol.conversion,
-            points: points
-        }));
-        calculateParameters(symbol.ask, symbol.bid, trade.ratio, points)
+        /** Partial update, Only price has been updated */
+        if (localSymbol.current && localSymbol.current.name === symbol.name) {
+            if (!localFreezePrice.current) {
+                setTrade((previousTrade) => ({
+                    ...previousTrade,
+                    bid: symbol.bid,
+                    ask: symbol.ask,
+                    balance: account.balance,
+                    point_value: symbol.point_value,
+                    tick_value: round(symbol.tick_value, 4),
+                }));
+            }
+        }
+        /* Full update */
+        else {
+            setTrade((previousTrade) => ({
+                ...previousTrade,
+                name: symbol.name,
+                bid: symbol.bid,
+                ask: symbol.ask,
+                risk_volume: risk,
+                volume_step: symbol.volume_step,
+                balance: account.balance,
+                point_value: symbol.point_value,
+                contract_size: symbol.contract_size,
+                digits: symbol.digits,
+                tick_size: symbol.tick_size,
+                tick_value: round(symbol.tick_value, 4),
+                conversion: symbol.conversion,
+                points: points
+            }));
+            calculateParameters(symbol.ask, symbol.bid, trade.ratio, points)
+        }
+        localSymbol.current = symbol
     }
 
     function requestTrade(request) {
@@ -179,6 +197,8 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             ...previousTrade,
             type: type
         }));
+
+        localFreezePrice.current = (type.includes("limit") || type.includes("stop"))
     };
 
     function handleRiskChange(risk) {
@@ -279,6 +299,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             <nav className="cls50PContainer">
                 <Calculator customClass="clsBorderless"
                     trade={trade}
+                    types={Object.keys(REQUEST_BUILD_HANDLERS)}
                     handlers={{
                         handleOpenTrade,
                         handleTypeChange,

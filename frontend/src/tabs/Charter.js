@@ -223,7 +223,7 @@ function createConfig(annotations) {
     return config;
 }
 
-const Charter = ({ customClass, calculator, symbol, instrument }) => {
+const Charter = ({ calculator, symbol, instrument }) => {
     const ANNOTATIONS = {
         "D1": ['', '', '', ''],
         "H4": ['', '', '', ''],
@@ -240,22 +240,9 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
     const localCalculator = React.useRef({ sl: [], tp: [] })
 
 
-    function updateRates() {
-        if (localInstrument.current !== '') {
-            fetchRates(TIMEFRAMES, localInstrument.current, rates, (newRates, updated) => {
-                rates.current = newRates
-                if (updated) {
-                    updateChart()
-                }
-            })
-        }
-    }
-
-
     /* instrument changed */
     if (instrument !== localInstrument.current) {
         localInstrument.current = instrument
-        updateChart()
         updateRates()
     }
 
@@ -269,16 +256,26 @@ const Charter = ({ customClass, calculator, symbol, instrument }) => {
         updateOptions(TIMEFRAMES, localSymbol.current.digits)
         updateAnnotations()
     }
-
-    if (localSymbol.current.ask !== symbol.ask || localSymbol.bid !== symbol.bid) {
+    
+    if (localSymbol.current.ask !== symbol.ask || localSymbol.current.bid !== symbol.bid) {
         localSymbol.current.ask = symbol.ask
         localSymbol.current.bid = symbol.bid
         updateAnnotations()
         updateRates()
     }
 
+    function updateRates() {
+        if (localInstrument.current !== '') {
+            fetchRates(TIMEFRAMES, localInstrument.current, rates, (newRates, updated) => {
+                rates.current = newRates
+                if (updated) {
+                    updateChart()
+                }
+            })
+        }
+    }
+
     function updateOptions(timeframes, digits) {
-        console.log("       :: Symbol ", localSymbol.current)
         refs.current.forEach((reference, _index) => {
             if (reference.current) {
                 const timeframe = Object.keys(timeframes)[_index]
