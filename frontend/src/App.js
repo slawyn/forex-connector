@@ -91,8 +91,7 @@ const App = () => {
   const [paneState, setPaneState] = React.useState(false);
   const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
-  const THEME = "clsStyle";
-  const SLIDING_PANE_THEME = "sliding-pane";
+  const THEME = "clsBorderless";
 
   function fetchTerminalData(force) {
     /**
@@ -173,7 +172,7 @@ const App = () => {
           </nav>
           <TabPanel>
             <SlidingPane
-              customClass={SLIDING_PANE_THEME}
+              customClass={"sliding-pane"}
               isOpen={paneState}
               child={<Symbols
                 customClass={THEME}
