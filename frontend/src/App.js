@@ -87,7 +87,7 @@ const App = () => {
    * Terminal data is numbers, and symbol data is per symbol
    */
   const selected = React.useRef({ instrument: '', calculator: {} });
-  const [symbolData, setSymbolData] = React.useState({ info: { name: "", step: 0, volume_step: 0, point_value: 0, digits: 0 } });
+  const [symbolData, setSymbolData] = React.useState({ info: { name: "", ask:0, bid:0, step: 0, volume_step: 0, point_value: 0, digits: 0 } });
   const [paneState, setPaneState] = React.useState(false);
   const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
@@ -192,7 +192,6 @@ const App = () => {
             />
             <Charter
               symbol={symbolData.info}
-              instrument={selected.current.instrument}
               calculator={selected.current.calculator}
             />
           </TabPanel>

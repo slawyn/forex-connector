@@ -177,10 +177,15 @@ def on_rates():
     start_ms = request.args.get("start", default=0, type=int)
     end_ms = request.args.get("end", default=0, type=int)
     time_frame = request.args.get("timeframe", default="D1", type=str)
-    return {time_frame:
+    return {"instrument": instrument,
+            "data":
             {
-                instrument: app.get_rates(instrument, time_frame, start_ms, end_ms, json=True)
+                time_frame: app.get_rates(instrument, time_frame, start_ms, end_ms, json=True)
             }}
+    # return {time_frame:
+    #         {
+    #             instrument: app.get_rates(instrument, time_frame, start_ms, end_ms, json=True)
+    #         }}
 
 
 @app.route('/symbol', methods=['GET'])

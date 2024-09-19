@@ -132,7 +132,7 @@ class Trader:
 
     def get_rates(self, symbol: Symbol, time_frame, start_ms, end_ms, json=False):
         """Add difference of rates to the symbol"""
-        rates = {}
+        rates = []
         period = Trader.TIMEFRAMES.index(time_frame)
         if start_ms != end_ms and period >=0:
             TIME_FRAME = Trader.MT_TIMEFRAMES[period]
@@ -169,10 +169,9 @@ class Trader:
                 if start_s <= timestamp_s <= current_s:
                     timestamp_ms = timestamp_s*1000
                     if json:
-                        rates[timestamp_ms] = _rates[timestamp_s].to_json()
+                        rates.append(_rates[timestamp_s].to_json())
                     else:
-                        rates[timestamp_ms] = _rates[timestamp_s]
-
+                        rates.append(_rates[timestamp_s])
         return rates
 
     def get_symbols(self, sorted=True):

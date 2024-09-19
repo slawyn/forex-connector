@@ -31,7 +31,8 @@ class Rate:
     IDX_VOLUME = 5
 
     def __init__(self, rate):
-        self.time = rate[Rate.IDX_TIME]
+        # convert to ms
+        self.time = int(rate[Rate.IDX_TIME])*1000
         self.open = rate[Rate.IDX_OPEN]
         self.high = rate[Rate.IDX_HIGH]
         self.low = rate[Rate.IDX_LOW]
@@ -89,7 +90,8 @@ class Rate:
         return atr
 
     def to_json(self):
-        return {"open": self.open,
+        return {"time":self.time,
+                "open": self.open,
                 "high": self.high,
                 "low": self.low,
                 "close": self.close,
