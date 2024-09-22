@@ -11,7 +11,11 @@ class RatesContainer:
             self.rates[time_frame] = {}
 
         for rate in rates:
-            self.rates[time_frame][int(rate[Rate.IDX_TIME])] = Rate(rate)
+            time = int(rate[Rate.IDX_TIME])
+            self.rates[time_frame][time] = Rate(rate)
+
+        self.rates[time_frame] = dict(sorted(self.rates[time_frame].items()))
+
 
     def get_rates(self, time_frame):
         return self.rates[time_frame]
@@ -32,7 +36,7 @@ class Rate:
 
     def __init__(self, rate):
         # convert to ms
-        self.time = int(rate[Rate.IDX_TIME])*1000
+        self.time = int(rate[Rate.IDX_TIME])
         self.open = rate[Rate.IDX_OPEN]
         self.high = rate[Rate.IDX_HIGH]
         self.low = rate[Rate.IDX_LOW]

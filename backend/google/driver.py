@@ -1,5 +1,4 @@
-import sys
-import json
+import os
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -57,6 +56,10 @@ class DriveFileController:
             log(folder['title'])
             file1 = self.drive.CreateFile({'id': folder["id"]})
             file1.Delete()
+
+
+    def get_optimal_bar_count(self):
+        return Chart.get_optimal_barcount()
 
     def update_google_sheet(self, positions):
         # Last position in the sheet

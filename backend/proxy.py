@@ -87,7 +87,7 @@ class App(Flask):
                                            self.cfg.get_google_worksheet(),
                                            self.cfg.get_export_folder())
         start_date = convert_string_to_date(self.cfg.get_google_startdate())
-        positions = self.trader.get_closed_positions(start_date)
+        positions = self.trader.get_closed_positions(start_date, drive_handle.get_optimal_bar_count())
         drive_handle.update_google_sheet(positions)
         return []
 

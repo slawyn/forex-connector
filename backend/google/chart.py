@@ -12,6 +12,9 @@ class Chart():
     CHART_SIZEY = 1080
     CHART_SIZEX = 1920
 
+    OPTIMAL_BAR_COUNT = 70
+
+
     # Offset for chart
     CHART_OFFSET_EXTRA = 30
     CHART_OFFSET_PRICESX = CHART_SIZEX-100
@@ -51,6 +54,9 @@ class Chart():
         self.bar_width = 1
         self.bar_scale = 1
         self.volume_scale = 1
+
+    def get_optimal_barcount():
+        return Chart.OPTIMAL_BAR_COUNT
 
     def draw_prices(self, maxprice, minprice):
         self.draw.rectangle([(Chart.CHART_OFFSET_PRICESX+10, Chart.CHART_OFFSET_TOPY), (Chart.CHART_SIZEX, Chart.CHART_SIZEY -

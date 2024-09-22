@@ -2,6 +2,20 @@ import React from 'react';
 import { createChart, CrosshairMode } from 'lightweight-charts';
 
 
+
+
+const mapData = (data) => {
+    let mapped = { price: [], volume: [] }
+    for (let idx = 0; idx < data.length; ++idx) {
+        const entry = data[idx]
+        mapped.price.push({ time: entry.time, open: entry.open, high: entry.high, low: entry.low, close: entry.close })
+
+        const barcolor = entry.close < entry.open ? "rgba(255, 128, 159, 0.10)" : "rgba(107, 255, 193, 0.10)";
+        mapped.volume.push({ time: entry.time, value: entry.volume, color: barcolor })
+    }
+    return mapped
+};
+
 export default class DynamicChart extends React.Component {
     constructor(props) {
         super(props)
@@ -23,10 +37,14 @@ export default class DynamicChart extends React.Component {
             },
             grid: {
                 vertLines: {
-                    color: "#334158"
+                    color: '#e0e0e060',
+                    style: 2,
+                    visible: true
                 },
                 horzLines: {
-                    color: "#334158"
+                    color: '#e0e0e060',
+                    style: 2,
+                    visible: true
                 }
             },
             crosshair: {
@@ -59,22 +77,22 @@ export default class DynamicChart extends React.Component {
             borderUpColor: "#4bffb5",
             wickDownColor: "#838ca1",
             wickUpColor: "#838ca1",
-            lastValueVisible: false,
-            priceLineVisible: false,
+
+
         });
         this.candleSeries.setData([]);
 
     }
     _createVolumes() {
         this.volumeSeries = this.chart.addHistogramSeries({
-            color: '#26a69a', // Default color for volume bars
+            color: '#26a69a',
             priceFormat: {
                 type: 'custom',
                 formatter: (price) => Math.abs(price).toFixed(2),
             },
-            priceScaleId: '', // Share the same scale with the candlestick series
+            priceScaleId: '',
             scaleMargins: {
-                top: 0.8, // Place the volume bars under the candlesticks
+                top: 0.8,
                 bottom: 0,
             },
         });
@@ -91,9 +109,9 @@ export default class DynamicChart extends React.Component {
             }
         };
 
-        window.addEventListener('resize', resizeHandler);
-
+        
         // Store the cleanup function to remove the event listener
+        window.addEventListener('resize', resizeHandler);
         this.cleanupResize = () => {
             window.removeEventListener('resize', resizeHandler);
         };
@@ -119,7 +137,7 @@ export default class DynamicChart extends React.Component {
 
         this.askLine = this.candleSeries.createPriceLine({
             price: price,
-            color: '#aa000030',
+            color: '#aa000080',
             lineWidth: 1,
             lineStyle: 0,
             axisLabelVisible: true,
@@ -134,7 +152,7 @@ export default class DynamicChart extends React.Component {
 
         this.bidLine = this.candleSeries.createPriceLine({
             price: price,
-            color: '#00aa0030',
+            color: '#00aa0080',
             lineWidth: 1,
             lineStyle: 0,
             axisLabelVisible: true,
@@ -157,7 +175,7 @@ export default class DynamicChart extends React.Component {
         sl.forEach((_sl) => {
             const line = this.candleSeries.createPriceLine({
                 price: _sl,
-                color: '#aa00aa30',
+                color: '#aa00aa80',
                 lineWidth: 2,
                 lineStyle: 0,
                 axisLabelVisible: true,
@@ -169,7 +187,7 @@ export default class DynamicChart extends React.Component {
         tp.forEach((_tp) => {
             const line = this.candleSeries.createPriceLine({
                 price: _tp,
-                color: '#00aaaa30',
+                color: '#00aaaa80',
                 lineWidth: 2,
                 lineStyle: 1,
                 axisLabelVisible: true,
@@ -180,25 +198,22 @@ export default class DynamicChart extends React.Component {
 
     }
 
-    updateData(priceData, volumeData, askPrice, bidPrice) {
+    updateData(data, askPrice, bidPrice) {
         if (this.candleSeries) {
-            if (priceData.length > 0) {
+            if (data.length > 0) {
+                const mapped = mapData(data)
 
                 if (this.data.length === 0) {
-                    console.log("<<<", priceData.length)
-                    console.log(">>", volumeData.length)
-                    this.data = priceData
-                    this.candleSeries.setData(priceData)
-                    this.volumeSeries.setData(volumeData)
+                    this.data = mapped.price
+                    this.candleSeries.setData(mapped.price)
+                    this.volumeSeries.setData(mapped.volume)
                 }
                 else {
-                    console.log(volumeData)
-                    console.log("---", priceData.length, priceData)
-                    priceData.forEach(pricePoint => {
+                    mapped.price.forEach(pricePoint => {
                         this.candleSeries.update(pricePoint);
                     });
 
-                    volumeData.forEach(volumePoint => {
+                    mapped.volume.forEach(volumePoint => {
                         this.volumeSeries.update(volumePoint);
                     });
                 }

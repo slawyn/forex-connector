@@ -4,20 +4,6 @@ import { mergeArray} from "../utils";
 import Grid from "./elements/Grid.js"
 import DynamicChart from "./DynamicChart.js";
 
-
-const mapData = (data) => {
-    let mapped = {price:[], volume:[]}
-    for(let idx = 0; idx < data.length; ++idx)
-    {
-        const entry = data[idx]
-        mapped.price.push({time:entry.time, open:entry.open, high:entry.high, low:entry.low, close:entry.close})
-
-        const barcolor = entry.close < entry.open? "rgba(255, 128, 159, 0.10)": "rgba(107, 255, 193, 0.10)";
-        mapped.volume.push({time:entry.time, value:entry.volume, color:barcolor})
-    }
-    return mapped
-};
-
 async function _fetchRates(timeframes, instrument, rates, handler) {
 
     /* Gather promises */
@@ -105,8 +91,7 @@ const Charter = ({ calculator, symbol, instrument }) => {
             refs.current.forEach((reference, _index) => {
                 if (reference.current) {
                     const timeframe = TIMEFRAMES[_index]
-                    const mapped = mapData(rates.current.data[timeframe])
-                    reference.current.updateData(mapped.price, mapped.volume, localSymbol.current.ask, localSymbol.current.bid)
+                    reference.current.updateData(rates.current.data[timeframe], localSymbol.current.ask, localSymbol.current.bid)
                 }
             })
         })
