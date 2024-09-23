@@ -1,3 +1,19 @@
+const millisecondsInSecond = 1000
+const secondsInMinute = 60;
+const minutesInHour = 60;
+const hoursInDay = 24;
+const deltaTable = {
+  "D1": millisecondsInSecond * secondsInMinute * minutesInHour * hoursInDay,
+  "H4": millisecondsInSecond * secondsInMinute * minutesInHour * 4,
+  "M20": millisecondsInSecond * secondsInMinute * 20,
+  "M5": millisecondsInSecond * secondsInMinute * 5,
+  "M1": millisecondsInSecond * secondsInMinute,
+}
+
+export function calculateDeltas(timeframe, bars) {
+  return deltaTable[timeframe] * bars
+}
+
 export function mergeArray(array) {
     return array.reduce((merged, dictionary) => mergeDict(merged, dictionary), {});
   }

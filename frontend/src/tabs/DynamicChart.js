@@ -8,10 +8,11 @@ const mapData = (data) => {
     let mapped = { price: [], volume: [] }
     for (let idx = 0; idx < data.length; ++idx) {
         const entry = data[idx]
-        mapped.price.push({ time: entry.time, open: entry.open, high: entry.high, low: entry.low, close: entry.close })
+        const time = entry.time/1000
+        mapped.price.push({ time: time, open: entry.open, high: entry.high, low: entry.low, close: entry.close })
 
         const barcolor = entry.close < entry.open ? "rgba(255, 128, 159, 0.10)" : "rgba(107, 255, 193, 0.10)";
-        mapped.volume.push({ time: entry.time, value: entry.volume, color: barcolor })
+        mapped.volume.push({ time: time, value: entry.volume, color: barcolor })
     }
     return mapped
 };
@@ -100,7 +101,6 @@ export default class DynamicChart extends React.Component {
     }
 
     _setupResizeHandler() {
-        // Handle resizing of the chart
         const resizeHandler = () => {
             if (this.chartContainerRef.current) {
                 this.chart.applyOptions({
@@ -115,27 +115,6 @@ export default class DynamicChart extends React.Component {
         this.cleanupResize = () => {
             window.removeEventListener('resize', resizeHandler);
         };
-    }
-
-    componentDidMount() {
-        this._createChart()
-        this._createCandlesticks()
-        this._createVolumes()
-        this._setupResizeHandler()
-    }
-
-    resetData(digits) {
-        this.data = []
-        this.candleSeries.setData([]);
-        this.volumeSeries.setData([]);
-        this.candleSeries.applyOptions({
-            priceFormat: {
-                type: "custom",
-                formatter: function (price) {
-                    return `${price.toFixed(digits)}`;
-                },
-            },
-        });
     }
 
     _updateAskPriceLine(price) {
@@ -165,6 +144,28 @@ export default class DynamicChart extends React.Component {
             lineStyle: 0,
             axisLabelVisible: true,
             title: '',
+        });
+    }
+
+    componentDidMount() {
+        this._createChart()
+        this._createCandlesticks()
+        this._createVolumes()
+        this._setupResizeHandler()
+    }
+
+
+    resetData(digits) {
+        this.data = []
+        this.candleSeries.setData([]);
+        this.volumeSeries.setData([]);
+        this.candleSeries.applyOptions({
+            priceFormat: {
+                type: "custom",
+                formatter: function (price) {
+                    return `${price.toFixed(digits)}`;
+                },
+            },
         });
     }
 
@@ -211,7 +212,7 @@ export default class DynamicChart extends React.Component {
             if (data.length > 0) {
                 const mapped = mapData(data)
 
-                if (this.data.length === 0) {
+                if (this.data.length === 0 && mapped.price.length>2) {
                     this.data = mapped.price
                     this.candleSeries.setData(mapped.price)
                     this.volumeSeries.setData(mapped.volume)

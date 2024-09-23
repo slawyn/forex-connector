@@ -35,10 +35,6 @@ function mapTerminalData(data, updates) {
   return Object.entries(data).map(([key, value]) => { return { id: key, items: value, updated: updates.includes(key), change: helperChange(value, updates, key) } });
 }
 
-function setUpdated(data) {
-  return Object.keys(data)
-}
-
 class Commander {
   constructor() {
     this.instrument = ""
@@ -83,20 +79,49 @@ class Commander {
 const commander = new Commander();
 
 const App = () => {
-  /**
-   * Terminal data is numbers, and symbol data is per symbol
-   */
+  const KEY_OC_TABLE = "t";
+  const KEY_GET_SYMBOLS = "s";
+  const THEME = "clsBorderless";
   const selected = React.useRef({ instrument: '', calculator: {} });
-  const [symbolData, setSymbolData] = React.useState({ info: { name: "", ask:0, bid:0, step: 0, volume_step: 0, point_value: 0, digits: 0 } });
+  const [symbolData, setSymbolData] = React.useState({ info: { name: "", ask: 0, bid: 0, step: 0, volume_step: 0, point_value: 0, digits: 0 } });
   const [paneState, setPaneState] = React.useState(false);
   const [terminalData, setTerminalData] = React.useState({ date: "", account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} });
   const [errorData, setErrorData] = React.useState({ error: 0, text: "" });
-  const THEME = "clsBorderless";
+  const intervalRef = React.useRef(null);
+
+  const handleKeyPress = (event) => {
+    switch (event.key) {
+      case KEY_OC_TABLE:
+        togglePane();
+        break;
+      case KEY_GET_SYMBOLS:
+        fetchTerminalData(true);
+        break;
+      default:
+        break;
+    }
+  };
+
+  function togglePane() {
+    setPaneState((prevState) => !prevState);
+  }
+
+  const startDataFetchInterval = () => {
+    intervalRef.current = setInterval(() => {
+      fetchTerminalData(false);
+      fetchSymbolData(selected.current.instrument);
+    }, 3000);
+  };
+
+  // Cleanup logic
+  const cleanup = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    window.removeEventListener('keydown', handleKeyPress);
+  };
 
   function fetchTerminalData(force) {
-    /**
-     * Fetch all Terminal Data
-     */
     fetch(`/update?force=${force}`).then((response) =>
       response.json().then((receivedTerminalData) => {
         setTerminalData((previousstate) => ({
@@ -104,7 +129,7 @@ const App = () => {
           account: receivedTerminalData.account,
           headers: receivedTerminalData.headers,
           instruments: { ...previousstate.instruments, ...receivedTerminalData.instruments },
-          updates: setUpdated(receivedTerminalData.instruments),
+          updates: Object.keys(receivedTerminalData.instruments),
           op_headers: receivedTerminalData.op_headers,
           open: receivedTerminalData.open
         })
@@ -114,9 +139,6 @@ const App = () => {
   };
 
   function fetchSymbolData(instrument) {
-    /**
-     * Fetch symbol info
-     */
     if (instrument !== undefined && instrument !== '') {
       fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
         response.json().then((receivedSymbol) => {
@@ -130,23 +152,16 @@ const App = () => {
     commander.setCommand(props)
     selected.current = { ...selected.current, ...props }
   }
-
+  
   React.useEffect(() => {
-
-
-    /* Mount */
+    window.addEventListener('keydown', handleKeyPress);
     fetchTerminalData(false);
-    const interval = setInterval(() => {
-      fetchTerminalData(false);
+    startDataFetchInterval();
+    return cleanup;
 
-      /* Fetch selected symbol data, periodically */
-      fetchSymbolData(selected.current.instrument)
-
-    }, 3000);
-
-    /* Unmount */
-    return () => clearInterval(interval);
   }, []);
+
+
   return (
     <main className="App">
       <ThemeProvider theme={darkTheme}>
@@ -158,8 +173,8 @@ const App = () => {
               <Tab className="top-bar-tab">History</Tab>
             </TabList>
             <MiscCheckbox customClass={"css-button-checkbox"} text="Sync" handler={(state) => { setCommand({ preview: state }) }} />
-            <button className={"css-blue-button"} onClick={() => fetchTerminalData(true)}>Get Symbols</button>
-            <button className={"css-blue-button"} onClick={() => setPaneState(!paneState)}>Show Symbols</button>
+            <button className={"css-blue-button"} onClick={() => fetchTerminalData(true)}>Get Symbols[{KEY_GET_SYMBOLS}]</button>
+            <button className={"css-blue-button"} onClick={() => togglePane()}>Show Symbols[{KEY_OC_TABLE}]</button>
             <TopBar
               customClass="top-bar"
               company={terminalData.account.company}

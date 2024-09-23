@@ -13,9 +13,6 @@ const History = ({ customClass }) => {
     };
 
     function fetchHistory() {
-        /**
-         * Fetch all positional Data
-         */
         fetch("/history").then((response) =>
             response.json().then((receivedPositions) => { setPositionData(receivedPositions); })
         );
@@ -23,7 +20,6 @@ const History = ({ customClass }) => {
 
 
     React.useEffect(() => {
-        /* Fetch History on mount */
         fetchHistory()
       }, []);
 
@@ -56,7 +52,7 @@ const History = ({ customClass }) => {
                         <tbody>
                             {
                                 positionData.positions.map((entry) => {
-                                    return <tr onClick={() => setSelectedImage(entry[0])} style={{
+                                    return <tr key={entry[0]} onClick={() => setSelectedImage(entry[0])} style={{
                                         backgroundColor: entry[0] === selectedImage ? 'orange' : ''
                                     }}>
                                         {
@@ -73,6 +69,11 @@ const History = ({ customClass }) => {
                 </nav>
                 <LazyLoadImage src={`${selectedImage}.png`}
                     effect="blur"
+                    style={{
+                        width: '100vw',   // Scale to the full viewport width
+                        height: '100vh',  // Scale to the full viewport height
+                        objectFit: 'contain',  // Ensure the image maintains aspect ratio
+                    }}
                 />
             </nav>
         </>
