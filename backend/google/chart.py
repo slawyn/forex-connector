@@ -40,6 +40,7 @@ class Chart():
     TIMEFRAME_SEPARATORS = {"M1": 60, "M2": 30, "M3": 20, "M4": 15, "M5": 12, "M6": 10, "M10": 6, "M12": 5,
                             "M15": 94, "M20": 9, "M30": 48, "H1": 24, "H2": 12, "H3": 8, "H4": 6, "H6": 7, "H8": 9, "H12": 6, "D1": 7, "W1": 4}
 
+
     def __init__(self):
         # Handles
         self.image = Image.new("RGB", (Chart.CHART_SIZEX, Chart.CHART_SIZEY), color=Chart.COLOR_BACKGROUND)
@@ -88,6 +89,11 @@ class Chart():
         self.draw.polygon([point0, point1, point2], fill=Chart.COLOR_ARROW_SELL)
         self.draw.rectangle([posx+self.bar_width/4, posy-self.bar_width, posx+self.bar_width*3/4, posy-self.bar_width*2], fill=Chart.COLOR_ARROW_SELL)
 
+
+    def draw_spread(self, start_x, start_y, width_x, fill):
+        for x in range(start_x, width_x, 4):
+            self.draw.line([(x, start_y), (x + 2, start_y)], fill=fill)
+
     def draw_trade(self, sl, tp, rates, deals, maxprice, minprice):
 
         # find deals on chart
@@ -98,15 +104,17 @@ class Chart():
 
             # find the date
             while idx < maxlength and date >= rates[idx].time:
-                idx = idx + 1
+                idx += 1
 
             posx = Chart.SPACE_BETWEEN_BARS + (self.bar_width + Chart.SPACE_BETWEEN_BARS)*(idx-1)
             posy = self.calculate_bar_y_coordinate(deal[2] - minprice)
 
             # Draw arrows
             if deal[0] == 'BUY':  # BUY
+                self.draw_spread(0, posy, Chart.CHART_OFFSET_PRICESX,  fill=Chart.COLOR_VOLUME)
                 self.draw_arrow_up(posx, posy)
             elif deal[0] == 'SELL':  # SELL
+                self.draw_spread(0, posy, Chart.CHART_OFFSET_PRICESX,  fill=Chart.COLOR_VOLUME)
                 self.draw_arrow_down(posx, posy)
             else:
                 raise ValueError("Unknown type of deal %d" % deal[0])
@@ -176,6 +184,8 @@ class Chart():
             baridx = 0
             idx = 0
             offsetx = Chart.SPACE_BETWEEN_BARS
+            previous_time = rates[0].time
+            seperate_aperiodically = (period != "W1")
             for rate in rates:
                 open = self.calculate_bar_y_coordinate(rate.open-price_min)
                 close = self.calculate_bar_y_coordinate(rate.close-price_min)
@@ -184,11 +194,20 @@ class Chart():
                 volume = self.calculate_volume_y_coordinate(rate.volume)
                 timestamp = pandas.to_datetime(rate.time, unit='s')
 
+
                 # Draw separators and dates
                 if baridx == 0:
                     offsetx = Chart.SPACE_BETWEEN_BARS + (self.bar_width + Chart.SPACE_BETWEEN_BARS)*(idx)
                     self.draw.text((offsetx+5, 3), str(timestamp), font=self.font_date, fill=Chart.COLOR_PRICES)
                     self.draw.line([(offsetx, 0), (offsetx, Chart.CHART_SIZEY)], fill=Chart.COLOR_VOLUME)
+
+                # Seperate gaps by a vertical line
+                elif seperate_aperiodically and (rate.time-previous_time>=time_get_n_days_in_seconds(1.5)):
+                    offsetx = Chart.SPACE_BETWEEN_BARS + (self.bar_width + Chart.SPACE_BETWEEN_BARS)*(idx)
+                    self.draw.text((offsetx+5, 3), str(timestamp), font=self.font_date, fill=Chart.COLOR_PRICES)
+                    self.draw.line([(offsetx, 0), (offsetx, Chart.CHART_SIZEY)], fill=Chart.COLOR_VOLUME)
+
+
 
                 baridx = (baridx + 1) % separator
 
@@ -202,6 +221,7 @@ class Chart():
                 # Draw Volume
                 self.draw_volume(idx, volume, Chart.COLOR_VOLUME)
                 idx = idx + 1
+                previous_time = rate.time
 
             # Draw Stop Loss and Take Profit
             self.draw_trade(sl, tp, rates, deals, price_max, price_min)

@@ -56,3 +56,6 @@ def get_millisecond_timestamp_for_date(arg_date):
 
 def time_go_back_n_weeks(date_msc, n):
     return date_msc - (n*WEEK)
+
+def time_get_n_days_in_seconds(n):
+    return DAY_MSC*n/1000

@@ -132,7 +132,10 @@ const App = () => {
   }
 
   React.useEffect(() => {
+
+
     /* Mount */
+    fetchTerminalData(false);
     const interval = setInterval(() => {
       fetchTerminalData(false);
 

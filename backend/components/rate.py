@@ -33,6 +33,7 @@ class Rate:
     IDX_LOW = 3
     IDX_CLOSE = 4
     IDX_VOLUME = 5
+    IDX_SPREAD = 6
 
     def __init__(self, rate):
         # convert to ms

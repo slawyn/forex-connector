@@ -23,6 +23,7 @@ export default class DynamicChart extends React.Component {
         this.data = []
         this.sl = []
         this.tp = []
+        this.title = props.title
     }
 
     _createChart() {
@@ -52,7 +53,7 @@ export default class DynamicChart extends React.Component {
             },
             priceScale: {
                 autoScale: true,
-                borderColor: "#485c7b"
+                borderColor: "#485c7b",
             },
             timeScale: {
                 borderColor: "#485c7b",
@@ -81,14 +82,13 @@ export default class DynamicChart extends React.Component {
 
         });
         this.candleSeries.setData([]);
-
+        
     }
     _createVolumes() {
         this.volumeSeries = this.chart.addHistogramSeries({
             color: '#26a69a',
             priceFormat: {
-                type: 'custom',
-                formatter: (price) => Math.abs(price).toFixed(2),
+                type: 'volume',
             },
             priceScaleId: '',
             scaleMargins: {
@@ -109,7 +109,7 @@ export default class DynamicChart extends React.Component {
             }
         };
 
-        
+
         // Store the cleanup function to remove the event listener
         window.addEventListener('resize', resizeHandler);
         this.cleanupResize = () => {
@@ -124,10 +124,18 @@ export default class DynamicChart extends React.Component {
         this._setupResizeHandler()
     }
 
-    resetData() {
+    resetData(digits) {
         this.data = []
         this.candleSeries.setData([]);
         this.volumeSeries.setData([]);
+        this.candleSeries.applyOptions({
+            priceFormat: {
+                type: "custom",
+                formatter: function (price) {
+                    return `${price.toFixed(digits)}`;
+                },
+            },
+        });
     }
 
     _updateAskPriceLine(price) {
@@ -236,6 +244,10 @@ export default class DynamicChart extends React.Component {
     }
 
     render() {
-        return <div ref={this.chartContainerRef} style={{ width: '100%', height: '400px' }} />;
+        return (
+            <nav>
+                <nav>{this.title}</nav>
+                <div ref={this.chartContainerRef} style={{ width: '100%', height: '400px' }} />
+            </nav>)
     }
 };

@@ -78,7 +78,8 @@ class Trader:
             end_msc = pd.get_end_msc()
             time_difference = (end_msc - start_msc)
 
-            start_msc -= (time_difference*4)
+            start_msc = time_go_back_n_weeks(start_msc, 1)
+            # start_msc -= (time_difference*4)
             end_msc += (time_difference/2)
 
             if end_msc > int(round(time.time() * 1000)):
@@ -94,8 +95,9 @@ class Trader:
                                              time_stop)
 
                 # Too big
-                if len(rates) > barcount or tf == "M1":
-                    pd.add_rates(rates, tf)
+                length = len(rates)
+                if length > barcount or tf == "M1":
+                    pd.add_rates(rates[length-barcount:], tf)
                     break
 
         return positions

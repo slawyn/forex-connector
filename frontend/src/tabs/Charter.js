@@ -63,13 +63,12 @@ const Charter = ({ calculator, symbol, instrument }) => {
     const localCalculator = React.useRef({ sl: [], tp: [] })
 
 
-
     if (symbol !== localSymbol.current) {
 
         if (symbol.name !== localSymbol.current.name) {
             refs.current.forEach((reference, _index) => {
                 if (reference.current)
-                    reference.current.resetData()
+                    reference.current.resetData(symbol.digits)
             })
         }
         localSymbol.current = symbol
@@ -88,9 +87,9 @@ const Charter = ({ calculator, symbol, instrument }) => {
     function _updateRates() {
         _fetchRates(CONFIG, localSymbol.current.name, rates.current, (newRates, updated) => {
             rates.current = newRates
-            refs.current.forEach((reference, _index) => {
+            refs.current.forEach((reference, index) => {
                 if (reference.current) {
-                    const timeframe = TIMEFRAMES[_index]
+                    const timeframe = TIMEFRAMES[index]
                     reference.current.updateData(rates.current.data[timeframe], localSymbol.current.ask, localSymbol.current.bid)
                 }
             })
@@ -100,11 +99,11 @@ const Charter = ({ calculator, symbol, instrument }) => {
     /* Create the charts only once, and use updateSeries to update the values */
     const charts = React.useMemo(() => {
         return refs.current.map((reference, index) => (
-            <DynamicChart ref={reference} />
-        ));
+            <DynamicChart ref={reference} title={TIMEFRAMES[index]}/>
+        ))
     }, [refs]);
 
-    return <Grid items={charts} />;
+    return <Grid items={charts} />
 }
 
 // Charter.whyDidYouRender = true
