@@ -1,6 +1,6 @@
 import React from "react";
 import Orders from "./Orders";
-import { Calculator, getCorrespondingClosingType } from "./Calculator";
+import Calculator from "./Calculator";
 import { createPostRequest } from "../utils";
 
 function round(number, digits) {
@@ -154,6 +154,17 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
         localSymbol.current = symbol
     }
 
+    function _getCorrespondingClosingType(type) {
+        let close_type = ""
+        if (type.includes("buy")) {
+            close_type = "close_buy";
+        } else {
+            close_type = "close_sell";
+        }
+    
+        return close_type;
+    };
+
     function requestTrade(request) {
         const requestOptions = createPostRequest(request)
         fetch('/trade', requestOptions).then(response =>
@@ -167,6 +178,8 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
                 }
             }));
     };
+
+
 
     function calculateParameters(ask, bid, ratio, points) {
         const sl = [ask - points, bid + points];
@@ -283,12 +296,15 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
         return `R${risk}%G${trade.ratio}%` + comment;
     };
 
+
+
+
     function handleCloseTrade(type, name, position, volume) {
         let request = {
             symbol: name,
             position: position,
             lot: volume,
-            type: getCorrespondingClosingType(type)
+            type: _getCorrespondingClosingType(type)
         };
 
         requestTrade(request);
@@ -297,7 +313,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
     return (
         <>
             <nav className="cls50PContainer">
-                <Calculator customClass="clsBorderless"
+                <Calculator customClass={customClass}
                     trade={trade}
                     types={Object.keys(REQUEST_BUILD_HANDLERS)}
                     handlers={{

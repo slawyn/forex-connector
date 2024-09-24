@@ -1,78 +1,80 @@
-import React, { } from "react";
+import React, { useState, useEffect } from "react";
 import { createPostRequest } from "../utils";
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 
 const History = ({ customClass }) => {
-    const [positionData, setPositionData] = React.useState({ headers: [], positions: [] });
-    const [selectedImage, setSelectedImage] = React.useState("0")
+    const [positionData, setPositionData] = useState({ headers: [], positions: [] });
+    const [selectedImage, setSelectedImage] = useState("0");
 
-
-    function saveHistory(selected) {
-        const requestOptions = createPostRequest("")
-        fetch('/save', requestOptions).then(response => response.json()).then(((receivedSymbolData) => { }));
+    const saveHistory = () => {
+        const requestOptions = createPostRequest("");
+        fetch('/save', requestOptions)
+            .then(response => response.json())
+            .then(() => { /* Handle response if needed */ });
     };
 
-    function fetchHistory() {
-        fetch("/history").then((response) =>
-            response.json().then((receivedPositions) => { setPositionData(receivedPositions); })
-        );
+    const fetchHistory = () => {
+        fetch("/history")
+            .then(response => response.json())
+            .then(receivedPositions => setPositionData(receivedPositions));
     };
 
-
-    React.useEffect(() => {
-        fetchHistory()
-      }, []);
+    useEffect(() => {
+        fetchHistory();
+    }, []);
 
     return (
         <>
-            <button
-                onClick={saveHistory}
-                className={"clsOrangebutton"}
-                style={{ width: "fit-content" }}>
-                Sync with Google
-            </button>
-            <button
-                onClick={fetchHistory}
-                className={"css-blue-button"}
-                style={{ width: "fit-content" }}>
-                Fetch Trades
-            </button>
-            <nav className="clsGlobalContainer" >
-                <nav className="clsHistoryContainer" >
-                    <table className={customClass} >
+            <div>
+                <button
+                    onClick={saveHistory}
+                    className="clsOrangebutton"
+                    style={{ width: "fit-content" }}>
+                    Sync with Google
+                </button>
+                <button
+                    onClick={fetchHistory}
+                    className="css-blue-button"
+                    style={{ width: "fit-content" }}>
+                    Fetch Trades
+                </button>
+            </div>
+            <nav className="clsGlobalContainer">
+                <nav className="clsHistoryContainer">
+                    <table className={customClass}>
                         <thead>
                             <tr>
-                                {positionData.headers.map((header, index) => {
-                                    return <th title={header} key={header} className={customClass}>
+                                {positionData.headers.map((header, index) => (
+                                    <th key={index} title={header} className={customClass}>
                                         {header}
                                     </th>
-                                })}
+                                ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {
-                                positionData.positions.map((entry) => {
-                                    return <tr key={entry[0]} onClick={() => setSelectedImage(entry[0])} style={{
+                            {positionData.positions.map((entry, entryIndex) => (
+                                <tr
+                                    key={entry[0] || entryIndex}
+                                    onClick={() => setSelectedImage(entry[0])}
+                                    style={{
                                         backgroundColor: entry[0] === selectedImage ? 'orange' : ''
-                                    }}>
-                                        {
-                                            /** Map row line */
-                                            entry.map((cellData) => {
-                                                return <td>{cellData}</td>
-                                            })
-                                        }
-                                    </tr>
-                                })
-                            }
+                                    }}
+                                >
+                                    {entry.map((cellData, cellIndex) => (
+                                        <td key={cellIndex}>{cellData}</td>
+                                    ))}
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </nav>
-                <LazyLoadImage src={`${selectedImage}.png`}
+                <LazyLoadImage
+                    src={`${selectedImage}.png`}
                     effect="blur"
                     style={{
-                        width: '100vw',   // Scale to the full viewport width
-                        height: '100vh',  // Scale to the full viewport height
-                        objectFit: 'contain',  // Ensure the image maintains aspect ratio
+                        width: '100vw',
+                        height: '100vh',
+                        objectFit: 'contain',
                     }}
                 />
             </nav>
@@ -80,5 +82,4 @@ const History = ({ customClass }) => {
     );
 };
 
-
-export { History as default };
+export default History;

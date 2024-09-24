@@ -1,34 +1,55 @@
 import React from "react";
-import TableRows from "./elements/TableRows"
-import TableHeads from "./elements/TableHeads"
-
+import TableRows from "./elements/TableRows";
+import TableHeads from "./elements/TableHeads";
 
 const Symbols = ({ customClass, headers, data, handlers }) => {
     const [sortConfig, setSortConfig] = React.useState({ key: 0, direction: 'ascending' });
 
-    function requestSort(sortkey) {
-        let direction = 'ascending'
-        if (sortConfig.key === sortkey && sortConfig.direction === 'ascending') {
-            direction = 'descending';
-        }
-        setSortConfig({ key: sortkey, direction: direction });
+    const requestSort = (sortKey) => {
+        setSortConfig((prevConfig) => ({
+            key: sortKey,
+            direction: prevConfig.key === sortKey && prevConfig.direction === 'ascending' ? 'descending' : 'ascending',
+        }));
+    };
+
+    const sortedData = React.useMemo(() => {
+        if (!sortConfig) return data;
+
+        return [...data].sort((a, b) => {
+            let valA = a.items[sortConfig.key];
+            let valB = b.items[sortConfig.key];
+
+            if (!isNaN(valA)) {
+                valA = parseFloat(valA);
+                valB = parseFloat(valB);
+            }
+
+            if (valA < valB) return sortConfig.direction === 'ascending' ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === 'ascending' ? 1 : -1;
+            return 0;
+        });
+    }, [data, sortConfig]);
+
+    function handleOnClick(id, items) {
+        handlers.setId(id)
     }
+
+
     return (
-        <>
-            <table className={customClass}>
-                <TableHeads
-                    className={customClass}
-                    data={headers}
-                    sorter={requestSort} />
-                <TableRows
-                    className={customClass}
-                    data={data}
-                    sortConfig={sortConfig}
-                    setId={handlers.setId}/>
-            </table>
-        </>
+        <table className={customClass}>
+            <TableHeads
+                customClass={`${customClass} css-orange-background`}
+                data={headers}
+                onHeaderClick={requestSort}
+            />
+            <TableRows
+                customClass={customClass}
+                data={sortedData}
+                onRowClick={handleOnClick}
+            />
+        </table>
     );
 };
 
-Symbols.whyDidYouRender = true
+// Symbols.whyDidYouRender = true
 export default Symbols;

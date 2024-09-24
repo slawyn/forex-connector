@@ -1,16 +1,18 @@
 import React from 'react';
 
-const Grid = ({items}) => {
+const Grid = ({ items, columns = 2, rows = 2, gap = '10px' }) => {
     const gridContainerStyle = {
         display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)', // 2 columns
-        gridTemplateRows: 'repeat(2, 1fr)', // 2 rows
-        gap: '10px', // space between grid items
+        gridTemplateColumns: `repeat(${columns}, 1fr)`, // Configurable columns
+        gridTemplateRows: `repeat(${rows}, 1fr)`, // Configurable rows
+        gap: gap, // Configurable gap
     };
 
     return (
         <div style={gridContainerStyle}>
-            {items.map((item) => { return item})}
+            {items.map((item, index) => (
+                <div key={index}>{item}</div>
+            ))}
         </div>
     );
 };

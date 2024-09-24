@@ -1,17 +1,21 @@
 import React from "react";
-function TableHeads ({data, className, sorter}) {
+
+function TableHeads({ customClass, data, onHeaderClick }) {
     return (
         <thead>
             <tr>
-                {data.map((header, index) => {
-                    return <th title={header}  style={{backgroundColor:'#e6520e'}} key={header} className={className} onClick={() => { sorter(index) }}>
+                {data.map((header, index) => (
+                    <th
+                        key={header}
+                        title={header}
+                        className={customClass}
+                        onClick={() => onHeaderClick(index)}>
                         {header}
                     </th>
-                })}
+                ))}
             </tr>
         </thead>
     );
-};
-
+}
 
 export default TableHeads;

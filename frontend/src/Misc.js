@@ -1,24 +1,36 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 
-  const MiscCheckbox = ({ customClass, text, handler }) => {
-    const btnRef = React.useRef(null)
-    const [state, setState] = React.useState(false);
+const MiscCheckbox = ({ customClass, text, handler }) => {
+  const btnRef = useRef(null);
+  const [isActive, setIsActive] = useState(false);
 
-    function onToggle() {
-      const new_state = !state
-      if (new_state) {
-        btnRef.current.className += " active"
-      }
-      else {
-        btnRef.current.className = btnRef.current.className.replace(" active", "")
-      }
+  const onToggle = () => {
+    const newState = !isActive;
 
-      setState(new_state)
-      if (handler) {
-        handler(new_state)
+    if (btnRef.current) {
+      if (newState) {
+        btnRef.current.classList.add("active");
+      } else {
+        btnRef.current.classList.remove("active");
       }
     }
-    return <button ref={btnRef} className={customClass} onClick={onToggle}>{text}</button>
-  }
 
-  export default MiscCheckbox;
+    setIsActive(newState);
+
+    if (handler) {
+      handler(newState);
+    }
+  };
+
+  return (
+    <button
+      ref={btnRef}
+      className={`${customClass} ${isActive ? "active" : ""}`}
+      onClick={onToggle}
+    >
+      {text}
+    </button>
+  );
+};
+
+export default MiscCheckbox;

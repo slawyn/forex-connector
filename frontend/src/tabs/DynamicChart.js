@@ -5,26 +5,51 @@ import { createChart, CrosshairMode } from 'lightweight-charts';
 
 
 const mapData = (data) => {
-    let mapped = { price: [], volume: [] }
-    for (let idx = 0; idx < data.length; ++idx) {
-        const entry = data[idx]
-        const time = entry.time/1000
-        mapped.price.push({ time: time, open: entry.open, high: entry.high, low: entry.low, close: entry.close })
-
-        const barcolor = entry.close < entry.open ? "rgba(255, 128, 159, 0.10)" : "rgba(107, 255, 193, 0.10)";
-        mapped.volume.push({ time: time, value: entry.volume, color: barcolor })
-    }
-    return mapped
+    return data.reduce((acc, entry) => {
+        const time = entry.time / 1000;
+        acc.price.push({
+            time,
+            open: entry.open,
+            high: entry.high,
+            low: entry.low,
+            close: entry.close
+        });
+        const barColor = entry.close < entry.open
+            ? "rgba(255, 128, 159, 0.10)"
+            : "rgba(107, 255, 193, 0.10)";
+        acc.volume.push({
+            time,
+            value: entry.volume,
+            color: barColor
+        });
+        return acc;
+    }, { price: [], volume: [] });
 };
+
 
 export default class DynamicChart extends React.Component {
     constructor(props) {
         super(props)
         this.chartContainerRef = React.createRef();
-        this.data = []
-        this.sl = []
-        this.tp = []
+        this.state = {
+            data: [],
+            sl: [],
+            tp: []
+        };
         this.title = props.title
+    }
+
+    componentDidMount() {
+        this._createChart()
+        this._createCandlesticks()
+        this._createVolumes()
+        this._setupResizeHandler()
+    }
+
+
+    componentWillUnmount() {
+        this._cleanupResizeHandler();
+        this.chart?.remove();
     }
 
     _createChart() {
@@ -83,7 +108,7 @@ export default class DynamicChart extends React.Component {
 
         });
         this.candleSeries.setData([]);
-        
+
     }
     _createVolumes() {
         this.volumeSeries = this.chart.addHistogramSeries({
@@ -100,7 +125,7 @@ export default class DynamicChart extends React.Component {
         this.volumeSeries.setData([]);
     }
 
-    _setupResizeHandler() {
+    _setupResizeHandler = () => {
         const resizeHandler = () => {
             if (this.chartContainerRef.current) {
                 this.chart.applyOptions({
@@ -108,20 +133,18 @@ export default class DynamicChart extends React.Component {
                 });
             }
         };
-
-
-        // Store the cleanup function to remove the event listener
         window.addEventListener('resize', resizeHandler);
-        this.cleanupResize = () => {
-            window.removeEventListener('resize', resizeHandler);
-        };
-    }
+        this.cleanupResize = () => window.removeEventListener('resize', resizeHandler);
+    };
+
+    _cleanupResizeHandler = () => {
+        if (this.cleanupResize) {
+            this.cleanupResize();
+        }
+    };
 
     _updateAskPriceLine(price) {
-        if (this.askLine) {
-            this.candleSeries.removePriceLine(this.askLine);
-        }
-
+        this.askLine && this.candleSeries.removePriceLine(this.askLine);
         this.askLine = this.candleSeries.createPriceLine({
             price: price,
             color: '#aa000080',
@@ -133,10 +156,7 @@ export default class DynamicChart extends React.Component {
     }
 
     _updateBidPriceLine(price) {
-        if (this.bidLine) {
-            this.candleSeries.removePriceLine(this.bidLine);
-        }
-
+        this.bidLine && this.candleSeries.removePriceLine(this.bidLine);
         this.bidLine = this.candleSeries.createPriceLine({
             price: price,
             color: '#00aa0080',
@@ -147,100 +167,55 @@ export default class DynamicChart extends React.Component {
         });
     }
 
-    componentDidMount() {
-        this._createChart()
-        this._createCandlesticks()
-        this._createVolumes()
-        this._setupResizeHandler()
-    }
 
+
+    _createPriceLine = (price, color, title) => {
+        return this.candleSeries.createPriceLine({
+            price,
+            color,
+            lineWidth: 2,
+            lineStyle: 0,
+            axisLabelVisible: true,
+            title
+        });
+    };
+    updateMarkers = (sl, tp) => {
+        this.state.sl.forEach(slLine => this.candleSeries.removePriceLine(slLine));
+        this.state.tp.forEach(tpLine => this.candleSeries.removePriceLine(tpLine));
+
+        const newSL = sl.map(slPrice => this._createPriceLine(slPrice, '#aa00aa80', 'SL'));
+        const newTP = tp.map(tpPrice => this._createPriceLine(tpPrice, '#00aaaa80', 'TP'));
+
+        this.setState({ sl: newSL, tp: newTP });
+    };
 
     resetData(digits) {
-        this.data = []
+        this.setState({ data: [] });
         this.candleSeries.setData([]);
         this.volumeSeries.setData([]);
         this.candleSeries.applyOptions({
             priceFormat: {
                 type: "custom",
-                formatter: function (price) {
-                    return `${price.toFixed(digits)}`;
-                },
-            },
+                formatter: (price) => price.toFixed(digits)
+            }
         });
     }
 
-    updateMarkers(sl, tp) {
-        this.sl.forEach((_sl) => {
-            this.candleSeries.removePriceLine(_sl);
-        })
-
-        this.tp.forEach((_tp) => {
-            this.candleSeries.removePriceLine(_tp);
-        })
-
-        this.sl = []
-        this.tp = []
-
-        sl.forEach((_sl) => {
-            const line = this.candleSeries.createPriceLine({
-                price: _sl,
-                color: '#aa00aa80',
-                lineWidth: 2,
-                lineStyle: 0,
-                axisLabelVisible: true,
-                title: 'SL',
-            });
-            this.sl.push(line)
-        })
-
-        tp.forEach((_tp) => {
-            const line = this.candleSeries.createPriceLine({
-                price: _tp,
-                color: '#00aaaa80',
-                lineWidth: 2,
-                lineStyle: 1,
-                axisLabelVisible: true,
-                title: 'TP',
-            });
-            this.tp.push(line)
-        })
-
-    }
-
     updateData(data, askPrice, bidPrice) {
-        if (this.candleSeries) {
-            if (data.length > 0) {
-                const mapped = mapData(data)
+        if (this.candleSeries && data.length > 0) {
+            const mappedData = mapData(data);
 
-                if (this.data.length === 0 && mapped.price.length>2) {
-                    this.data = mapped.price
-                    this.candleSeries.setData(mapped.price)
-                    this.volumeSeries.setData(mapped.volume)
-                }
-                else {
-                    mapped.price.forEach(pricePoint => {
-                        this.candleSeries.update(pricePoint);
-                    });
-
-                    mapped.volume.forEach(volumePoint => {
-                        this.volumeSeries.update(volumePoint);
-                    });
-                }
-
+            if (this.state.data.length === 0 && mappedData.price.length > 2) {
+                this.setState({ data: mappedData.price });
+                this.candleSeries.setData(mappedData.price);
+                this.volumeSeries.setData(mappedData.volume);
+            } else {
+                mappedData.price.forEach(pricePoint => this.candleSeries.update(pricePoint));
+                mappedData.volume.forEach(volumePoint => this.volumeSeries.update(volumePoint));
             }
 
             this._updateAskPriceLine(askPrice)
             this._updateBidPriceLine(bidPrice)
-        }
-    }
-
-    componentWillUnmount() {
-        if (this.cleanupResize) {
-            this.cleanupResize();
-        }
-
-        if (this.chart) {
-            this.chart.remove();
         }
     }
 

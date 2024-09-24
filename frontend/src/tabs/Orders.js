@@ -1,4 +1,3 @@
-import performance from "./../Performance";
 import React, { useState } from "react";
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -6,46 +5,49 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-
-
-
+import TableHeads from "./elements/TableHeads";
+import TableRows from "./elements/TableRows";
 
 const Orders = ({ customClass, headers, data, handlers }) => {
-    const [dialogData, setDiagloData] = React.useState({ type: "", state: false, id: 0, name: "", volume: 0, ask: 0, bid: 0 });
+    const [dialogData, setDialogData] = useState({
+        type: "",
+        state: false,
+        id: 0,
+        name: "",
+        volume: 0,
+        ask: 0,
+        bid: 0
+    });
 
-    function handleCloseConfirmed() {
-        setDiagloData((previousTrade) => ({
-            ...previousTrade,
-            state: false
-        }));
-        handlers.handleCloseTrade(dialogData.type, dialogData.name, dialogData.id, dialogData.volume);
+    const handleDialogClose = (confirm) => {
+        if (confirm) {
+            handlers.handleCloseTrade(
+                dialogData.type,
+                dialogData.name,
+                dialogData.id,
+                dialogData.volume
+            );
+        }
+        setDialogData((prev) => ({ ...prev, state: false }));
     };
 
-    function handleCloseRejected() {
-        setDiagloData((previousTrade) => ({
-            ...previousTrade,
-            state: false
-        }));
-    };
-
-    function handleOpenDialog(name, id, volume, type, ask, bid) {
-
-        setDiagloData((previousTrade) => ({
-            id: id,
-            name: name,
-            volume: volume,
+    const handleRowClick = (id, items) => {
+        setDialogData({
+            name: items[1],
+            id: items[0],
+            volume: items[items.length - 1],
+            type: items[3],
+            ask: items[8],
+            bid: items[9],
             state: true,
-            ask: ask,
-            bid: bid,
-            type: type
-        }));
+        });
     };
 
     return (
         <>
             <Dialog
                 open={dialogData.state}
-                onClose={handleCloseRejected}
+                onClose={() => handleDialogClose(false)}
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
             >
@@ -58,39 +60,27 @@ const Orders = ({ customClass, headers, data, handlers }) => {
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleCloseRejected}>Disagree</Button>
-                    <Button onClick={handleCloseConfirmed} autoFocus>
+                    <Button onClick={() => handleDialogClose(false)}>Disagree</Button>
+                    <Button onClick={() => handleDialogClose(true)} autoFocus>
                         Agree
                     </Button>
                 </DialogActions>
             </Dialog>
-            <table className="clsBorderless" style={{ width: "100%" }}>
-                <thead>
-                    <tr>
-                        {headers.map((header, index) => {
-                            return <th title={header} key={header} className="clsBorderless">
-                                {header}
-                            </th>
-                        })}
-                    </tr>
-                </thead>
-                <tbody>
-                    {
-                        data.map((row) => {
-                            return <tr className={customClass} style={{ color: "aqua" }} onClick={() => handleOpenDialog(row.items[1], row.items[0], row.items[row.items.length - 1], row.items[3], row.items[8], row.items[9])}>
-                                {
-                                    /** Map row line */
-                                    row.items.map((cellData) => {
-                                        return <td>{cellData}</td>
-                                    })
-                                }
-                            </tr>
-                        })
-                    }
-                </tbody>
-            </table >
+
+            <table className={customClass} style={{ width: "100%" }}>
+                <TableHeads
+                    customClass={customClass}
+                    data={headers}
+                    onHeaderClick={() => {}}
+                />
+                <TableRows
+                    customClass={customClass}
+                    data={data}
+                    onRowClick={handleRowClick}
+                />
+            </table>
         </>
     );
 };
 
-export { Orders as default };
+export default Orders;
