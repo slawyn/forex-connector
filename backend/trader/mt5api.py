@@ -118,3 +118,30 @@ class MetatraderApi:
             print("Exception", e)
 
         return [-1, "unknown error"]
+
+    def calculate_broke_time_difference_seconds(self):
+        symbol = "EURUSD"
+        symbol_info = mt5.symbol_info(symbol)
+
+        # Check if rates were retrieved successfully
+        time_difference = 0
+        if symbol_info is None or len(symbol_info) == 0:
+            raise ValueError(f"Failed to retrieve rates for {symbol}")
+        else:
+            # Get the time from the broker (the 'time' field is in Unix timestamp format)
+            broker_time_unix = symbol_info.time
+
+            # Convert broker time to UTC
+            broker_time_utc = utc_convert_to_utc(broker_time_unix)
+
+            # Get the current time in UTC for comparison
+            system_time_utc = utc_now()
+
+            # Calculate the difference in hours between broker time and UTC
+            time_difference = system_time_utc - broker_time_utc
+            time_difference_seconds = -time_difference.total_seconds()
+
+            log(f"Broker time (UTC): {broker_time_utc}")
+            log(f"System time (UTC): {system_time_utc}")
+            log(f"Estimated broker timezone offset from UTC: {time_difference_seconds / 3600} hours")
+        return time_difference_seconds

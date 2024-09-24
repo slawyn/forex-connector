@@ -26,6 +26,7 @@ class Trader:
         # 1. Establish connection to the MetaTrader 5 terminal
         if self.mt5api.is_connection_present():
             self.account = Account(self.mt5api.get_account())
+            self.time_offset_s = self.mt5api.calculate_broke_time_difference_seconds()
 
     def get_account_info(self):
         self.account.update(self.mt5api.get_account())
@@ -69,9 +70,8 @@ class Trader:
 
     def get_closed_positions(self, start_date, barcount):
         """ Return the current positions. Position=0 --> Buy """
+        
         positions = self.get_history_positions(start_date)
-
-        # prepare positions for drawing
         for pid in positions:
             pd = positions[pid]
             start_msc = pd.get_start_msc()
@@ -185,46 +185,41 @@ class Trader:
                 syms.append(_sym)
         return syms
 
-    def get_history_positions(self, start_date, onlyfinished=True):
+    def get_history_positions(self, start_date, only_finished=True):
         pos_temporary = {}
         pos_finished = {}
-        history_deals = mt5.history_deals_get(start_date, datetime.datetime.now())
-        for deal in history_deals:
-            mt5.history_deals_get(start_date, datetime.datetime.now())
+        end_date = convert_timestamp_to_date(local_timestamp(), self.time_offset_s)
 
-            # add deals to position
+        history_deals = mt5.history_deals_get(start_date, end_date)
+        for deal in history_deals:
             pos_id = str(deal.position_id)
+
+            # Add deal to the corresponding position
             if pos_id not in pos_temporary:
                 pos_temporary[pos_id] = ClosedPosition(pos_id)
-                pos_temporary[pos_id].add_deal(deal)
-            else:
-                pos_temporary[pos_id].add_deal(deal)
+            
+            pos_temporary[pos_id].add_deal(deal)
 
-            # if closed add it to finished
-            pd = pos_temporary[pos_id]
-            if pd.is_fully_closed():
-                pos_finished[pos_id] = pd
+            # If position is fully closed, move to finished
+            if pos_temporary[pos_id].is_fully_closed():
+                pos_finished[pos_id] = pos_temporary[pos_id]
 
-        for pid in pos_finished.keys():
-            pd = pos_finished[pid]
+        # Process finished positions
+        for pos_id, closed_pos in pos_finished.items():
+            # Handle potential symbol name change (e.g. for futures)
+            symbol_info = mt5.symbol_info(closed_pos.get_symbol_name())
+            closed_pos.set_symbol_info(symbol_info)
 
-            # Caution, futures change names
-            symbol_info_ = mt5.symbol_info(pd.get_symbol_name())
-            pd.set_symbol_info(symbol_info_)
+            # Retrieve and add associated orders
+            orders = mt5.history_orders_get(position=int(pos_id))
+            closed_pos.add_orders(orders)
 
-            #
-            orders = mt5.history_orders_get(position=int(pid))
-            pd.add_orders(orders)
+            # Finalize calculations and print position data
+            closed_pos.calculate()
+            closed_pos.print_data()
 
-            #
-            pd.calculate()
-            pd.print_data()
-
-        log("INFO: Entry Count:%d" % len(pos_finished))
-        if onlyfinished:
-            return pos_finished
-        else:
-            return pos_temporary
+        log(f"INFO: Finished Count: {len(pos_finished)} | Total Count: {len(pos_temporary)}")
+        return pos_finished if only_finished else pos_temporary
 
     def trade(self, symbol, lot, type, price, stoplimit, stoploss, takeprofit, comment, pending=False, position=0):
         if not self.is_trading_enabled:
