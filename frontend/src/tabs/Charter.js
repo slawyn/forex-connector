@@ -1,7 +1,10 @@
-import React, { useRef, useMemo, useEffect } from "react";
+import React, { useRef, useMemo } from "react";
 import Grid from "./elements/Grid";
 import DynamicChart from "./DynamicChart";
 import { mergeArray, calculateDeltas } from "../utils";
+
+const TIMEFRAMES = ["D1", "H4", "M20", "M5"]
+
 
 async function fetchRates(timeframes, instrument, rates, updateRatesHandler) {
     const currentTime = Date.now();
@@ -32,52 +35,48 @@ function createTimeframeConfig(timeframes) {
 }
 
 const Charter = ({ calculator, symbol, instrument }) => {
-    const TIMEFRAMES = ["D1", "H4", "M20", "M5"]
-    const CONFIG = createTimeframeConfig(TIMEFRAMES);
-    const chartRefs = useRef(Object.entries(CONFIG).map(() => React.createRef()));
-    const localSymbol = useRef({ digits: 0, ask: 0, bid: 0 });
-    const rates = useRef({});
-    const localCalculator = useRef({ sl: [], tp: [] });
+    const config = useMemo(() => createTimeframeConfig(TIMEFRAMES), []);
+    const refCharts = useRef(Object.entries(config).map(() => React.createRef()));
+    const localSymbol = useRef(symbol);
+    const localCalculator = useRef(calculator);
+    const localRates = useRef({});
 
 
     if (symbol !== localSymbol.current) {
 
         if (symbol.name !== localSymbol.current.name) {
-            chartRefs.current.forEach((reference, _index) => { reference.current?.resetData(symbol.digits) })
+            refCharts.current.forEach((reference, _index) => { reference.current?.resetData(symbol.digits) })
         }
 
         localSymbol.current = symbol
-        updateRates()
+        fetchRates(config, localSymbol.current.name, localRates.current, updateRates);
     }
 
     if (localCalculator.current !== calculator) {
         localCalculator.current = calculator
-        chartRefs.current.forEach((reference, _index) => {
+        refCharts.current.forEach((reference, _index) => {
             if (reference.current) {
                 reference.current.updateMarkers(localCalculator.current.sl, localCalculator.current.tp)
             }
         })
     }
 
-    function updateRates() {
-        fetchRates(CONFIG, localSymbol.current.name, rates.current, (newRates) => {
-            rates.current = newRates;
-            chartRefs.current.forEach((ref, index) => {
-                const timeframe = TIMEFRAMES[index];
-                ref.current?.updateData(rates.current.data?.[timeframe], localSymbol.current.ask, localSymbol.current.bid);
-            });
+    function updateRates(newRates) {
+        localRates.current = newRates;
+        Object.keys(config).forEach((timeframe, index) => {
+            refCharts.current[index]?.current?.updateData(localRates.current.data?.[timeframe], localSymbol.current.ask, localSymbol.current.bid);
         });
     }
 
     /* Memoize chart components to prevent unnecessary re-renders */
     const charts = useMemo(() => (
-        chartRefs.current.map((ref, index) => (
-            <DynamicChart ref={ref} title={TIMEFRAMES[index]} key={TIMEFRAMES[index]} />
+        Object.keys(config).map((timeframe, index) => (
+            <DynamicChart ref={refCharts.current[index]} title={timeframe} key={timeframe} />
         ))
-    ), [chartRefs]);
+    ), [refCharts, config]);
 
-    return <Grid items={charts} />
-}
+    return <Grid items={charts} />;
+};
 
 // Charter.whyDidYouRender = true
 export default Charter;
