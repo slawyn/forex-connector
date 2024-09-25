@@ -34,39 +34,9 @@ function createTimeframeConfig(timeframes) {
     }, {});
 }
 
-const Charter = ({ calculator, symbol }) => {
+const Backtester = ({}) => {
     const config = useMemo(() => createTimeframeConfig(TIMEFRAMES), []);
     const refCharts = useRef(Object.entries(config).map(() => React.createRef()));
-    const localSymbol = useRef(symbol);
-    const localCalculator = useRef(calculator);
-    const localRates = useRef({});
-
-
-    if (symbol !== localSymbol.current) {
-
-        if (symbol.name !== localSymbol.current.name) {
-            refCharts.current.forEach((reference, _index) => { reference.current?.resetData(symbol.digits) })
-        }
-
-        localSymbol.current = symbol
-        fetchRates(config, localSymbol.current.name, localRates.current, updateRates);
-    }
-
-    if (localCalculator.current !== calculator) {
-        localCalculator.current = calculator
-        refCharts.current.forEach((reference, _index) => {
-            if (reference.current) {
-                reference.current.updateMarkers(localCalculator.current.sl, localCalculator.current.tp)
-            }
-        })
-    }
-
-    function updateRates(newRates) {
-        localRates.current = newRates;
-        Object.keys(config).forEach((timeframe, index) => {
-            refCharts.current[index]?.current?.updateData(localRates.current.data?.[timeframe], localSymbol.current.ask, localSymbol.current.bid);
-        });
-    }
 
     /* Memoize chart components to prevent unnecessary re-renders */
     const charts = useMemo(() => (
@@ -79,4 +49,4 @@ const Charter = ({ calculator, symbol }) => {
 };
 
 // Charter.whyDidYouRender = true
-export default Charter;
+export default Backtester;

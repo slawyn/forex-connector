@@ -61,14 +61,8 @@ class App(Flask):
     def fetch_resource(self, path):
         return send_from_directory(self.cfg.get_export_folder(), path)
 
-    def save_to_google(self):
-        self.trader.update_history_info()
-
     def set_filter(self, filter):
         self.trader.set_filter(filter)
-
-    def get_symbol(self, instrument):
-        return self.trader.get_symbol(instrument)
 
     def get_rates(self, instrument, time_frame, start_ms, end_ms, json=False):
         if instrument == '':
@@ -94,7 +88,7 @@ class App(Flask):
     def show_closed_positions(self):
         """Gets closed positions with headers"""
         start_date = convert_string_to_date(self.cfg.get_google_startdate())
-        positions = self.trader.get_history_positions(start_date, only_finished=False)
+        positions = self.trader.get_history_positions(start_date, only_finished=True)
         return ClosedPosition.get_info_header(), [positions[p].get_info() for p in positions]
 
     def show_open_positions(self):
@@ -182,15 +176,10 @@ def on_rates():
             {
                 time_frame: app.get_rates(instrument, time_frame, start_ms, end_ms, json=True)
             }}
-    # return {time_frame:
-    #         {
-    #             instrument: app.get_rates(instrument, time_frame, start_ms, end_ms, json=True)
-    #         }}
-
 
 @app.route('/symbol', methods=['GET'])
 def on_symbol():
-    symbol = app.get_symbol(request.args.get("instrument", ""))
+    symbol = app.trader.get_symbol(request.args.get("instrument", ""))
     if symbol is not None:
         return {"info":
                 {"name": symbol.get_name(),

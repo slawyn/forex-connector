@@ -44,9 +44,9 @@ class Trader:
     def get_atr(self, sym):
         if self.mt5api.is_connection_present():
             info = mt5.symbol_info_tick(sym.name)
-            stop_msc = info.time_msc
-            start_msc = time_go_back_n_weeks(stop_msc, 2)
-            rates = mt5.copy_rates_range(sym.name, mt5.TIMEFRAME_D1, start_msc/1000, stop_msc/1000)
+            end_ms = info.time_msc
+            start_ms = time_go_back_n_weeks(end_ms, 2)
+            rates = mt5.copy_rates_range(sym.name, mt5.TIMEFRAME_D1, convert_timestamp_ms_to_date(start_ms), convert_timestamp_ms_to_date(end_ms))
             return Rate.calculate_average_true_range(rates)
         return -1
 
@@ -74,25 +74,23 @@ class Trader:
         positions = self.get_history_positions(start_date)
         for pid in positions:
             pd = positions[pid]
-            start_msc = pd.get_start_msc()
-            end_msc = pd.get_end_msc()
-            time_difference = (end_msc - start_msc)
+            start_ms = pd.get_start_ms()
+            end_ms = pd.get_end_ms()
+            time_difference_ms = (end_ms - start_ms)
 
-            start_msc = time_go_back_n_weeks(start_msc, 1)
-            # start_msc -= (time_difference*4)
-            end_msc += (time_difference/2)
+            start_ms = time_go_back_n_weeks(start_ms, 1)
+            # start_ms -= (time_difference_ms*4)
+            end_ms += (time_difference_ms/2)
 
-            if end_msc > int(round(time.time() * 1000)):
-                end_msc = int(round(time.time() * 1000))
-
-            time_start = convert_timestamp_to_date(start_msc/1000.0)
-            time_stop = convert_timestamp_to_date(end_msc/1000.0)
+            if end_ms > int(round(time.time() * 1000)):
+                end_ms = int(round(time.time() * 1000))
 
             for tf in reversed(Trader.TIMEFRAMES):
-                rates = mt5.copy_rates_range(pd.get_symbol_name(),
-                                             self.mt5api.get_mt5_timeframe(tf),
-                                             time_start,
-                                             time_stop)
+                rates = self.mt5api.get_rates(pd.get_symbol_name(),
+                                              utc_from=convert_timestamp_ms_to_date(start_ms),
+                                              utc_to=convert_timestamp_ms_to_date(end_ms),
+                                              frame=self.mt5api.get_mt5_timeframe(tf))
+
 
                 # Too big
                 length = len(rates)
@@ -118,47 +116,15 @@ class Trader:
     def get_symbol(self, sym_name):
         return self.symbols.get(sym_name, None)
 
-    def get_rates(self, symbol: Symbol, time_frame, start_ms, end_ms, json=False):
+    def get_rates(self, symbol: Symbol, timeframe, start_ms, end_ms, json=False):
         """Add difference of rates to the symbol"""
         rates = []
-        timeframe = self.mt5api.get_mt5_timeframe(time_frame)
-        if start_ms != end_ms and timeframe >= 0:
-            start_s = start_ms/1000
-            end_s = end_ms/1000
-            current_s = symbol.time
-
-            timestamp_start = convert_timestamp_to_date(start_s)
-            timestamp_end = convert_timestamp_to_date(end_s)
-            timestamp_current = convert_timestamp_to_date(current_s)
-
-            # Update initial
-            if symbol.get_timestamp_first(timeframe) == 0:
-                symbol.update_rates(self.mt5api.get_rates(symbol.name,
-                                                          utc_from=timestamp_start,
-                                                          utc_to=timestamp_end,
-                                                          frame=timeframe),
-                                    timeframe=timeframe)
-            # Update recent
-            symbol.update_rates(self.mt5api.get_rates(symbol.name,
-                                                      utc_from=timestamp_end,
-                                                      utc_to=timestamp_current,
-                                                      frame=timeframe),
-                                timeframe=timeframe)
-
-            # Update before current start
-            timestamp_initial = convert_timestamp_to_date(symbol.get_timestamp_first(timeframe))
-            if timestamp_start < timestamp_initial:
-                symbol.update_rates(self.mt5api.get_rates(symbol.name,
-                                                          utc_from=timestamp_start,
-                                                          utc_to=timestamp_initial,
-                                                          frame=timeframe),
-                                    timeframe=timeframe)
-
-            for timestamp, rate in symbol.get_rates(timeframe=timeframe).items():
-                if start_s <= timestamp <= current_s:
-                    r = rate.to_json()
-                    r["time"] = r.get("time")*1000
-                    rates.append(r)
+        tf = self.mt5api.get_mt5_timeframe(timeframe)
+        if start_ms != end_ms and tf >= 0:
+            timestamp_start = convert_timestamp_ms_to_date(start_ms)
+            timestamp_end = convert_timestamp_ms_to_date(end_ms)
+            for rate in self.mt5api.get_rates(symbol.name,utc_from=timestamp_start, utc_to=timestamp_end, frame=tf):
+                rates.append(Rate(rate).to_json(1000))
 
         return rates
 

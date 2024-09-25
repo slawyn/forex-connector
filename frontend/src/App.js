@@ -10,6 +10,7 @@ import Symbols from "./tabs/Symbols";
 import Trader from "./tabs/Trader";
 import History from "./tabs/History";
 import Charter from "./tabs/Charter";
+import Backtester from "./tabs/Backtester";
 import TopBar from "./tabs/TopBar";
 import SlidingPane from "./tabs/elements/SlidingPane";
 import MiscCheckbox from "./Misc";
@@ -153,6 +154,7 @@ class App extends Component {
               <TabList className="top-bar-tabs">
                 <Tab className="top-bar-tab">Trading</Tab>
                 <Tab className="top-bar-tab">History</Tab>
+                <Tab className="top-bar-tab">Backtester</Tab>
               </TabList>
               <MiscCheckbox
                 customClass={"css-button-checkbox"}
@@ -216,6 +218,9 @@ class App extends Component {
             </TabPanel>
             <TabPanel>
               <History customClass={this.THEME} />
+            </TabPanel>
+            <TabPanel>
+              <Backtester customClass={this.THEME} />
             </TabPanel>
           </Tabs>
         </ThemeProvider>

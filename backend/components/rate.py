@@ -1,31 +1,3 @@
-
-class RatesContainer:
-
-    def __init__(self):
-        self.rates = {}
-
-    def add_rates(self, rates, time_frame):
-        """Extend the rates
-        """
-        if time_frame not in self.rates:
-            self.rates[time_frame] = {}
-
-        for rate in rates:
-            time = int(rate[Rate.IDX_TIME])
-            self.rates[time_frame][time] = Rate(rate)
-
-        self.rates[time_frame] = dict(sorted(self.rates[time_frame].items()))
-
-
-    def get_rates(self, time_frame):
-        return self.rates[time_frame]
-
-    def get_timestamp_first(self, time_frame):
-        if time_frame in self.rates and len(self.rates[time_frame]) > 0:
-            return list(self.rates[time_frame].keys())[-1]
-        return 0
-
-
 class Rate:
     IDX_TIME = 0
     IDX_OPEN = 1
@@ -48,8 +20,7 @@ class Rate:
         return self.time
 
     def get_min_max(rates):
-        """Find min and max for price and volume
-        """
+        """Find min and max for price and volume"""
 
         # Find highest and lowest
         price_max = 0
@@ -94,8 +65,9 @@ class Rate:
             print(e)
         return atr
 
-    def to_json(self):
-        return {"time":self.time,
+    def to_json(self, time_factor=1):
+
+        return {"time":self.time*time_factor,
                 "open": self.open,
                 "high": self.high,
                 "low": self.low,

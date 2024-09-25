@@ -1,10 +1,7 @@
-from components.rate import RatesContainer
-
 class Symbol:
     EXCEPTED_FIXED = "JPY"
 
     def __init__(self, sym, conversion=False):
-        self.rates_container = RatesContainer()
         self.time = sym.time
         self.step = sym.trade_tick_size
         self.digits = sym.digits
@@ -18,15 +15,6 @@ class Symbol:
         # updatable: first creation sets the updated flag
         self.update(sym)
         self.updated = True
-
-    def get_timestamp_first(self, timeframe):
-        return self.rates_container.get_timestamp_first(timeframe)
-
-    def update_rates(self, rates, timeframe):
-        self.rates_container.add_rates(rates, timeframe)
-
-    def get_rates(self, timeframe):
-        return self.rates_container.get_rates(timeframe)
 
     def update(self, sym):
         self.updated = (self.time != sym.time)

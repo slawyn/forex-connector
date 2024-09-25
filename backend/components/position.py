@@ -176,10 +176,10 @@ class ClosedPosition:
     def get_id(self):
         return self.id
 
-    def get_start_msc(self):
+    def get_start_ms(self):
         return self.opening_deals[0].time_msc
 
-    def get_end_msc(self):
+    def get_end_ms(self):
         return self.closing_deals[len(self.closing_deals)-1].time_msc
 
     def get_rates(self):

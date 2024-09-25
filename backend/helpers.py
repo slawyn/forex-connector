@@ -68,6 +68,8 @@ def utc_convert_to_utc(timestamp_s):
 def convert_timestamp_to_date(timestamp_s, offset=0):
     return datetime.datetime.fromtimestamp(timestamp_s + offset)
 
+def convert_timestamp_ms_to_date(timestamp_ms, offset=0):
+    return datetime.datetime.fromtimestamp(timestamp_ms/1000 + offset)
 
 def convert_string_to_date(date):
     return datetime.datetime.fromisoformat(date)
