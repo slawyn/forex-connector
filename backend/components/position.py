@@ -128,7 +128,7 @@ class ClosedPosition:
         """Rates and period
         """
         self.period = period
-        self.rates = [Rate(rate) for rate in rates]
+        self.rates = rates
 
     def add_deal(self, deal):
         """Add deal to position

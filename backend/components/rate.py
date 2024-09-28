@@ -1,3 +1,6 @@
+import pandas as pd
+from helpers import *
+
 class Rate:
     IDX_TIME = 0
     IDX_OPEN = 1
@@ -15,6 +18,10 @@ class Rate:
         self.low = rate[Rate.IDX_LOW]
         self.close = rate[Rate.IDX_CLOSE]
         self.volume = int(rate[Rate.IDX_VOLUME])
+
+    def add(data):
+        rates = [Rate(d) for d in data]
+        return rates
 
     def get_timestamp(self):
         return self.time
@@ -65,12 +72,29 @@ class Rate:
             print(e)
         return atr
 
-    def to_json(self, time_factor=1):
+    def to_pandas(rates):
+        data = [{
+            'time': utc_convert_to_utc(rate.time),
+            'Open': rate.open,
+            'High': rate.high,
+            'Low': rate.low,
+            'Close': rate.close,
+            'Volume': rate.volume
+        } for rate in rates]
+        
+        df = pd.DataFrame(data)
+        df.set_index('time', inplace=True)
+        return df
 
-        return {"time":self.time*time_factor,
-                "open": self.open,
-                "high": self.high,
-                "low": self.low,
-                "close": self.close,
-                "volume": self.volume
-                }
+    def to_json(rates):
+        _json = []
+        for rate in rates:
+            _json.append({"time": rate.time*1000,
+                          "open": rate.open,
+                          "high": rate.high,
+                          "low": rate.low,
+                          "close": rate.close,
+                          "volume": rate.volume
+                          })
+
+        return _json

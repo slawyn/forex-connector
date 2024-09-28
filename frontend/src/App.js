@@ -29,6 +29,10 @@ function helperChange(value, updates, key) {
   return '';
 }
 
+function mapInstruments(data) {
+  return Object.keys(data)
+}
+
 function mapTerminalData(data, updates) {
   return Object.entries(data).map(([key, value]) => ({
     id: key,
@@ -220,7 +224,7 @@ class App extends Component {
               <History customClass={this.THEME} />
             </TabPanel>
             <TabPanel>
-              <Backtester customClass={this.THEME} />
+              <Backtester customClass={this.THEME} instruments={mapInstruments(terminalData.instruments)} />
             </TabPanel>
           </Tabs>
         </ThemeProvider>

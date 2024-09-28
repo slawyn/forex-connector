@@ -1,7 +1,6 @@
 from backtesting import Backtest, Strategy
 from backtesting.lib import crossover
-
-from backtesting.test import SMA, GOOG, EURUSD
+from backtesting.test import SMA
 
 
 class SmaCross(Strategy):
@@ -20,10 +19,16 @@ class SmaCross(Strategy):
             self.sell()
 
 
-bt = Backtest(EURUSD, SmaCross,
-              cash=10000, commission=.002,
-              exclusive_orders=True)
+class Backtester:
+    def __init__(self, pd):
+        self.bt = Backtest(pd,
+                           SmaCross,
+                           cash=500,
+                           commission=.002,
+                           exclusive_orders=True)
 
-output = bt.run()
-print(output)
-bt.plot()
+    def run(self):
+        output = self.bt.run()
+        print(output)
+        self.bt.plot()
+

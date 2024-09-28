@@ -37,6 +37,7 @@ export default class DynamicChart extends React.Component {
             tp: []
         };
         this.title = props.title
+        this.handler = props.handler
     }
 
     componentDidMount() {
@@ -44,6 +45,7 @@ export default class DynamicChart extends React.Component {
         this._createCandlesticks()
         this._createVolumes()
         this._setupResizeHandler()
+        this._subscribeSelectableRange(this.handler)
     }
 
 
@@ -200,6 +202,64 @@ export default class DynamicChart extends React.Component {
             }
         });
     }
+    _getCurrentPrice() {
+        const last = this.state.data.length - 1
+        return this.state.data[last].open
+    }
+
+    _subscribeSelectableRange(handler) {
+        if (handler) {
+            let selecting = false
+            let times = { A: 0, B: 0 }
+            let prices = { A: 0, B: 0 }
+
+            const selectionRange = this.chart.addAreaSeries({
+                topColor: 'rgba(38,198,218, 0.56)',
+                bottomColor: 'rgba(38,198,218, 0.04)',
+                lineColor: 'rgba(38,198,218, 1)',
+                lineWidth: 2,
+            });
+
+            this.chart.subscribeDblClick((params) => {
+                selecting = false
+                selectionRange.setData([])
+            })
+
+            this.chart.subscribeClick((params) => {
+                if (!selecting) {
+                    times.A = params.time
+                    prices.A = this._getCurrentPrice()
+                }
+                else {
+                    if (times.B < times.A) {
+                        selectionRange.setData([{ time: times.B, value: prices.A }, { time: times.A, value: prices.A }])
+                    }
+                    else {
+
+                        selectionRange.setData([{ time: times.A, value: prices.A }, { time: times.B, value: prices.A }])
+                    }
+
+                    handler(times.A, times.B)
+                }
+                selecting = !selecting
+            });
+
+            this.chart.subscribeCrosshairMove((params) => {
+                if (selecting) {
+                    times.B = params.time
+
+                }
+                // if (event.type === 'mousedown') {
+                //     console.log('Mouse down!');
+                // }
+
+                // if (event.type === 'mouseup') {
+                //     console.log('Mouse up!');
+                // }
+            });
+
+        }
+    }
 
     updateData(data, askPrice, bidPrice) {
         if (this.candleSeries && data.length > 0) {
@@ -210,12 +270,15 @@ export default class DynamicChart extends React.Component {
                 this.candleSeries.setData(mappedData.price);
                 this.volumeSeries.setData(mappedData.volume);
             } else {
+                this.setState({ data: mappedData.price });
                 mappedData.price.forEach(pricePoint => this.candleSeries.update(pricePoint));
                 mappedData.volume.forEach(volumePoint => this.volumeSeries.update(volumePoint));
             }
 
-            this._updateAskPriceLine(askPrice)
-            this._updateBidPriceLine(bidPrice)
+            if (askPrice)
+                this._updateAskPriceLine(askPrice)
+            if (bidPrice)
+                this._updateBidPriceLine(bidPrice)
         }
     }
 

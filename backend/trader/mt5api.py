@@ -2,6 +2,7 @@ import MetaTrader5 as mt5
 import subprocess
 from helpers import *
 from trader.mt5codes import ERROR_CODES
+from components.rate import Rate
 
 TYPES_MAP = {
     mt5.ORDER_TYPE_BUY: "market_buy",
@@ -90,7 +91,7 @@ class MetatraderApi:
                 raise Exception(f"{__class__.__name__}: During fetching of rates {symbol_name} {mt5.last_error()}")
         except Exception as e:
             log(e)
-        return data
+        return Rate.add(data)
 
     def get_ticks_for_symbol(self, symbol_name, utc_from, utc_to):
         data = []

@@ -6,9 +6,12 @@ import traceback
 from commander.commander import Commander
 from trader.trader import Trader
 from components.position import ClosedPosition, OpenPosition
+from components.rate import Rate
+
 from config import Config
 from helpers import *
 from grafana import Grafana
+from backtester.backtester import Backtester
 
 # Configurable values
 CONFIG_ENABLE_TRADING = True
@@ -55,7 +58,7 @@ class App(Flask):
         self.grafana = Grafana(
             cb_get_timeframes=self.trader.get_timeframes,
             cb_get_instruments=lambda: [sym.name for sym in self.trader.get_symbols()],
-            cb_get_rates=self.get_rates
+            cb_get_rates=self.get_rates_json
         )
 
     def fetch_resource(self, path):
@@ -64,11 +67,13 @@ class App(Flask):
     def set_filter(self, filter):
         self.trader.set_filter(filter)
 
-    def get_rates(self, instrument, time_frame, start_ms, end_ms, json=False):
-        if instrument == '':
-            return []
+    def get_rates_json(self, instrument, time_frame, start_ms, end_ms):
         symbol = self.trader.get_symbol(instrument)
-        return self.trader.get_rates(symbol, time_frame, int(start_ms), int(end_ms), json)
+        return Rate.to_json(self.trader.get_rates(symbol, time_frame, int(start_ms), int(end_ms)))
+    
+    def get_rates_pandas(self, instrument, time_frame, start_ms, end_ms):
+        symbol = self.trader.get_symbol(instrument)
+        return Rate.to_pandas(self.trader.get_rates(symbol, time_frame, int(start_ms), int(end_ms)))
 
     def get_account_info(self):
         return self.trader.get_account_info().to_json()
@@ -134,8 +139,6 @@ class App(Flask):
 
 
 app = App()
-
-
 @app.route('/metrics', methods=['POST'])
 def on_metrics():
     return app.grafana.get_metrics()
@@ -150,6 +153,21 @@ def on_variable():
 def on_query():
     return app.grafana.get_query(request.get_json())
 
+
+@app.route('/backtesting', methods=['POST'])
+def on_backtesting():
+    data = request.get_json()
+    instrument = data.get("instrument")
+    start_ms = data.get("start")
+    end_ms = data.get("end")
+    time_frame = data.get("timeframe")
+
+    print(data)
+
+    pd_data = app.get_rates_pandas(instrument, time_frame, start_ms, end_ms)
+    bt = Backtester(pd_data)
+    bt.run()
+    return {}
 
 @app.route('/update', methods=['GET'])
 def on_update():
@@ -174,7 +192,7 @@ def on_rates():
     return {"instrument": instrument,
             "data":
             {
-                time_frame: app.get_rates(instrument, time_frame, start_ms, end_ms, json=True)
+                time_frame: app.get_rates_json(instrument, time_frame, start_ms, end_ms)
             }}
 
 @app.route('/symbol', methods=['GET'])

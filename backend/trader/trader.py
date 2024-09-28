@@ -1,7 +1,6 @@
 import MetaTrader5 as mt5
 import time
 
-
 from components.account import Account
 from components.position import ClosedPosition, OpenPosition
 from components.rate import Rate
@@ -70,7 +69,7 @@ class Trader:
 
     def get_closed_positions(self, start_date, barcount):
         """ Return the current positions. Position=0 --> Buy """
-        
+
         positions = self.get_history_positions(start_date)
         for pid in positions:
             pd = positions[pid]
@@ -90,7 +89,6 @@ class Trader:
                                               utc_from=convert_timestamp_ms_to_date(start_ms),
                                               utc_to=convert_timestamp_ms_to_date(end_ms),
                                               frame=self.mt5api.get_mt5_timeframe(tf))
-
 
                 # Too big
                 length = len(rates)
@@ -116,15 +114,14 @@ class Trader:
     def get_symbol(self, sym_name):
         return self.symbols.get(sym_name, None)
 
-    def get_rates(self, symbol: Symbol, timeframe, start_ms, end_ms, json=False):
+    def get_rates(self, symbol: Symbol, timeframe, start_ms, end_ms):
         """Add difference of rates to the symbol"""
         rates = []
         tf = self.mt5api.get_mt5_timeframe(timeframe)
         if start_ms != end_ms and tf >= 0:
             timestamp_start = convert_timestamp_ms_to_date(start_ms)
             timestamp_end = convert_timestamp_ms_to_date(end_ms)
-            for rate in self.mt5api.get_rates(symbol.name,utc_from=timestamp_start, utc_to=timestamp_end, frame=tf):
-                rates.append(Rate(rate).to_json(1000))
+            rates = self.mt5api.get_rates(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end, frame=tf)
 
         return rates
 
@@ -163,7 +160,7 @@ class Trader:
             # Add deal to the corresponding position
             if pos_id not in pos_temporary:
                 pos_temporary[pos_id] = ClosedPosition(pos_id)
-            
+
             pos_temporary[pos_id].add_deal(deal)
 
             # If position is fully closed, move to finished
