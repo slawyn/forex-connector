@@ -70,7 +70,7 @@ class App(Flask):
     def get_rates_json(self, instrument, time_frame, start_ms, end_ms):
         symbol = self.trader.get_symbol(instrument)
         return Rate.to_json(self.trader.get_rates(symbol, time_frame, int(start_ms), int(end_ms)))
-    
+
     def get_rates_pandas(self, instrument, time_frame, start_ms, end_ms):
         symbol = self.trader.get_symbol(instrument)
         return Rate.to_pandas(self.trader.get_rates(symbol, time_frame, int(start_ms), int(end_ms)))
@@ -139,6 +139,8 @@ class App(Flask):
 
 
 app = App()
+
+
 @app.route('/metrics', methods=['POST'])
 def on_metrics():
     return app.grafana.get_metrics()
@@ -161,12 +163,21 @@ def on_backtesting():
     start_ms = data.get("start")
     end_ms = data.get("end")
     time_frame = data.get("timeframe")
+    risk = data.get("risk")
+    volume = data.get("volume")
 
     pd_data = app.get_rates_pandas(instrument, time_frame, start_ms, end_ms)
     sym = app.trader.get_symbol(instrument)
-    bt = Backtester(pd_data, sym.get_conversion(), sym.get_contract_size(), sym.get_step(), sym.get_point_value() )
+    bt = Backtester(pd_data,
+                    sym.get_conversion(),
+                    sym.get_contract_size(),
+                    sym.get_step(),
+                    sym.get_point_value(),
+                    float(risk),
+                    float(volume))
     bt.run()
     return {}
+
 
 @app.route('/update', methods=['GET'])
 def on_update():
@@ -193,6 +204,7 @@ def on_rates():
             {
                 time_frame: app.get_rates_json(instrument, time_frame, start_ms, end_ms)
             }}
+
 
 @app.route('/symbol', methods=['GET'])
 def on_symbol():

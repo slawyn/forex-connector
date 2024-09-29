@@ -2,10 +2,12 @@ import React, { useRef, useMemo } from "react";
 import Grid from "./elements/Grid";
 import DynamicChart from "./DynamicChart";
 import { mergeArray, calculateDeltas, createPostRequest } from "../utils";
-import { InputLabel, MenuItem, FormControl, Select } from '@mui/material';
+import { TextField, InputAdornment, InputLabel, MenuItem, FormControl, Select } from '@mui/material';
 
 const TIMEFRAMES = ["D1", "H4"]
-
+const RISKINITIAL = 1.00
+const RISKSTEP = 0.25
+const VOLUME = 0.01
 
 async function fetchRates(timeframes, instrument, updateRatesHandler) {
     const currentTime = Date.now();
@@ -36,7 +38,9 @@ const Backtester = ({ instruments }) => {
     const config = useMemo(() => createTimeframeConfig(TIMEFRAMES), []);
     const refCharts = useRef(Object.entries(config).map(() => React.createRef()));
     const [selectedInstrument, setSelectedInstrument] = React.useState("")
-    const selectedTimes = useRef({ timeframe: "", start: 0, end: 0 })
+    const [selectedRisk, setSelectedRisk] = React.useState(RISKINITIAL)
+    const [selectedVolume, setSelectedVolume] = React.useState(VOLUME)
+    const selectedTimes = useRef({ volume:VOLUME, risk:RISKINITIAL, timeframe: "", start: 0, end: 0 })
 
     /* Memoize chart components to prevent unnecessary re-renders */
     const charts = useMemo(() => (
@@ -72,6 +76,18 @@ const Backtester = ({ instruments }) => {
         selectedTimes.current.end = timeEnd * 1000
     }
 
+    function handleRiskSelection(risk)
+    {
+        selectedTimes.current.risk = risk
+        setSelectedRisk(risk)
+    }
+
+    function handleVolumeSelection(volume)
+    {
+        selectedTimes.current.volume = volume
+        setSelectedVolume(volume)
+    }
+
     return (
         <>
             <nav className="clsGlobalContainer">
@@ -91,6 +107,34 @@ const Backtester = ({ instruments }) => {
                         ))}
                     </Select>
                 </FormControl>
+
+                <TextField
+                            id="trade-risk"
+                            type="number"
+                            value={selectedRisk}
+                            variant="outlined"
+                            label="Risk %"
+                            onChange={(e) => handleRiskSelection(e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            inputProps={{
+                                startAdornment: <InputAdornment position="start">%</InputAdornment>,
+                                step: RISKSTEP,
+                            }}
+                        />
+                
+                <TextField
+                            id="trade-volume"
+                            type="number"
+                            value={selectedVolume}
+                            variant="outlined"
+                            label="Volume LOT"
+                            onChange={(e) => handleVolumeSelection(e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            inputProps={{
+                                startAdornment: <InputAdornment position="start">LOT</InputAdornment>,
+                                step: VOLUME,
+                            }}
+                        />
                 <button className={"css-blue-button"} onClick={() => backtestData()}>
                     Backtest
                 </button>
