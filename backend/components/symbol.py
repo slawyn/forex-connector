@@ -1,8 +1,8 @@
 class Symbol:
     EXCEPTED_FIXED = "JPY"
-
+    DIVISION_BY_ZERO = 0.0000001
     def __init__(self, sym, conversion=False):
-        self.time = sym.time
+        self.updated = False  # Initialize `updated` flag as False
         self.step = sym.trade_tick_size
         self.digits = sym.digits
         self.name = sym.name
@@ -11,30 +11,26 @@ class Symbol:
         self.contract_size = sym.trade_contract_size
         self.currency = f"{sym.currency_base}/{sym.currency_profit}"
         self.conversion = conversion
-
-        # updatable: first creation sets the updated flag
-        self.update(sym)
-        self.updated = True
+        self.update(sym)  # Call `update()` method to set initial values
 
     def update(self, sym):
-        self.updated = (self.time != sym.time)
+        # Only set member variables inside the update method
+        self.updated = (self.time != sym.time) if hasattr(self, 'time') else True
+        self.time = sym.time
         self.ask = sym.ask
         self.bid = sym.bid
-        self.time = sym.time
-        self.session_open = sym.session_open
+        self.session_open = sym.session_open+Symbol.DIVISION_BY_ZERO
         self.spread = sym.spread * sym.trade_tick_size
 
         # Fix broker problem with the tick value
-        self.tick_value = sym.trade_tick_value  # (self.contract_size*self.step)
+        self.tick_value = sym.trade_tick_value
 
-        # calculate point value, does not always work
-        self.point_value = (self.tick_value * sym.point)/self.step
-        self.price_change = ((self.bid-self.session_open)/(self.session_open+0.00000001))*100.0
-
-        ##
+        # Calculate point value, does not always work
+        # self.point_value = (self.tick_value * sym.point) / self.step if self.step else 0
         self.point_value = 1
+        self.price_change = ((self.bid - self.session_open) / (self.session_open)) * 100.0
 
-        # Pips
+        # Override point value based on currency exception
         if Symbol.EXCEPTED_FIXED in self.currency:
             self.point_value /= 100.0
 
@@ -85,13 +81,3 @@ class Symbol:
 
     def is_updated(self):
         return self.updated
-
-    def calculate_stoploss(self, risk_amount, risk_lot):
-        point_value = self.point_value
-        if self.conversion:
-            point_value = 1/self.ask
-        points = (risk_amount / (self.contract_size * point_value * risk_lot))
-
-        sl_sell = self.ask + points
-        sl_buy = self.bid - points
-        return [points, sl_sell, sl_buy]

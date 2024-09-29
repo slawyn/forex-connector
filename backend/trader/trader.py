@@ -45,7 +45,7 @@ class Trader:
             info = mt5.symbol_info_tick(sym.name)
             end_ms = info.time_msc
             start_ms = time_go_back_n_weeks(end_ms, 2)
-            rates = mt5.copy_rates_range(sym.name, mt5.TIMEFRAME_D1, convert_timestamp_ms_to_date(start_ms), convert_timestamp_ms_to_date(end_ms))
+            rates = self.get_rates(sym, "D1",  start_ms, end_ms)
             return Rate.calculate_average_true_range(rates)
         return -1
 

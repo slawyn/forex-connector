@@ -18,13 +18,11 @@ class Rate:
         self.low = rate[Rate.IDX_LOW]
         self.close = rate[Rate.IDX_CLOSE]
         self.volume = int(rate[Rate.IDX_VOLUME])
+        self.spread = int(rate[Rate.IDX_SPREAD])
 
     def add(data):
         rates = [Rate(d) for d in data]
         return rates
-
-    def get_timestamp(self):
-        return self.time
 
     def get_min_max(rates):
         """Find min and max for price and volume"""
@@ -55,16 +53,16 @@ class Rate:
         atr = 0.0001
         try:
             count = len(rates)-1
-            H = rates[0][Rate.IDX_HIGH]
-            L = rates[0][Rate.IDX_LOW]
-            Cp = rates[0][Rate.IDX_CLOSE]
+            H = rates[0].high
+            L = rates[0].low
+            Cp = rates[0].close
             trs = []
             for idx in range(1, count):
-                H = rates[idx][Rate.IDX_HIGH]
-                L = rates[idx][Rate.IDX_LOW]
+                H = rates[idx].high
+                L = rates[idx].low
                 tr = max([(H-L), abs(H-Cp), abs(L-Cp)])
                 trs.append(tr)
-                Cp = rates[idx][Rate.IDX_CLOSE]
+                Cp = rates[idx].close
 
             if len(trs) != 0:
                 atr = sum(trs)/(len(trs))

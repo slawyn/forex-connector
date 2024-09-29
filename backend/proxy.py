@@ -162,10 +162,9 @@ def on_backtesting():
     end_ms = data.get("end")
     time_frame = data.get("timeframe")
 
-    print(data)
-
     pd_data = app.get_rates_pandas(instrument, time_frame, start_ms, end_ms)
-    bt = Backtester(pd_data)
+    sym = app.trader.get_symbol(instrument)
+    bt = Backtester(pd_data, sym.get_conversion(), sym.get_contract_size(), sym.get_step(), sym.get_point_value() )
     bt.run()
     return {}
 
