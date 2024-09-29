@@ -12,6 +12,14 @@ MINUTES30 = DAY_MSC/48
 MINUTES15 = DAY_MSC/96
 MINUTES3 = HOURS1/20
 
+def logi(*s):
+    """Log function"""
+    log("INFO:", s)
+
+def loge(*s):
+    """Log function"""
+    log("ERROR:", s)
+
 
 def log(*s):
     """Log function"""

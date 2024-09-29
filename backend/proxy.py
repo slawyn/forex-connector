@@ -267,4 +267,4 @@ if __name__ == "__main__":
         app.set_filter("currency")
         app.run(debug=True)
     except Exception as e:
-        log(traceback.format_exc())
+        loge(traceback.format_exc())

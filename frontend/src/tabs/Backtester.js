@@ -2,12 +2,12 @@ import React, { useRef, useMemo } from "react";
 import Grid from "./elements/Grid";
 import DynamicChart from "./DynamicChart";
 import { mergeArray, calculateDeltas, createPostRequest } from "../utils";
-import { TextField, InputAdornment, InputLabel, MenuItem, FormControl, Select } from '@mui/material';
+import { InputLabel, MenuItem, FormControl, Select } from '@mui/material';
 
-const TIMEFRAMES = ["D1","M20"]
+const TIMEFRAMES = ["D1", "H4"]
 
 
-async function fetchRates(timeframes, instrument,  updateRatesHandler) {
+async function fetchRates(timeframes, instrument, updateRatesHandler) {
     const currentTime = Date.now();
     const promises = Object.entries(timeframes).map(async ([timeframe, duration]) => {
         let start = currentTime - duration;
@@ -26,7 +26,7 @@ async function fetchRates(timeframes, instrument,  updateRatesHandler) {
 
 function createTimeframeConfig(timeframes) {
     return timeframes.reduce((config, timeframe) => {
-        config[timeframe] = calculateDeltas(timeframe, 200);
+        config[timeframe] = calculateDeltas(timeframe, 300);
         return config;
     }, {});
 }
@@ -36,17 +36,20 @@ const Backtester = ({ instruments }) => {
     const config = useMemo(() => createTimeframeConfig(TIMEFRAMES), []);
     const refCharts = useRef(Object.entries(config).map(() => React.createRef()));
     const [selectedInstrument, setSelectedInstrument] = React.useState("")
-    const selectedTimes = useRef({timeframe:"", start:0, end:0})
+    const selectedTimes = useRef({ timeframe: "", start: 0, end: 0 })
 
     /* Memoize chart components to prevent unnecessary re-renders */
     const charts = useMemo(() => (
         Object.keys(config).map((timeframe, index) => (
-            <DynamicChart ref={refCharts.current[index]} title={timeframe} key={timeframe} handler={(start, end) => {handleDataSelection(timeframe, start, end)}}/>
+            <DynamicChart ref={refCharts.current[index]} title={timeframe} key={timeframe} handler={(start, end) => { handleDataSelection(timeframe, start, end) }} />
         ))
     ), [refCharts, config]);
 
 
-    function updateChart(instrument){
+    function updateChart(instrument) {
+        if (selectedTimes.current.instrument !== instrument) {
+            refCharts.current.forEach((reference, _index) => { reference.current?.resetData(4) })
+        }
         selectedTimes.current.instrument = instrument
         setSelectedInstrument(instrument)
         fetchRates(config, instrument, updateRates)
@@ -58,17 +61,15 @@ const Backtester = ({ instruments }) => {
         });
     }
 
-    function backtestData()
-    {
+    function backtestData() {
         const requestOptions = createPostRequest(selectedTimes.current)
         fetch('/backtesting', requestOptions).then(response => response.json())
     }
 
-    function handleDataSelection(timeframe, timeStart, timeEnd)
-    {
+    function handleDataSelection(timeframe, timeStart, timeEnd) {
         selectedTimes.current.timeframe = timeframe
-        selectedTimes.current.start = timeStart*1000
-        selectedTimes.current.end = timeEnd*1000
+        selectedTimes.current.start = timeStart * 1000
+        selectedTimes.current.end = timeEnd * 1000
     }
 
     return (
@@ -92,10 +93,10 @@ const Backtester = ({ instruments }) => {
                 </FormControl>
                 <button className={"css-blue-button"} onClick={() => backtestData()}>
                     Backtest
-              </button>
+                </button>
             </nav>
             <nav>
-                <Grid items={charts} columns={1} rows={1}  />
+                <Grid items={charts} columns={1} rows={1} />
             </nav>
         </>
     )

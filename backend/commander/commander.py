@@ -1,5 +1,5 @@
 import socket
-from helpers import log
+from helpers import loge, logi
 import time
 
 
@@ -16,11 +16,11 @@ class Commander():
         try:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server.connect((Commander.HOST, Commander.PORT))
-            log("Cmmander[OK]: connected")
+            logi("Cmmander: connected")
             time.sleep(0.2)
         except Exception as e:
             error = True
-            log("Commander[ERROR]: failed connect")
+            loge("Commander: failed connect")
         return error
 
     def disconnect(self):
@@ -32,11 +32,11 @@ class Commander():
         data = bytes(string, 'ascii')
         try:
             self.server.sendall(data)
-            log(f"Commander[OK]: {string}")
+            logi(f"Commander: {string}")
         except Exception as e:
             print(e)
             error = True
-            log(f"Commander[ERROR]: {string}")
+            loge(f"Commander: {string}")
 
         return rdata, error
 

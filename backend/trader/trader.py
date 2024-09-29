@@ -181,7 +181,7 @@ class Trader:
             closed_pos.calculate()
             closed_pos.print_data()
 
-        log(f"INFO: Finished Count: {len(pos_finished)} | Total Count: {len(pos_temporary)}")
+        logi(f"Finished Count: {len(pos_finished)} | Total Count: {len(pos_temporary)}")
         return pos_finished if only_finished else pos_temporary
 
     def trade(self, symbol, lot, type, price, stoplimit, stoploss, takeprofit, comment, pending=False, position=0):

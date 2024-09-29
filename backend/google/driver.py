@@ -53,7 +53,7 @@ class DriveFileController:
         request_template = "'root' in parents and trashed=false"
         file_lst = self.drive.ListFile({'q': request_template}).GetList()
         for folder in file_lst:
-            log(folder['title'])
+            logi(folder['title'])
             file1 = self.drive.CreateFile({'id': folder["id"]})
             file1.Delete()
 
@@ -95,7 +95,7 @@ class DriveFileController:
             # Add only if image was not uploaded
             if pid not in uploaded_images.keys():
                 try:
-                    log(f" Uploading {img_name}")
+                    logi(f" Uploading {img_name}")
                     file = self.drive.CreateFile({'title': img_name, 'parents': [{'id': self.folderid}]})
                     file.SetContentFile(os.path.join(self.dir, img_name))
                     file.Upload()
@@ -109,7 +109,7 @@ class DriveFileController:
                         'value': 'anyone',
                         'role': 'reader'})
                 except Exception as e:
-                    log(e)
+                    loge(e)
 
         # Add Image links to the rows
         links = self.worksheet.range(f'{DriveFileController.LINK_COLUMN}1:{DriveFileController.LINK_COLUMN}{self.next_free_idx}')
@@ -130,5 +130,5 @@ class DriveFileController:
                     #   link = link.replace("https://","https://www.")
                     value = '=HYPERLINK(\"%s\",\"<link>\")' % (link)
 
-                log(f' Inserting {value} into {DriveFileController.LINK_COLUMN}{i+1}')
+                logi(f' Inserting {value} into {DriveFileController.LINK_COLUMN}{i+1}')
                 self.worksheet.update_acell(f'{DriveFileController.LINK_COLUMN}{i+1}', value)

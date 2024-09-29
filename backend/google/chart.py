@@ -172,12 +172,12 @@ class Chart():
             self.bar_scale = (Chart.CHART_AREA_Y)/(price_max-price_min)
             self.volume_scale = (Chart.CHART_OFFSET_BOTTOMY)/(volume_max)
 
-            log("%s [%s]" % (symbol, chartname))
+            logi("%s [%s]" % (symbol, chartname))
             if self.bar_width < Chart.SPACE_BETWEEN_BARS:
-                log("log:Error: Timeframe is too big for the PERIOD[%s] SYMBOL[%s] BARS[%d]. Try selecting another period or a bigger timeframe" % (period, symbol, bar_count))
+                loge("Timeframe is too big for the PERIOD[%s] SYMBOL[%s] BARS[%d]. Try selecting another period or a bigger timeframe" % (period, symbol, bar_count))
 
-            log("bars:: Low: %f High: %f Scale: %f Max:%f Count:%d" % (price_min, price_max, self.bar_scale, (price_max-price_min)*self.bar_scale+Chart.CHART_OFFSET_BOTTOMY, bar_count))
-            log("Volumes:: Low: %f High: %f bar Scale: %f Max:%f " % (volume_min, volume_max, self.volume_scale, (volume_max-volume_min)*self.volume_scale))
+            logi("Bars:: Low: %f High: %f Scale: %f Max:%f Count:%d" % (price_min, price_max, self.bar_scale, (price_max-price_min)*self.bar_scale+Chart.CHART_OFFSET_BOTTOMY, bar_count))
+            logi("Volumes:: Low: %f High: %f bar Scale: %f Max:%f " % (volume_min, volume_max, self.volume_scale, (volume_max-volume_min)*self.volume_scale))
             separator = Chart.TIMEFRAME_SEPARATORS[period]
 
             # Draw bars and Volume

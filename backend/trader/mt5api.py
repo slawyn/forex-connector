@@ -46,7 +46,7 @@ class MetatraderApi:
     def __init__(self, mt_process, mt_config):
         cmd = [mt_process, f"/config:{mt_config}"]
         p = subprocess.Popen(cmd, start_new_session=True)
-        log("INFO", cmd)
+        logi(cmd)
 
     def resolve_type_mt5_to_api(self, type):
         return TYPES_MAP[type]
@@ -90,7 +90,7 @@ class MetatraderApi:
                 data = []
                 raise Exception(f"{__class__.__name__}: During fetching of rates {symbol_name} {mt5.last_error()}")
         except Exception as e:
-            log(e)
+            loge(e)
         return Rate.add(data)
 
     def get_ticks_for_symbol(self, symbol_name, utc_from, utc_to):
@@ -102,13 +102,13 @@ class MetatraderApi:
                 data = []
                 raise Exception(f"{__class__.__name__}: During fetching of ticks {symbol_name} {mt5.last_error()}")
         except Exception as e:
-            log(e)
+            loge(e)
 
         return data
 
     def trade(self, request):
         try:
-            log(request)
+            logi(request)
             result = mt5.order_send(request)
             if result != None:
                 return [result.retcode, ERROR_CODES[result.retcode]]
@@ -142,7 +142,7 @@ class MetatraderApi:
             time_difference = system_time_utc - broker_time_utc
             time_difference_seconds = -time_difference.total_seconds()
 
-            log(f"Broker time (UTC): {broker_time_utc}")
-            log(f"System time (UTC): {system_time_utc}")
-            log(f"Estimated broker timezone offset from UTC: {time_difference_seconds / 3600} hours")
+            logi(f"Broker time (UTC): {broker_time_utc}")
+            logi(f"System time (UTC): {system_time_utc}")
+            logi(f"Estimated broker timezone offset from UTC: {time_difference_seconds / 3600} hours")
         return time_difference_seconds

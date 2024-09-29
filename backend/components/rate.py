@@ -77,7 +77,8 @@ class Rate:
             'High': rate.high,
             'Low': rate.low,
             'Close': rate.close,
-            'Volume': rate.volume
+            'Volume': rate.volume,
+            'Spread': rate.spread,
         } for rate in rates]
         
         df = pd.DataFrame(data)

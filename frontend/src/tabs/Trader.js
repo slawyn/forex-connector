@@ -3,6 +3,8 @@ import Orders from "./Orders";
 import Calculator from "./Calculator";
 import { createPostRequest } from "../utils";
 
+
+const SPREADMULTIPLIFER = 5
 function round(number, digits) {
     const d = Math.pow(10, digits);
     return Math.round((number + Number.EPSILON) * d) / d;
@@ -20,8 +22,7 @@ function calculateInitialRisk(ask, bid, riskAmount, contractSize, pointValue, vo
         pointValue = 1 / ask;
     }
 
-    const INITIAL_SPREAD_AMOUNT = 5
-    const priceRisk = (ask - bid) * INITIAL_SPREAD_AMOUNT
+    const priceRisk = (ask - bid) * SPREADMULTIPLIFER
     const riskLot = (riskAmount / (contractSize * pointValue * priceRisk));
     const initialRiskLot = Math.trunc(riskLot / volumeStep) * volumeStep
     if (initialRiskLot < volumeStep) {

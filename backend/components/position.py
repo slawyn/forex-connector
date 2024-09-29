@@ -1,6 +1,6 @@
 import datetime
 
-from helpers import log
+from helpers import loge, log
 from components.rate import Rate
 
 
@@ -222,7 +222,7 @@ class ClosedPosition:
 
             self.pip_movement = abs(self.price_open_avg-self.price_close_avg)*value_per_point
         except Exception as e:
-            log("Symbol not found %s" % self.opening_deals[0].symbol)
+            loge("Symbol not found %s" % self.opening_deals[0].symbol)
         #
         if not self.price_sl > 0.0:
             self.pips_sl = 0
