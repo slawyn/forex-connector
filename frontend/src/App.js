@@ -60,6 +60,7 @@ class App extends Component {
       paneState: false,
       terminalData: {
         date: "",
+        timeoffset:0,
         account: [],
         headers: [],
         instruments: {},
@@ -119,6 +120,7 @@ class App extends Component {
           terminalData: {
             ...prevState.terminalData,
             date: receivedTerminalData.date,
+            timeoffset: receivedTerminalData.timeoffset,
             account: receivedTerminalData.account,
             headers: receivedTerminalData.headers,
             instruments: { ...prevState.terminalData.instruments, ...receivedTerminalData.instruments },
@@ -140,6 +142,10 @@ class App extends Component {
       );
     }
   };
+
+  getTimeOffset() {
+    return this.state.terminalData.timeoffset
+  } 
 
   setCommand = (props) => {
     this.commander.setCommand(props);
@@ -218,13 +224,13 @@ class App extends Component {
                   },
                 }}
               />
-              <Charter symbol={symbolData.info} calculator={this.selected.calculator} />
+              <Charter symbol={symbolData.info} calculator={this.selected.calculator} timeoffset= {terminalData.timeoffset}  />
             </TabPanel>
             <TabPanel>
               <History customClass={this.THEME} />
             </TabPanel>
             <TabPanel>
-              <Backtester customClass={this.THEME} instruments={mapInstruments(terminalData.instruments)} />
+              <Backtester customClass={this.THEME} instruments={mapInstruments(terminalData.instruments)} timeoffset= {terminalData.timeoffset} />
             </TabPanel>
           </Tabs>
         </ThemeProvider>

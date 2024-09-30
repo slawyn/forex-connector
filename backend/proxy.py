@@ -184,7 +184,7 @@ def on_update():
     force = request.args.get("force", default=False, type=is_it_true)
     instr_headers, instr = app.show_symbols(filter=force)
     op_headers, open_positions = app.show_open_positions()
-    return {"date": get_current_date(), "headers": instr_headers, "instruments": instr, "account":  app.get_account_info(), "op_headers": op_headers, "open": open_positions}
+    return {"date": get_current_date(), "timeoffset":app.trader.get_timeoffset_ms(),"headers": instr_headers, "instruments": instr, "account":  app.get_account_info(), "op_headers": op_headers, "open": open_positions}
 
 
 @app.route('/history', methods=['GET'])

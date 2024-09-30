@@ -9,8 +9,8 @@ const RISKINITIAL = 1.00
 const RISKSTEP = 0.25
 const VOLUME = 0.01
 
-async function fetchRates(timeframes, instrument, updateRatesHandler) {
-    const currentTime = Date.now();
+async function fetchRates(timeframes, timeoffset, instrument, updateRatesHandler) {
+    const currentTime = Date.now() + timeoffset;
     const promises = Object.entries(timeframes).map(async ([timeframe, duration]) => {
         let start = currentTime - duration;
         const end = currentTime;
@@ -33,7 +33,7 @@ function createTimeframeConfig(timeframes) {
     }, {});
 }
 
-const Backtester = ({ instruments }) => {
+const Backtester = ({ customClass, instruments, timeoffset }) => {
 
     const config = useMemo(() => createTimeframeConfig(TIMEFRAMES), []);
     const refCharts = useRef(Object.entries(config).map(() => React.createRef()));
@@ -56,7 +56,9 @@ const Backtester = ({ instruments }) => {
         }
         selectedTimes.current.instrument = instrument
         setSelectedInstrument(instrument)
-        fetchRates(config, instrument, updateRates)
+
+        console.log(timeoffset)
+        fetchRates(config, timeoffset, instrument, updateRates)
     }
 
     function updateRates(newRates) {

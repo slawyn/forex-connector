@@ -31,6 +31,9 @@ class Trader:
         self.account.update(self.mt5api.get_account())
         return self.account
 
+    def get_timeoffset_ms(self):
+        return int(self.time_offset_s*1000)
+
     def set_filter(self, filter):
         if filter == "currency":
             self.filter_function = lambda sym: sym.currency_base == self.account.currency or sym.currency_profit == self.account.currency

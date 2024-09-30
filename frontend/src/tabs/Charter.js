@@ -6,8 +6,8 @@ import { mergeArray, calculateDeltas } from "../utils";
 const TIMEFRAMES = ["D1", "H4", "M20", "M5"]
 
 
-async function fetchRates(timeframes, instrument, rates, updateRatesHandler) {
-    const currentTime = Date.now();
+async function fetchRates(timeframes, timeoffset, instrument, rates, updateRatesHandler) {
+    const currentTime = Date.now() + timeoffset;
     const promises = Object.entries(timeframes).map(async ([timeframe, duration]) => {
         let start = currentTime - duration;
         const end = currentTime;
@@ -29,12 +29,12 @@ async function fetchRates(timeframes, instrument, rates, updateRatesHandler) {
 
 function createTimeframeConfig(timeframes) {
     return timeframes.reduce((config, timeframe) => {
-        config[timeframe] = calculateDeltas(timeframe, 60);
+        config[timeframe] = calculateDeltas(timeframe, 100);
         return config;
     }, {});
 }
 
-const Charter = ({ calculator, symbol }) => {
+const Charter = ({ calculator, symbol, timeoffset}) => {
     const config = useMemo(() => createTimeframeConfig(TIMEFRAMES), []);
     const refCharts = useRef(Object.entries(config).map(() => React.createRef()));
     const localSymbol = useRef(symbol);
@@ -49,7 +49,7 @@ const Charter = ({ calculator, symbol }) => {
         }
 
         localSymbol.current = symbol
-        fetchRates(config, localSymbol.current.name, localRates.current, updateRates);
+        fetchRates(config, timeoffset, localSymbol.current.name, localRates.current, updateRates);
     }
 
     if (localCalculator.current !== calculator) {
