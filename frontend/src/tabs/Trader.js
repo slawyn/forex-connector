@@ -100,8 +100,11 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
         conversion: false
     });
 
-    if (localSymbol.current !== symbol) {
+    React.useEffect(() => {
+        calculateParameters(trade.ask, trade.bid, trade.ratio, trade.points)
+    }, [trade.ask, trade.bid, trade.points, trade.ratio]);
 
+    if (localSymbol.current !== symbol) {
         const risk = calculateInitialRisk(
             symbol.ask,
             symbol.bid,
@@ -150,7 +153,6 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
                 conversion: symbol.conversion,
                 points: points
             }));
-            calculateParameters(symbol.ask, symbol.bid, trade.ratio, points)
         }
         localSymbol.current = symbol
     }
@@ -202,8 +204,6 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             risk_volume: parseFloat(risk_volume),
             points: points
         }));
-
-        calculateParameters(trade.ask, trade.bid, trade.ratio, points)
     };
 
     function handleTypeChange(type) {
@@ -229,8 +229,6 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             risk: parseFloat(risk),
             points: points
         }));
-
-        calculateParameters(trade.ask, trade.bid, trade.ratio, points)
     };
 
     function handleRatioChange(ratio) {
@@ -247,8 +245,6 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             ratio: parseFloat(ratio),
             points: points
         }));
-
-        calculateParameters(trade.ask, trade.bid, trade.ratio, points)
     };
 
     function handleCommentChange(comment) {
@@ -263,8 +259,6 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             ...previousTrade,
             ask: parseFloat(ask)
         }));
-
-        calculateParameters(ask, trade.bid, trade.ratio, trade.points)
     };
 
     const handleBidChange = (bid) => {
@@ -272,8 +266,6 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
             ...previousTrade,
             bid: parseFloat(bid)
         }));
-
-        calculateParameters(trade.ask, bid, trade.ratio, trade.points)
     };
 
     function handleOpenTrade() {
@@ -296,9 +288,6 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
         }
         return `R${risk}%G${trade.ratio}%` + comment;
     };
-
-
-
 
     function handleCloseTrade(type, name, position, volume) {
         let request = {

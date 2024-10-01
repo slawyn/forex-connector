@@ -6,6 +6,7 @@ const deltaTable = {
   "D1": millisecondsInSecond * secondsInMinute * minutesInHour * hoursInDay,
   "H4": millisecondsInSecond * secondsInMinute * minutesInHour * 4,
   "M20": millisecondsInSecond * secondsInMinute * 20,
+  "M6": millisecondsInSecond * secondsInMinute * 6,
   "M5": millisecondsInSecond * secondsInMinute * 5,
   "M1": millisecondsInSecond * secondsInMinute,
 }

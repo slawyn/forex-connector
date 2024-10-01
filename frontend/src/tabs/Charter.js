@@ -1,9 +1,9 @@
 import React, { useRef, useMemo } from "react";
 import Grid from "elements/Grid";
 import DynamicChart from "./DynamicChart";
-import { mergeArray, calculateDeltas } from "../utils";
+import { mergeArray, calculateDeltas } from "utils";
 
-const TIMEFRAMES = ["D1", "H4", "M20", "M5"]
+const TIMEFRAMES = ["D1", "H4",  "M6"]
 
 
 async function fetchRates(timeframes, timeoffset, instrument, rates, updateRatesHandler) {
@@ -52,7 +52,7 @@ const Charter = ({ calculator, symbol, timeoffset}) => {
         fetchRates(config, timeoffset, localSymbol.current.name, localRates.current, updateRates);
     }
 
-    if (localCalculator.current !== calculator) {
+    if (calculator && localCalculator.current !== calculator) {
         localCalculator.current = calculator
         refCharts.current.forEach((reference, _index) => {
             if (reference.current) {

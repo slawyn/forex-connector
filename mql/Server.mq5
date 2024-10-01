@@ -29,7 +29,6 @@ which needs to receive data from the server as well as just sending it.
 
 ################################################################### */
 
-
 #property strict
 
 // --------------------------------------------------------------------
@@ -56,6 +55,8 @@ which needs to receive data from the server as well as just sending it.
 // Include socket library, asking for event handling
 // --------------------------------------------------------------------
 #define SOCKET_LIBRARY_USE_EVENTS
+
+// https://github.com/JafferWilson/MT4-Ticks-To-MT5/blob/master/socket-library-mt4-mt5.mqh
 #include <socket-library-mt4-mt5.mqh>
 
 // --------------------------------------------------------------------

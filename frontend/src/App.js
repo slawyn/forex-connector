@@ -48,18 +48,20 @@ class App extends Component {
     this.KEY_OC_TABLE = "t";
     this.KEY_GET_SYMBOLS = "s";
     this.THEME = "clsBorderless";
-    
+
     this.commander = new Commander();
-    this.selected = { instrument: '', calculator: {} };
-    
     this.state = {
+      calculatorState: {
+        instrument: "",
+        calculator: {}
+      },
       symbolData: {
         info: { name: "", ask: 0, bid: 0, step: 0, volume_step: 0, point_value: 0, digits: 0 },
       },
       paneState: false,
       terminalData: {
         date: "",
-        timeoffset:0,
+        timeoffset: 0,
         account: [],
         headers: [],
         instruments: {},
@@ -108,7 +110,7 @@ class App extends Component {
   startDataFetchInterval = () => {
     this.intervalRef = setInterval(() => {
       this.fetchTerminalData(false);
-      this.fetchSymbolData(this.selected.instrument);
+      this.fetchSymbolData(this.state.calculatorState.instrument);
     }, 3000);
   };
 
@@ -144,15 +146,10 @@ class App extends Component {
 
   getTimeOffset() {
     return this.state.terminalData.timeoffset
-  } 
-
-  setCommand = (props) => {
-    this.commander.setCommand(props);
-    this.selected = { ...this.selected, ...props };
-  };
+  }
 
   render() {
-    const { symbolData, paneState, terminalData, errorData } = this.state;
+    const { calculatorState, symbolData, paneState, terminalData, errorData } = this.state;
 
     return (
       <main className="App">
@@ -204,7 +201,13 @@ class App extends Component {
                     handlers={{
                       setId: (id) => {
                         this.fetchSymbolData(id);
-                        this.setCommand({ instrument: id });
+                        this.setState((prevState) => ({
+                          calculatorState: {
+                            ...prevState.calculatorState,
+                            instrument: id
+                          },
+                        }));
+                        this.commander.setCommand({ instrument: id });
                       },
                     }}
                   />
@@ -219,17 +222,23 @@ class App extends Component {
                 handlers={{
                   setErrorData: (errorData) => this.setState({ errorData }),
                   setCommand: (ask, bid, sl, tp) => {
-                    this.setCommand({ calculator: { ask, bid, sl, tp } });
+                    this.setState((prevState) => ({
+                      calculatorState: {
+                        ...prevState.calculatorState,
+                        calculator: { ask, bid, sl, tp }
+                      },
+                    }));
+                    this.commander.setCommand({ calculator: { ask, bid, sl, tp } });
                   },
                 }}
               />
-              <Charter symbol={symbolData.info} calculator={this.selected.calculator} timeoffset= {terminalData.timeoffset}  />
+              <Charter symbol={symbolData.info} calculator={calculatorState.calculator} timeoffset={terminalData.timeoffset} />
             </TabPanel>
             <TabPanel>
               <History customClass={this.THEME} />
             </TabPanel>
             <TabPanel>
-              <Backtester customClass={this.THEME} instruments={mapInstruments(terminalData.instruments)} timeoffset= {terminalData.timeoffset} />
+              <Backtester customClass={this.THEME} instruments={mapInstruments(terminalData.instruments)} timeoffset={terminalData.timeoffset} />
             </TabPanel>
           </Tabs>
         </ThemeProvider>
