@@ -1,5 +1,5 @@
 import React, { useRef, useMemo } from "react";
-import Grid from "./elements/Grid";
+import Grid from "elements/Grid";
 import DynamicChart from "./DynamicChart";
 import { mergeArray, calculateDeltas } from "../utils";
 

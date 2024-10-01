@@ -1,4 +1,3 @@
-import performancejo from "./Performance";
 import React, { Component } from "react";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
@@ -12,7 +11,7 @@ import History from "./tabs/History";
 import Charter from "./tabs/Charter";
 import Backtester from "./tabs/Backtester";
 import TopBar from "./tabs/TopBar";
-import SlidingPane from "./tabs/elements/SlidingPane";
+import SlidingPane from "./elements/SlidingPane";
 import MiscCheckbox from "./Misc";
 import Commander from "./Commander";
 

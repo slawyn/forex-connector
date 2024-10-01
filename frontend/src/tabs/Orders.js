@@ -5,8 +5,8 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import TableHeads from "./elements/TableHeads";
-import TableRows from "./elements/TableRows";
+import TableHeads from "elements/TableHeads";
+import TableRows from "elements/TableRows";
 
 const Orders = ({ customClass, headers, data, handlers }) => {
     const [dialogData, setDialogData] = useState({

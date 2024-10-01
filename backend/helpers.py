@@ -2,6 +2,7 @@ import datetime
 import time
 import json
 
+from numpy.linalg import norm
 
 DAY_MSC = 86400000
 WEEK = DAY_MSC * 7
@@ -36,6 +37,11 @@ def load_json(filename):
 
     return config
 
+def normalize(arr):
+    return arr / norm(arr)
+
+def print_dict(dictionary):
+    print(json.dumps(dictionary, indent=4))
 
 def is_it_true(value):
     return value.lower() == 'true'

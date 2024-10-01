@@ -2,6 +2,8 @@ from backtesting import Strategy
 from backtesting.lib import crossover
 import talib
 import pandas as pd
+from helpers import *
+
 
 class SmaCross(Strategy):
     n1 = 5
@@ -13,7 +15,10 @@ class SmaCross(Strategy):
     ratio = 2.25
     risk_amount = 5
 
-    PATTERN_BAR_COUNT = 4
+    PATTERN_BAR_COUNT = 6
+    LINEAR_BAR_COUNT = 2
+    ANGLE_RISE = 0.05
+    ANGLE_FALL = -0.05
 
     def init(self):
         close = self.data.Close
@@ -48,15 +53,28 @@ class SmaCross(Strategy):
         open = self.data.Open[-SmaCross.PATTERN_BAR_COUNT:]
         high = self.data.High[-SmaCross.PATTERN_BAR_COUNT:]
         low = self.data.Low[-SmaCross.PATTERN_BAR_COUNT:]
-        return talib.CDLENGULFING(open, high, low, close)
+        return {"engulfing":talib.CDLENGULFING(open, high, low, close).tolist()[-1]}
     
     def _calc_hammer_pattern(self):
         close = self.data.Close[-SmaCross.PATTERN_BAR_COUNT:]
         open = self.data.Open[-SmaCross.PATTERN_BAR_COUNT:]
         high = self.data.High[-SmaCross.PATTERN_BAR_COUNT:]
         low = self.data.Low[-SmaCross.PATTERN_BAR_COUNT:]
-        return talib.CDLHAMMER(open, high, low, close)
- 
+        return {"hammer":talib.CDLHAMMER(open, high, low, close).tolist()[-1]}
+    
+    def _calc_linear_reg(self):
+        close = self.data.Close[-SmaCross.PATTERN_BAR_COUNT:]
+        slope =  talib.LINEARREG_SLOPE(close, timeperiod=SmaCross.LINEAR_BAR_COUNT)
+        angle =  talib.LINEARREG_ANGLE(close, timeperiod=SmaCross.LINEAR_BAR_COUNT)
+
+        current_angle = angle.tolist()[-1]
+        desc = "side"
+        if current_angle > SmaCross.ANGLE_RISE:
+            desc = "rise"
+        elif current_angle < SmaCross.ANGLE_FALL:
+            desc = "fall"
+        return {"slope":slope.tolist()[-1], "angle":current_angle, "desc_angle":desc}
+
 
     def next(self):
         price = self.data.Close[-1]
@@ -68,10 +86,10 @@ class SmaCross(Strategy):
         low = self.data.Low[-1]
 
         parameters = self.calculator.calculate_stoploss(price, spread, self.risk_amount)
-        pat_engulfing = self._calc_engulfing_pattern()
-        pat_hammer = self._calc_hammer_pattern()
+        analysis = {**self._calc_engulfing_pattern(),  **self._calc_hammer_pattern(), **self._calc_linear_reg()}
         
-        print(pat_engulfing, pat_hammer)
+
+        print_dict(analysis)
         if crossover(self.sma1, self.sma2):
             print("BUY: ", parameters.ask, parameters.sl_buy, parameters.tp_buy)
             self.buy(size=parameters.risk_volume, sl=parameters.sl_buy, tp=parameters.tp_buy)
