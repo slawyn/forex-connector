@@ -170,7 +170,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
 
     function requestTrade(request) {
         const requestOptions = createPostRequest(request)
-        fetch('/trade', requestOptions).then(response =>
+        fetch('/api/trade', requestOptions).then(response =>
             response.json()).then(((idResponse) => {
                 handlers.setErrorData({
                     error: idResponse.error,

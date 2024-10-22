@@ -28,11 +28,11 @@ export default class Commander {
     if (this.preview) {
       if (!this.selected && this.instrument !== "") {
         const requestOptions = createPostRequest({ 'command': 'select', data: this.instrument })
-        fetch('/command', requestOptions).then(response => response.json())
+        fetch('/api/command', requestOptions).then(response => response.json())
         this.selected = true
       } else if (this.selected && Object.keys(this.calculator).length > 0) {
         const requestOptions = createPostRequest({ 'command': 'preview', data: this.calculator })
-        fetch('/command', requestOptions).then(response => response.json())
+        fetch('/api/command', requestOptions).then(response => response.json())
       }
     }
     else {

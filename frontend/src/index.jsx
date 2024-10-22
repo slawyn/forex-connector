@@ -1,4 +1,4 @@
-import './wdyr'
+import 'src/wdyr'
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './css/index.css';

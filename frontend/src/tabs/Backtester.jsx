@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from "react";
-import Grid from "elements/Grid";
+import Grid from "src/elements/Grid";
 import DynamicChart from "./DynamicChart";
-import { mergeArray, calculateDeltas, createPostRequest } from "../utils";
+import { mergeArray, calculateDeltas, createPostRequest } from "src/utils";
 import { TextField, InputAdornment, InputLabel, MenuItem, FormControl, Select } from '@mui/material';
 
 const TIMEFRAMES = ["D1", "H4"]
@@ -16,7 +16,7 @@ async function fetchRates(timeframes, timeoffset, instrument, updateRatesHandler
         const end = currentTime;
 
         const response = await fetch(
-            `/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`
+            `/api/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`
         );
         return response.json();
     });
@@ -69,7 +69,7 @@ const Backtester = ({ customClass, instruments, timeoffset }) => {
 
     function backtestData() {
         const requestOptions = createPostRequest(selectedTimes.current)
-        fetch('/backtesting', requestOptions).then(response => response.json())
+        fetch('/api/backtesting', requestOptions).then(response => response.json())
     }
 
     function handleDataSelection(timeframe, timeStart, timeEnd) {

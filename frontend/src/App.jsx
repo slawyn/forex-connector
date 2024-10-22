@@ -115,7 +115,7 @@ class App extends Component {
   };
 
   fetchTerminalData = (force) => {
-    fetch(`/update?force=${force}`).then((response) =>
+    fetch(`/api/update?force=${force}`).then((response) =>
       response.json().then((receivedTerminalData) => {
         this.setState((prevState) => ({
           terminalData: {
@@ -136,7 +136,7 @@ class App extends Component {
 
   fetchSymbolData = (instrument) => {
     if (instrument) {
-      fetch(`/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
+      fetch(`/api/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
         response.json().then((receivedSymbol) => {
           this.setState({ symbolData: receivedSymbol });
         })

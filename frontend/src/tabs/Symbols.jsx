@@ -1,6 +1,6 @@
 import React from "react";
-import TableRows from "elements/TableRows";
-import TableHeads from "elements/TableHeads";
+import TableRows from "src/elements/TableRows";
+import TableHeads from "src/elements/TableHeads";
 
 const Symbols = ({ customClass, headers, data, handlers }) => {
     const [sortConfig, setSortConfig] = React.useState({ key: 0, direction: 'ascending' });

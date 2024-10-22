@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from "react";
-import Grid from "elements/Grid";
-import DynamicChart from "./DynamicChart";
-import { mergeArray, calculateDeltas } from "utils";
+import Grid from "src/elements/Grid";
+import DynamicChart from "src/tabs/DynamicChart";
+import { mergeArray, calculateDeltas } from "src/utils";
 
 const TIMEFRAMES = ["D1", "H4",  "M6"]
 
@@ -17,7 +17,7 @@ async function fetchRates(timeframes, timeoffset, instrument, rates, updateRates
         }
 
         const response = await fetch(
-            `/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`
+            `/api/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`
         );
         return response.json();
     });

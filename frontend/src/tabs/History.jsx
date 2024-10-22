@@ -8,13 +8,13 @@ const History = ({ customClass }) => {
 
     const saveHistory = () => {
         const requestOptions = createPostRequest("");
-        fetch('/save', requestOptions)
+        fetch('/api/save', requestOptions)
             .then(response => response.json())
             .then(() => { /* Handle response if needed */ });
     };
 
     const fetchHistory = () => {
-        fetch("/history")
+        fetch("/api/history")
             .then(response => response.json())
             .then(receivedPositions => setPositionData(receivedPositions));
     };
@@ -69,7 +69,7 @@ const History = ({ customClass }) => {
                     </table>
                 </nav>
                 <LazyLoadImage
-                    src={`${selectedImage}.png`}
+                    src={`api/${selectedImage}.png`}
                     effect="blur"
                     style={{
                         width: '100vw',
