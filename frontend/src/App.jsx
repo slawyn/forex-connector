@@ -2,18 +2,18 @@ import React, { Component } from "react";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 
-import "./css/App.css";
+import "src/css/App.css";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import Symbols from "./tabs/Symbols";
-import Trader from "./tabs/Trader";
-import History from "./tabs/History";
-import Charter from "./tabs/Charter";
-import Backtester from "./tabs/Backtester";
-import TopBar from "./tabs/TopBar";
-import SlidingPane from "./elements/SlidingPane";
-import MiscCheckbox from "./Misc";
-import Commander from "./Commander";
+import Symbols from "src/tabs/Symbols";
+import Trader from "src/tabs/Trader";
+import History from "src/tabs/History";
+import Charter from "src/tabs/Charter";
+import Backtester from "src/tabs/Backtester";
+import TopBar from "src/tabs/TopBar";
+import SlidingPane from "src/elements/SlidingPane";
+import MiscCheckbox from "src/Misc";
+import Commander from "src/Commander";
 
 const darkTheme = createTheme({
   palette: {
@@ -166,7 +166,7 @@ class App extends Component {
                 customClass={"css-button-checkbox"}
                 text="Sync"
                 handler={(state) => {
-                  this.setCommand({ preview: state });
+                  this.commander.setCommand({ preview: state });
                 }}
               />
               <button className={"css-blue-button"} onClick={() => this.fetchTerminalData(true)}>

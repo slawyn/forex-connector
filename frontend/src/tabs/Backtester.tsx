@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from "react";
 import Grid from "src/elements/Grid";
-import DynamicChart from "./DynamicChart";
+import DynamicChart from "src/tabs/DynamicChart";
 import { mergeArray, calculateDeltas, createPostRequest } from "src/utils";
 import { TextField, InputAdornment, InputLabel, MenuItem, FormControl, Select } from '@mui/material';
 

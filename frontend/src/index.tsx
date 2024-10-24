@@ -1,9 +1,9 @@
 import 'src/wdyr';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './css/index.css';
+import 'src/css/index.css';
 import App from 'src/App';
-import reportWebVitals from './reportWebVitals';
+import reportWebVitals from 'src/reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(<App />);

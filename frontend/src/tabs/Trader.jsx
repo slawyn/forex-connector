@@ -1,7 +1,7 @@
 import React from "react";
-import Orders from "./Orders";
-import Calculator from "./Calculator";
-import { createPostRequest } from "../utils";
+import Orders from "src/tabs/Orders";
+import Calculator from "src/tabs/Calculator";
+import { createPostRequest } from "src/utils";
 
 
 const SPREADMULTIPLIFER = 5

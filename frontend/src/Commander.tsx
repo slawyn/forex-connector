@@ -1,4 +1,4 @@
-import { createPostRequest } from "./utils";
+import { createPostRequest } from "src/utils";
 
 interface Calculator {
     ask?: number;

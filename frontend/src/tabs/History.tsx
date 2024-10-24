@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { createPostRequest } from "../utils";
+import { createPostRequest } from "src/utils";
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 
 interface HistoryProps {

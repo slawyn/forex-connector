@@ -2,5 +2,4 @@ secretsfile.json
 __pycache__/
 *.png
 *.pyc
-*/dist/*
-
+frontend/dist/*
