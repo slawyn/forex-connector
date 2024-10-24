@@ -5,10 +5,26 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import TableHeads from "src/elements/TableHeads.jsx";
+import TableHeads from "src/elements/TableHeads";
 import TableRows from "src/elements/TableRows";
 
-const Orders = ({ customClass, headers, data, handlers }) => {
+interface Order {
+    id: number;
+    items: any[];
+    change: string;
+}
+
+interface OrdersProps {
+    customClass: string;
+    headers: string[];
+    data: Order[];
+    handlers: {
+        handleCloseTrade: (type: string, name: string, id: number, volume: number) => void;
+        setId: (id: number) => void;
+    };
+}
+
+const Orders: React.FC<OrdersProps> = ({ customClass, headers, data, handlers }) => {
     const [dialogData, setDialogData] = useState({
         type: "",
         state: false,
@@ -19,7 +35,7 @@ const Orders = ({ customClass, headers, data, handlers }) => {
         bid: 0
     });
 
-    const handleDialogClose = (confirm) => {
+    const handleDialogClose = (confirm: boolean) => {
         if (confirm) {
             handlers.handleCloseTrade(
                 dialogData.type,
@@ -28,10 +44,10 @@ const Orders = ({ customClass, headers, data, handlers }) => {
                 dialogData.volume
             );
         }
-        setDialogData((prev) => ({ ...prev, state: false }));
+        setDialogData(prev => ({ ...prev, state: false }));
     };
 
-    const handleRowClick = (id, items) => {
+    const handleRowClick = (id: number, items: any[]) => {
         setDialogData({
             name: items[1],
             id: items[0],
@@ -66,7 +82,6 @@ const Orders = ({ customClass, headers, data, handlers }) => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             <table className={customClass} style={{ width: "100%" }}>
                 <TableHeads
                     customClass={customClass}
@@ -83,4 +98,5 @@ const Orders = ({ customClass, headers, data, handlers }) => {
     );
 };
 
+// Symbols.whyDidYouRender = true
 export default Orders;

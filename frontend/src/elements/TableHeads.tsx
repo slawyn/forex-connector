@@ -1,6 +1,12 @@
 import React from "react";
 
-function TableHeads({ customClass, data, onHeaderClick }) {
+interface TableHeadsProps {
+    customClass: string;
+    data: string[];
+    onHeaderClick: (index: number) => void;
+}
+
+const TableHeads: React.FC<TableHeadsProps> = ({ customClass, data, onHeaderClick }) => {
     return (
         <thead>
             <tr>
@@ -9,7 +15,8 @@ function TableHeads({ customClass, data, onHeaderClick }) {
                         key={header}
                         title={header}
                         className={customClass}
-                        onClick={() => onHeaderClick(index)}>
+                        onClick={() => onHeaderClick(index)}
+                    >
                         {header}
                     </th>
                 ))}

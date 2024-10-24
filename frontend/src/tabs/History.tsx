@@ -2,12 +2,21 @@ import React, { useState, useEffect } from "react";
 import { createPostRequest } from "../utils";
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 
-const History = ({ customClass }) => {
-    const [positionData, setPositionData] = useState({ headers: [], positions: [] });
-    const [selectedImage, setSelectedImage] = useState("0");
+interface HistoryProps {
+    customClass: string;
+}
+
+interface PositionData {
+    headers: string[];
+    positions: any[][];
+}
+
+const History: React.FC<HistoryProps> = ({ customClass }) => {
+    const [positionData, setPositionData] = useState<PositionData>({ headers: [], positions: [] });
+    const [selectedImage, setSelectedImage] = useState<string>("0");
 
     const saveHistory = () => {
-        const requestOptions = createPostRequest("");
+        const requestOptions = createPostRequest({});
         fetch('/api/save', requestOptions)
             .then(response => response.json())
             .then(() => { /* Handle response if needed */ });
@@ -29,13 +38,15 @@ const History = ({ customClass }) => {
                 <button
                     onClick={saveHistory}
                     className="clsOrangebutton"
-                    style={{ width: "fit-content" }}>
+                    style={{ width: "fit-content" }}
+                >
                     Sync with Google
                 </button>
                 <button
                     onClick={fetchHistory}
                     className="css-blue-button"
-                    style={{ width: "fit-content" }}>
+                    style={{ width: "fit-content" }}
+                >
                     Fetch Trades
                 </button>
             </div>

@@ -1,7 +1,45 @@
 import { TextField, InputAdornment, InputLabel, MenuItem, FormControl, Select } from '@mui/material';
 import * as React from 'react';
 
-const Calculator = ({ customClass, types, trade, handlers }) => {
+interface Trade {
+    name: string;
+    contract_size: number;
+    point_value: number;
+    volume_step: number;
+    digits: number;
+    tick_size: number;
+    tick_value: number;
+    type: string;
+    risk_volume: number;
+    risk: number;
+    risk_step: number;
+    ratio: number;
+    ratio_step: number;
+    ask: number;
+    bid: number;
+    points: number;
+    comment: string;
+}
+
+interface Handlers {
+    handleOpenTrade: () => void;
+    handleTypeChange: (value: string) => void;
+    handleVolumeChange: (value: number) => void;
+    handleRiskChange: (value: number) => void;
+    handleRatioChange: (value: number) => void;
+    handleAskChange: (value: number) => void;
+    handleBidChange: (value: number) => void;
+    handleCommentChange: (value: string) => void;
+}
+
+interface CalculatorProps {
+    customClass: string;
+    types: string[];
+    trade: Trade;
+    handlers: Handlers;
+}
+
+const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, handlers }) => {
     return (
         <table className={customClass}>
             <thead>

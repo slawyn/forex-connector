@@ -1,6 +1,13 @@
 import React from 'react';
 
-const Grid = ({ items, columns = 2, rows = 2, gap = '10px' }) => {
+interface GridProps {
+    items: React.ReactNode[];
+    columns?: number;
+    rows?: number;
+    gap?: string;
+}
+
+const Grid: React.FC<GridProps> = ({ items, columns = 2, rows = 2, gap = '10px' }) => {
     const gridContainerStyle = {
         display: 'grid',
         gridTemplateColumns: `repeat(${columns}, 1fr)`, // Configurable columns
@@ -14,7 +21,7 @@ const Grid = ({ items, columns = 2, rows = 2, gap = '10px' }) => {
                 // Check if this is the last row with an uneven count of items
                 const isLastItem = index === items.length - 1;
                 const isUnevenCount = items.length % columns !== 0;
-                
+
                 // If the item is the last in an uneven row, span the remaining columns
                 const itemStyle = isLastItem && isUnevenCount ? { gridColumn: `span ${columns}` } : {};
 
@@ -27,4 +34,5 @@ const Grid = ({ items, columns = 2, rows = 2, gap = '10px' }) => {
         </div>
     );
 };
+
 export default Grid;

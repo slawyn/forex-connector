@@ -1,9 +1,15 @@
 import React from "react";
 
-const TableRows = ({ customClass, data, onRowClick }) => {
-    const [selectedId, setSelectedId] = React.useState('');
+interface TableRowsProps {
+    customClass: string;
+    data: { id: string; items: any[]; change: string }[];
+    onRowClick: (id: string, items: any[]) => void;
+}
 
-    const handleRowClick = (id, items) => {
+const TableRows: React.FC<TableRowsProps> = ({ customClass, data, onRowClick }) => {
+    const [selectedId, setSelectedId] = React.useState<string>('');
+
+    const handleRowClick = (id: string, items: any[]) => {
         setSelectedId(id);
         onRowClick(id, items);
     };
@@ -25,7 +31,7 @@ const TableRows = ({ customClass, data, onRowClick }) => {
                             const isWedge = idx >= wedgeIdx;
                             const cellStyle = isWedge
                                 ? { color: change === 'positive' ? 'green' : change === 'negative' ? 'red' : '' }
-                                : null;
+                                : undefined;
 
                             return <td key={idx} style={cellStyle}>{cellData}</td>;
                         })}
@@ -34,6 +40,6 @@ const TableRows = ({ customClass, data, onRowClick }) => {
             })}
         </tbody>
     );
-};
+}
 
 export default TableRows;
