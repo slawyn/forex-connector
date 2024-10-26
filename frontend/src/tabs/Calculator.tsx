@@ -83,7 +83,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             value={trade.risk_volume}
                             variant="outlined"
                             label="Risk Volume"
-                            onChange={(e) => handlers.handleVolumeChange(e.target.value)}
+                            onChange={(e) => handlers.handleVolumeChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">LOT</InputAdornment>,
@@ -98,7 +98,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             value={trade.risk}
                             variant="outlined"
                             label="Risk"
-                            onChange={(e) => handlers.handleRiskChange(e.target.value)}
+                            onChange={(e) => handlers.handleRiskChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">%</InputAdornment>,
@@ -113,7 +113,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             value={trade.ratio}
                             variant="outlined"
                             label="Risk Ratio"
-                            onChange={(e) => handlers.handleRatioChange(e.target.value)}
+                            onChange={(e) => handlers.handleRatioChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">%</InputAdornment>,
@@ -128,7 +128,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             type="number"
                             value={trade.ask}
                             variant="outlined"
-                            onChange={(e) => handlers.handleAskChange(e.target.value)}
+                            onChange={(e) => handlers.handleAskChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">Price</InputAdornment>,
@@ -142,7 +142,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             type="number"
                             value={trade.bid}
                             variant="outlined"
-                            onChange={(e) => handlers.handleBidChange(e.target.value)}
+                            onChange={(e) => handlers.handleBidChange(parseFloat(e.target.value))}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                             }}

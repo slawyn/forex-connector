@@ -25,7 +25,7 @@ function calculateInitialRisk(ask, bid, riskAmount, contractSize, pointValue, vo
     const priceRisk = (ask - bid) * SPREADMULTIPLIFER
     const riskLot = (riskAmount / (contractSize * pointValue * priceRisk));
     const initialRiskLot = Math.trunc(riskLot / volumeStep) * volumeStep
-    if (initialRiskLot < volumeStep) {
+    if (priceRisk <=0 || initialRiskLot < volumeStep) {
         return volumeStep
     }
 
@@ -191,6 +191,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
     }
 
     function handleVolumeChange(risk_volume) {
+        console.log(risk_volume)
         const points = calculatePoints(
             trade.ask,
             trade.risk * 0.01 * trade.balance,
@@ -201,7 +202,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
 
         setTrade((previousTrade) => ({
             ...previousTrade,
-            risk_volume: parseFloat(risk_volume),
+            risk_volume: risk_volume,
             points: points
         }));
     };
@@ -226,7 +227,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
 
         setTrade((previousTrade) => ({
             ...previousTrade,
-            risk: parseFloat(risk),
+            risk: risk,
             points: points
         }));
     };
@@ -242,7 +243,7 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
 
         setTrade((previousTrade) => ({
             ...previousTrade,
-            ratio: parseFloat(ratio),
+            ratio: ratio,
             points: points
         }));
     };
@@ -257,14 +258,14 @@ const Trader = ({ customClass, account, symbol, headers, data, handlers }) => {
     function handleAskChange(ask) {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            ask: parseFloat(ask)
+            ask: ask
         }));
     };
 
     const handleBidChange = (bid) => {
         setTrade((previousTrade) => ({
             ...previousTrade,
-            bid: parseFloat(bid)
+            bid: bid
         }));
     };
 
