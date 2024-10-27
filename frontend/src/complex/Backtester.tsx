@@ -1,6 +1,6 @@
 import React, { useRef, useMemo } from "react";
 import Grid from "src/elements/Grid";
-import DynamicChart from "src/tabs/DynamicChart";
+import DynamicChart from "src/elements/DynamicChart";
 import { mergeArray, calculateDeltaBars, createPostRequest } from "src/utils";
 import { TextField, InputAdornment, InputLabel, MenuItem, FormControl, Select } from '@mui/material';
 
@@ -13,7 +13,7 @@ type Timeframe = typeof TIMEFRAMES[number];
 
 interface BacktesterProps {
     customClass: string;
-    instruments: string[];
+    instruments: any[];
     timeoffset: number;
 }
 
@@ -121,7 +121,7 @@ const Backtester: React.FC<BacktesterProps> = ({ customClass, instruments, timeo
                         value={selectedInstrument}
                         onChange={(e) => updateChart(e.target.value as string)}
                     >
-                        {instruments.map((instrument, index) => (
+                        {Object.keys(instruments).map((instrument, index) => (
                             <MenuItem key={index} value={instrument}>
                                 {instrument}
                             </MenuItem>

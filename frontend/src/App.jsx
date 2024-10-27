@@ -5,16 +5,16 @@ import 'react-tabs/style/react-tabs.css';
 import "src/css/App.css";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import Symbols from "src/tabs/Symbols";
-import Trader from "src/tabs/Trader";
-import History from "src/tabs/History";
-import Charter from "src/tabs/Charter";
-import Backtester from "src/tabs/Backtester";
-import TopBar from "src/tabs/TopBar";
+import Symbols from "src/complex/Symbols";
+import Trader from "src/complex/Trader";
+import History from "src/complex/History";
+import Charter from "src/complex/Charter";
+import Backtester from "src/complex/Backtester";
+import TopBar from "src/elements/TopBar";
 import SlidingPane from "src/elements/SlidingPane";
 import MiscCheckbox from "src/elements/Misc";
 import Commander from "src/Commander";
-import Orders from "src/tabs/Orders";
+import Orders from "src/complex/Orders";
 
 
 const darkTheme = createTheme({
@@ -22,26 +22,6 @@ const darkTheme = createTheme({
     mode: 'dark',
   },
 });
-
-function helperChange(value, updates, key) {
-  if (updates.includes(key)) {
-    return value[value.length - 1] >= 0 ? 'positive' : 'negative';
-  }
-  return '';
-}
-
-function mapInstruments(data) {
-  return Object.keys(data)
-}
-
-function mapTerminalData(data, updates) {
-  return Object.entries(data).map(([key, value]) => ({
-    id: key,
-    items: value,
-    updated: updates.includes(key),
-    change: helperChange(value, updates, key)
-  }));
-}
 
 class App extends Component {
   constructor(props) {
@@ -225,7 +205,8 @@ class App extends Component {
                     customClass={this.THEME}
                     account={terminalData.account}
                     headers={terminalData.headers}
-                    data={mapTerminalData(terminalData.instruments, terminalData.updates)}
+                    instruments={terminalData.instruments}
+                    updates={terminalData.updates}
                     handlers={{
                       setId: (id) => {
                         this.fetchSymbolData(id);
@@ -248,7 +229,7 @@ class App extends Component {
                   <Orders
                     customClass={this.THEME}
                     headers={terminalData.op_headers}
-                    data={mapTerminalData(terminalData.open, terminalData.updates)}
+                    open={terminalData.open}
                     handlers={{closeOrder: this.handleCloseOrder}}
                   />
                 }
@@ -276,7 +257,7 @@ class App extends Component {
               <History customClass={this.THEME} />
             </TabPanel>
             <TabPanel>
-              <Backtester customClass={this.THEME} instruments={mapInstruments(terminalData.instruments)} timeoffset={terminalData.timeoffset} />
+              <Backtester customClass={this.THEME} instruments={terminalData.instruments} timeoffset={terminalData.timeoffset} />
             </TabPanel>
           </Tabs>
         </ThemeProvider>

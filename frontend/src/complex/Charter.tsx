@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, MutableRefObject } from "react";
 import Grid from "src/elements/Grid";
-import DynamicChart from "src/tabs/DynamicChart";
+import DynamicChart from "src/elements/DynamicChart";
 import { mergeArray, calculateDeltaDays } from "src/utils";
 
 const DAYS = 50

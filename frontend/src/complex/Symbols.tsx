@@ -1,14 +1,15 @@
 import React from "react";
-import Table from "src/elements/Table";
+import Table, {mapTerminalData} from "src/elements/table/Table";
 
 interface SymbolsProps {
     customClass: string;
     headers: string[];
-    data: { id: string, items: any[], change: string }[];
+    instruments: any[][]
+    updates: string[];
     handlers: { setId: (id: string) => void };
 }
 
-const Symbols: React.FC<SymbolsProps> = ({ customClass, headers, data, handlers }) => {
+const Symbols: React.FC<SymbolsProps> = ({ customClass, headers, instruments, updates, handlers }) => {
     const handleOnClick = (id: string, items: any[]) => {
         handlers.setId(id);
     };
@@ -17,7 +18,7 @@ const Symbols: React.FC<SymbolsProps> = ({ customClass, headers, data, handlers 
         <Table customClass={customClass}
             customHeaderClass=" css-orange-background"
             headers={headers}
-            data={data}
+            data={mapTerminalData(instruments, updates)}
             onRowClick={handleOnClick}
         />
     );

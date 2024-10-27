@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Calculator, Trade } from "src/tabs/Calculator";
+import { Calculator, Trade } from "src/complex/Calculator";
 import { createPostRequest } from "src/utils";
 
 const SPREADMULTIPLIFER = 5;

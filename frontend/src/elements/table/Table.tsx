@@ -1,6 +1,6 @@
 import React from "react";
-import TableHeads from "src/elements/TableHeads";
-import TableRows from "src/elements/TableRows";
+import TableHeads from "src/elements/table/TableHeads";
+import TableRows from "src/elements/table/TableRows";
 
 interface TableProps {
     customClass: string;
@@ -10,6 +10,23 @@ interface TableProps {
     onRowClick?: (id: string, items: any[]) => void;
     onHeaderClick?: (index: number) => void;
 }
+
+function identifyChange(value:any, updates:string[], key:string) {
+    if (updates.includes(key)) {
+      return value[value.length - 1] >= 0 ? 'positive' : 'negative';
+    }
+    return '';
+  }
+
+export function mapTerminalData(data:any[][], updates:any[]=[]) {
+    return Object.entries(data).map(([key, value]) => ({
+      id: key,
+      items: value,
+      updated: updates.includes(key),
+      change: identifyChange(value, updates, key)
+    }));
+  }
+
 
 const Table: React.FC<TableProps> = ({ customClass, customHeaderClass, headers, data, onRowClick, onHeaderClick }) => {
     const [sortConfig, setSortConfig] = React.useState<{ key: number, direction: 'ascending' | 'descending' }>({ key: 0, direction: 'ascending' });

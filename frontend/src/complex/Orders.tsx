@@ -5,19 +5,19 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import Table from "src/elements/Table";
+import Table, { mapTerminalData } from "src/elements/table/Table";
 
 
 interface OrdersProps {
     customClass: string;
     headers: string[];
-    data: { id: string, items: any[], change: string }[];
+    open: any[][];
     handlers: {
         closeOrder: (type: string, name: string, id: number, volume: number) => void;
     };
 }
 
-const Orders: React.FC<OrdersProps> = ({ customClass, headers, data, handlers }) => {
+const Orders: React.FC<OrdersProps> = ({ customClass, headers, open, handlers }) => {
     const [dialogData, setDialogData] = useState({
         type: "",
         state: false,
@@ -78,7 +78,7 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, data, handlers })
             <Table customClass={customClass}
                     customHeaderClass="css-green-background"
                     headers={headers}
-                    data={data}
+                    data={mapTerminalData(open)}
                     onRowClick={handleRowClick}
             />
         </>

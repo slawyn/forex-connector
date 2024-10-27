@@ -53,7 +53,10 @@ button {
 
 
 .clsBorderless td:nth-child(8),
-.clsBorderless td:nth-child(9){
+.clsBorderless td:nth-child(9),
+.clsBorderless td:nth-child(12),
+.clsBorderless td:nth-child(13)
+{
   background-color:#3410ff53
 }
 
