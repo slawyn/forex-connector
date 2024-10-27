@@ -81,7 +81,6 @@ class Trader:
             time_difference_ms = (end_ms - start_ms)
 
             start_ms = time_go_back_n_weeks(start_ms, 1)
-            # start_ms -= (time_difference_ms*4)
             end_ms += (time_difference_ms/2)
 
             if end_ms > int(round(time.time() * 1000)):

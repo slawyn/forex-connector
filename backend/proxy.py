@@ -91,7 +91,6 @@ class App(Flask):
         return []
 
     def show_closed_positions(self):
-        """Gets closed positions with headers"""
         start_date = convert_string_to_date(self.cfg.get_google_startdate())
         positions = self.trader.get_history_positions(start_date, only_finished=True)
         return ClosedPosition.get_info_header(), [positions[p].get_info() for p in positions]

@@ -88,7 +88,7 @@ class MetatraderApi:
             code = mt5.last_error()[0]
             if code != 1:
                 data = []
-                raise Exception(f"{__class__.__name__}: During fetching of rates {symbol_name} {mt5.last_error()}")
+                raise Exception(f"{__class__.__name__}: During fetching of rates symbol:{symbol_name} timeframe:{frame} error:{mt5.last_error()}")
         except Exception as e:
             loge(e)
         return Rate.add(data)

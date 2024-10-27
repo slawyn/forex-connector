@@ -1,6 +1,6 @@
 import datetime
 
-from helpers import loge, log
+from helpers import loge, log, convert_timestamp_ms_to_date_formatted, convert_delta_ms_to_formatted_string
 from components.rate import Rate
 
 
@@ -87,6 +87,8 @@ class ClosedPosition:
     DEAL_TYPES = {0: "BUY", 1: "SELL"}
     HEADER = ["ID",
               "SYMBOL",
+              "START",
+              "DURATION",
               "VOLUME",
               "OPEN",
               "CLOSE",
@@ -318,16 +320,16 @@ class ClosedPosition:
 
     def get_info(self):
         data = []
-
         data.append(self.id)
         data.append(self.symbol)
+        data.append(convert_timestamp_ms_to_date_formatted(self.get_start_ms()))
+        data.append(convert_delta_ms_to_formatted_string(self.get_end_ms()-self.get_start_ms()))
         data.append(self.closing_volume)
         data.append(self.price_open_avg)
         data.append(self.price_close_avg)
         data.append(self.profit_total)
         data.append(self.sell_or_buy)
         data.append(self.comment)
-
         return data
 
     def to_json(self):

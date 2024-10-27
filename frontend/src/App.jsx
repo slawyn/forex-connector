@@ -15,13 +15,14 @@ import SlidingPane from "src/elements/SlidingPane";
 import MiscCheckbox from "src/elements/Misc";
 import Commander from "src/Commander";
 import Orders from "src/complex/Orders";
+import {randomIntFromInterval} from "src/utils"
 
 
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
+const darkTheme = createTheme({ palette: { mode: 'dark' } });
+const THEME = "clsBorderless";
+const TIMESTAMP_MS_BASE = Date.parse('01/01/2020 00:00:00')
+const TIMEFRAMES = ["D1", "H4", "M20"];
+
 
 class App extends Component {
   constructor(props) {
@@ -29,34 +30,19 @@ class App extends Component {
     this.KEY_OC_SYMBOLS = "s";
     this.KEY_GET_SYMBOLS = "f";
     this.KEY_OC_ORDERS = "o";
-    this.THEME = "clsBorderless";
-
     this.commander = new Commander();
     this.state = {
-      calculatorState: {
-        instrument: "",
-        calculator: {}
-      },
-      symbolData: {
-        info: { name: "", ask: 0, bid: 0, step: 0, volume_step: 0, point_value: 0, digits: 0 },
-      },
-      paneState: {
-        symbols: false,
-        orders: false,
-      },
-      terminalData: {
-        date: "",
-        timeoffset: 0,
-        account: [],
-        headers: [],
-        instruments: {},
-        updates: {},
-        op_headers: [],
-        open: {},
-      },
-      errorData: { error: 0, text: "" },
+      calculatorState: { instrument: "", calculator: {} },
+      symbolData: { info: { name: "", ask: 0, bid: 0, step: 0, volume_step: 0, point_value: 0, digits: 0 } },
+      paneState: { symbols: false, orders: false },
+      terminalData: { date: "", timeoffset: 0, account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} },
+      errorData: { error: 0, text: "" }
     };
 
+    this.simulation = {
+      isEnabled:false,
+      timeoffset:0
+    }
     this.intervalRef = null;
     this.traderRef = React.createRef();
   }
@@ -75,42 +61,36 @@ class App extends Component {
   }
 
   handleKeyPress = (event) => {
-    switch (event.key) {
-      case this.KEY_OC_SYMBOLS:
-        this.toggleSymbolsPane();
-        break;
-      case this.KEY_GET_SYMBOLS:
-        this.fetchTerminalData(true);
-        break;
-      case this.KEY_OC_ORDERS:
-        this.toggleOrdersPane();
-        break;
-      default:
-        break;
-    }
+    const actions = {
+      [this.KEY_OC_SYMBOLS]: () => this.togglePane('symbols'),
+      [this.KEY_GET_SYMBOLS]: () => this.fetchTerminalData(true),
+      [this.KEY_OC_ORDERS]: () => this.togglePane('orders')
+    };
+    actions[event.key]?.();
   }
-  handleCloseOrder =(...args) =>{
+
+  handleCloseOrder = (...args) => {
     this.traderRef.current?.handleCloseTrade(...args)
   }
 
-  toggleSymbolsPane() {
+  toggleSimulation(state) {
+    this.simulation.isEnabled = state
+    if (this.simulation.isEnabled) {
+      this.simulation.timeoffset = randomIntFromInterval(TIMESTAMP_MS_BASE, Date.now()) - Date.now()
+      console.log(this.simulation.timeoffset)
+    } else {
+      this.simulation.timeoffset = 0
+    } 
+  }
+
+  togglePane(pane) {
     this.setState((prevState) => ({
       paneState: {
         ...prevState.paneState,
-        symbols: !prevState.paneState.symbols
+        [pane]: !prevState.paneState[pane]
       }
     }));
-  };
-
-  toggleOrdersPane() {
-
-    this.setState((prevState) => ({
-      paneState: {
-        ...prevState.paneState,
-        orders: !prevState.paneState.orders
-      }
-    }));
-  };
+  }
 
   startDataFetchInterval = () => {
     this.intervalRef = setInterval(() => {
@@ -125,15 +105,10 @@ class App extends Component {
         this.setState((prevState) => ({
           terminalData: {
             ...prevState.terminalData,
-            date: receivedTerminalData.date,
-            timeoffset: receivedTerminalData.timeoffset,
-            account: receivedTerminalData.account,
-            headers: receivedTerminalData.headers,
+            ...receivedTerminalData,
             instruments: { ...prevState.terminalData.instruments, ...receivedTerminalData.instruments },
             updates: Object.keys(receivedTerminalData.instruments),
-            op_headers: receivedTerminalData.op_headers,
-            open: receivedTerminalData.open,
-          },
+          }
         }));
       })
     );
@@ -149,8 +124,9 @@ class App extends Component {
     }
   };
 
-  getTimeOffset() {
-    return this.state.terminalData.timeoffset
+  getCurrentTime(){
+    const currentBrokerTime = Date.now() + this.state.terminalData.timeoffset + this.simulation.timeoffset;
+    return currentBrokerTime
   }
 
   render() {
@@ -173,6 +149,11 @@ class App extends Component {
                 handler={(state) => {
                   this.commander.setCommand({ preview: state });
                 }}
+              />
+              <MiscCheckbox
+                customClass={"css-button-checkbox"}
+                text="Sim"
+                handler={(state) => { this.toggleSimulation(state) }}
               />
               <button className={"css-blue-button"} onClick={() => this.fetchTerminalData(true)}>
                 [{this.KEY_GET_SYMBOLS}]etch Symbols
@@ -202,7 +183,7 @@ class App extends Component {
                 isOpen={paneState.symbols}
                 child={
                   <Symbols
-                    customClass={this.THEME}
+                    customClass={THEME}
                     account={terminalData.account}
                     headers={terminalData.headers}
                     instruments={terminalData.instruments}
@@ -227,16 +208,16 @@ class App extends Component {
                 isOpen={paneState.orders}
                 child={
                   <Orders
-                    customClass={this.THEME}
+                    customClass={THEME}
                     headers={terminalData.op_headers}
                     open={terminalData.open}
-                    handlers={{closeOrder: this.handleCloseOrder}}
+                    handlers={{ closeOrder: this.handleCloseOrder }}
                   />
                 }
               />
               <Trader
                 ref={this.traderRef}
-                customClass={this.THEME}
+                customClass={THEME}
                 account={terminalData.account}
                 symbol={symbolData.info}
                 handlers={{
@@ -251,13 +232,13 @@ class App extends Component {
                   },
                 }}
               />
-              <Charter symbol={symbolData.info} calculator={calculatorState.calculator} timeoffset={terminalData.timeoffset} />
+              <Charter symbol={symbolData.info} calculator={calculatorState.calculator} currentTime={this.getCurrentTime()} timeframes={TIMEFRAMES}/>
             </TabPanel>
             <TabPanel>
-              <History customClass={this.THEME} />
+              <History customClass={THEME} />
             </TabPanel>
             <TabPanel>
-              <Backtester customClass={this.THEME} instruments={terminalData.instruments} timeoffset={terminalData.timeoffset} />
+              <Backtester customClass={THEME} instruments={terminalData.instruments} timeoffset={terminalData.timeoffset} />
             </TabPanel>
           </Tabs>
         </ThemeProvider>

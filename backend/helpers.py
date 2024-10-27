@@ -79,6 +79,17 @@ def utc_convert_to_utc(timestamp_s):
     return datetime.datetime.utcfromtimestamp(timestamp_s)
 
 
+def convert_timestamp_ms_to_date_formatted(timestamp_ms):
+    date_time = datetime.datetime.fromtimestamp(timestamp_ms/1000.0)
+    return date_time.strftime('%y.%m.%d [%H:%M:%S]')
+
+def convert_delta_ms_to_formatted_string(delta_ms):
+    hours = int(delta_ms/ 1000.0/3600) 
+    minutes = int(delta_ms/1000.0/60)%60
+    seconds = int(delta_ms/1000.0)%60
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+
 def convert_timestamp_to_date(timestamp_s, offset=0):
     return datetime.datetime.fromtimestamp(timestamp_s + offset)
 

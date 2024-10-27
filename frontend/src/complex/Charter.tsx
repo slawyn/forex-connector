@@ -4,9 +4,7 @@ import DynamicChart from "src/elements/DynamicChart";
 import { mergeArray, calculateDeltaDays } from "src/utils";
 
 const DAYS = 50
-const TIMEFRAMES = ["D1", "H4", "M6"] as const;
-
-type Timeframe = typeof TIMEFRAMES[number];
+type Timeframe = string;
 
 interface Calculator {
     sl: number;
@@ -27,12 +25,11 @@ interface Rates {
 
 async function fetchRates(
     timeframes: Record<Timeframe, number>,
-    timeoffset: number,
+    currentTime: number,
     instrument: string,
     rates: Rates,
     updateRatesHandler: (mergedData: any) => void
 ): Promise<void> {
-    const currentTime = Date.now() + timeoffset;
     const promises = Object.entries(timeframes).map(async ([timeframe, duration]) => {
         let start = currentTime - duration;
         const end = currentTime;
@@ -59,11 +56,11 @@ function createTimeframeConfig(timeframes: Timeframe[]): Record<Timeframe, numbe
 interface CharterProps {
     calculator: Calculator;
     symbol: Symbol;
-    timeoffset: number;
+    currentTime: number;
 }
 
-const Charter: React.FC<CharterProps> = ({ calculator, symbol, timeoffset }) => {
-    const config = useMemo(() => createTimeframeConfig(TIMEFRAMES), []);
+const Charter: React.FC<CharterProps> = ({ calculator, symbol, currentTime, timeframes }) => {
+    const config = useMemo(() => createTimeframeConfig(timeframes), []);
     const refCharts = useRef<MutableRefObject<any>[]>(Object.entries(config).map(() => React.createRef()));
     const localSymbol = useRef(symbol);
     const localCalculator = useRef(calculator);
@@ -76,7 +73,7 @@ const Charter: React.FC<CharterProps> = ({ calculator, symbol, timeoffset }) => 
             });
         }
         localSymbol.current = symbol;
-        fetchRates(config, timeoffset, localSymbol.current.name, localRates.current, updateRates);
+        fetchRates(config, currentTime, localSymbol.current.name, localRates.current, updateRates);
     }
 
     if (calculator && localCalculator.current !== calculator) {

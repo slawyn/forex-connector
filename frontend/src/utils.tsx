@@ -6,7 +6,11 @@ const hoursInDay = 24;
 const deltaTable = {
     D1: millisecondsInSecond * secondsInMinute * minutesInHour * hoursInDay,
     H4: millisecondsInSecond * secondsInMinute * minutesInHour * 4,
+    H1: millisecondsInSecond * secondsInMinute * minutesInHour * 1,
+    M30: millisecondsInSecond * secondsInMinute * 30,
     M20: millisecondsInSecond * secondsInMinute * 20,
+    M15: millisecondsInSecond * secondsInMinute * 15,
+    M10: millisecondsInSecond * secondsInMinute * 10,
     M6: millisecondsInSecond * secondsInMinute * 6,
     M5: millisecondsInSecond * secondsInMinute * 5,
     M1: millisecondsInSecond * secondsInMinute,
@@ -44,4 +48,8 @@ export function createPostRequest(body: Record<string, any>): RequestInit {
         },
         body: JSON.stringify(body), // Ensure body is a string
     };
+}
+
+export function randomIntFromInterval(min:number, max:number) { 
+    return Math.floor(Math.random() * (max - min + 1) + min);
 }
