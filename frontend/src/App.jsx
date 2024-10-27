@@ -12,8 +12,10 @@ import Charter from "src/tabs/Charter";
 import Backtester from "src/tabs/Backtester";
 import TopBar from "src/tabs/TopBar";
 import SlidingPane from "src/elements/SlidingPane";
-import MiscCheckbox from "src/Misc";
+import MiscCheckbox from "src/elements/Misc";
 import Commander from "src/Commander";
+import Orders from "src/tabs/Orders";
+
 
 const darkTheme = createTheme({
   palette: {
@@ -44,9 +46,9 @@ function mapTerminalData(data, updates) {
 class App extends Component {
   constructor(props) {
     super(props);
-
-    this.KEY_OC_TABLE = "t";
-    this.KEY_GET_SYMBOLS = "s";
+    this.KEY_OC_SYMBOLS = "s";
+    this.KEY_GET_SYMBOLS = "f";
+    this.KEY_OC_ORDERS = "o";
     this.THEME = "clsBorderless";
 
     this.commander = new Commander();
@@ -58,7 +60,10 @@ class App extends Component {
       symbolData: {
         info: { name: "", ask: 0, bid: 0, step: 0, volume_step: 0, point_value: 0, digits: 0 },
       },
-      paneState: false,
+      paneState: {
+        symbols: false,
+        orders: false,
+      },
       terminalData: {
         date: "",
         timeoffset: 0,
@@ -73,6 +78,7 @@ class App extends Component {
     };
 
     this.intervalRef = null;
+    this.traderRef = React.createRef();
   }
 
   componentDidMount() {
@@ -90,20 +96,39 @@ class App extends Component {
 
   handleKeyPress = (event) => {
     switch (event.key) {
-      case this.KEY_OC_TABLE:
-        this.togglePane();
+      case this.KEY_OC_SYMBOLS:
+        this.toggleSymbolsPane();
         break;
       case this.KEY_GET_SYMBOLS:
         this.fetchTerminalData(true);
         break;
+      case this.KEY_OC_ORDERS:
+        this.toggleOrdersPane();
+        break;
       default:
         break;
     }
+  }
+  handleCloseOrder =(...args) =>{
+    this.traderRef.current?.handleCloseTrade(...args)
+  }
+
+  toggleSymbolsPane() {
+    this.setState((prevState) => ({
+      paneState: {
+        ...prevState.paneState,
+        symbols: !prevState.paneState.symbols
+      }
+    }));
   };
 
-  togglePane = () => {
+  toggleOrdersPane() {
+
     this.setState((prevState) => ({
-      paneState: !prevState.paneState,
+      paneState: {
+        ...prevState.paneState,
+        orders: !prevState.paneState.orders
+      }
     }));
   };
 
@@ -170,10 +195,13 @@ class App extends Component {
                 }}
               />
               <button className={"css-blue-button"} onClick={() => this.fetchTerminalData(true)}>
-                Get Symbols[{this.KEY_GET_SYMBOLS}]
+                [{this.KEY_GET_SYMBOLS}]etch Symbols
               </button>
-              <button className={"css-blue-button"} onClick={this.togglePane}>
-                Show Symbols[{this.KEY_OC_TABLE}]
+              <button className={"css-blue-button"} onClick={this.toggleSymbolsPane}>
+                Show [{this.KEY_OC_SYMBOLS}]ymbols
+              </button>
+              <button className={"css-blue-button"} onClick={this.toggleOrdersPane}>
+                Show [{this.KEY_OC_ORDERS}]rders
               </button>
               <TopBar
                 customClass="top-bar"
@@ -190,8 +218,8 @@ class App extends Component {
             </nav>
             <TabPanel>
               <SlidingPane
-                customClass={"sliding-pane"}
-                isOpen={paneState}
+                customClass={"sliding-pane-left"}
+                isOpen={paneState.symbols}
                 child={
                   <Symbols
                     customClass={this.THEME}
@@ -213,18 +241,28 @@ class App extends Component {
                   />
                 }
               />
+              <SlidingPane
+                customClass={"sliding-pane-right"}
+                isOpen={paneState.orders}
+                child={
+                  <Orders
+                    customClass={this.THEME}
+                    headers={terminalData.op_headers}
+                    data={mapTerminalData(terminalData.open, terminalData.updates)}
+                    handlers={{closeOrder: this.handleCloseOrder}}
+                  />
+                }
+              />
               <Trader
+                ref={this.traderRef}
                 customClass={this.THEME}
                 account={terminalData.account}
                 symbol={symbolData.info}
-                headers={terminalData.op_headers}
-                data={mapTerminalData(terminalData.open, terminalData.updates)}
                 handlers={{
                   setErrorData: (errorData) => this.setState({ errorData }),
                   setCommand: (ask, bid, sl, tp) => {
                     this.setState((prevState) => ({
                       calculatorState: {
-                        ...prevState.calculatorState,
                         calculator: { ask, bid, sl, tp }
                       },
                     }));

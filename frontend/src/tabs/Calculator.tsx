@@ -1,35 +1,37 @@
 import { TextField, InputAdornment, InputLabel, MenuItem, FormControl, Select } from '@mui/material';
 import * as React from 'react';
 
-interface Trade {
-    name: string;
-    contract_size: number;
-    point_value: number;
-    volume_step: number;
-    digits: number;
-    tick_size: number;
-    tick_value: number;
-    type: string;
-    risk_volume: number;
-    risk: number;
-    risk_step: number;
-    ratio: number;
-    ratio_step: number;
-    ask: number;
-    bid: number;
-    points: number;
-    comment: string;
+export interface Trade {
+  name: string;
+  type: string;
+  risk: number;
+  ratio: number;
+  ratio_step: number;
+  bid: number;
+  ask: number;
+  risk_volume: number;
+  volume_step: number;
+  risk_step: number;
+  balance: number;
+  point_value: number;
+  contract_size: number;
+  points: number;
+  digits: number;
+  tick_size: number;
+  tick_value: number;
+  conversion: boolean;
+  comment?: string;
 }
 
 interface Handlers {
-    handleOpenTrade: () => void;
-    handleTypeChange: (value: string) => void;
-    handleVolumeChange: (value: number) => void;
-    handleRiskChange: (value: number) => void;
-    handleRatioChange: (value: number) => void;
-    handleAskChange: (value: number) => void;
-    handleBidChange: (value: number) => void;
-    handleCommentChange: (value: string) => void;
+    openTrade: () => void;
+    typeChange: (value: string) => void;
+    volumeChange: (value: number) => void;
+    riskChange: (value: number) => void;
+    ratioChange: (value: number) => void;
+    askChange: (value: number) => void;
+    bidChange: (value: number) => void;
+    commentChange: (value: string) => void;
 }
 
 interface CalculatorProps {
@@ -39,19 +41,19 @@ interface CalculatorProps {
     handlers: Handlers;
 }
 
-const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, handlers }) => {
+export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, handlers }) => {
     return (
         <table className={customClass}>
             <thead>
                 <tr>
                     <th className={customClass}>{trade.name}</th>
-                    <th className={customClass}>Contract Size: {trade.contract_size}</th>
-                    <th className={customClass}>Point Value: {trade.point_value}</th>
-                    <th className={customClass}>Volume Step: {trade.volume_step}</th>
-                    <th className={customClass}>Digits: {trade.digits}</th>
-                    <th className={customClass}>Tick Size: {trade.tick_size}</th>
-                    <th className={customClass}>Tick Value: {trade.tick_value}</th>
-                    <th className="css-blue-button property-fullsize" onClick={handlers.handleOpenTrade}>
+                    <th title="Volume Step" className={customClass}>VS: {trade.volume_step}</th>
+                    <th title="Contract Size" className={customClass}>CS: {trade.contract_size}</th>
+                    <th title="Point Value" className={customClass}>PV: {trade.point_value}</th>
+                    <th title="Digits Count" className={customClass}>DC: {trade.digits}</th>
+                    <th title="Tick Size" className={customClass}>TS: {trade.tick_size}</th>
+                    <th title="Tick Value" className={customClass}>TV: {trade.tick_value}</th>
+                    <th title="" className="css-blue-button property-fullsize" onClick={handlers.openTrade}>
                         {"Execute Trade"}
                     </th>
                 </tr>
@@ -66,7 +68,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                                 id="order-type-select"
                                 label="Order type"
                                 value={trade.type}
-                                onChange={(e) => handlers.handleTypeChange(e.target.value)}
+                                onChange={(e) => handlers.typeChange(e.target.value)}
                             >
                                 {types.map((type, index) => (
                                     <MenuItem key={index} value={type}>
@@ -83,7 +85,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             value={trade.risk_volume}
                             variant="outlined"
                             label="Risk Volume"
-                            onChange={(e) => handlers.handleVolumeChange(parseFloat(e.target.value))}
+                            onChange={(e) => handlers.volumeChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">LOT</InputAdornment>,
@@ -98,7 +100,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             value={trade.risk}
                             variant="outlined"
                             label="Risk"
-                            onChange={(e) => handlers.handleRiskChange(parseFloat(e.target.value))}
+                            onChange={(e) => handlers.riskChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">%</InputAdornment>,
@@ -113,7 +115,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             value={trade.ratio}
                             variant="outlined"
                             label="Risk Ratio"
-                            onChange={(e) => handlers.handleRatioChange(parseFloat(e.target.value))}
+                            onChange={(e) => handlers.ratioChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">%</InputAdornment>,
@@ -128,7 +130,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             type="number"
                             value={trade.ask}
                             variant="outlined"
-                            onChange={(e) => handlers.handleAskChange(parseFloat(e.target.value))}
+                            onChange={(e) => handlers.askChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">Price</InputAdornment>,
@@ -142,7 +144,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             type="number"
                             value={trade.bid}
                             variant="outlined"
-                            onChange={(e) => handlers.handleBidChange(parseFloat(e.target.value))}
+                            onChange={(e) => handlers.bidChange(parseFloat(e.target.value))}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                             }}
@@ -164,7 +166,7 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
                             id="trade-comment"
                             label="Comment"
                             value={trade.comment}
-                            onChange={(e) => handlers.handleCommentChange(e.target.value)}
+                            onChange={(e) => handlers.commentChange(e.target.value)}
                         />
                     </td>
                 </tr>
@@ -173,4 +175,3 @@ const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, trade, han
     );
 };
 
-export default Calculator;

@@ -19,8 +19,7 @@ interface OrdersProps {
     headers: string[];
     data: Order[];
     handlers: {
-        handleCloseTrade: (type: string, name: string, id: number, volume: number) => void;
-        setId: (id: number) => void;
+        closeOrder: (type: string, name: string, id: number, volume: number) => void;
     };
 }
 
@@ -37,7 +36,7 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, data, handlers })
 
     const handleDialogClose = (confirm: boolean) => {
         if (confirm) {
-            handlers.handleCloseTrade(
+            handlers.closeOrder(
                 dialogData.type,
                 dialogData.name,
                 dialogData.id,
@@ -84,7 +83,7 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, data, handlers })
             </Dialog>
             <table className={customClass} style={{ width: "100%" }}>
                 <TableHeads
-                    customClass={customClass}
+                    customClass={`${customClass} css-green-background`}
                     data={headers}
                     onHeaderClick={() => {}}
                 />

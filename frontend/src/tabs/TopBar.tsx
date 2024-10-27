@@ -21,14 +21,14 @@ const TopBar: React.FC<TopBarProps> = ({ customClass, company, balance, currency
         <table className={customClass}>
             <tbody>
                 <tr>
-                    <td className={customClass}>Company: {company}</td>
-                    <td className={customClass}>Balance: {balance}{currency}</td>
-                    <td className={customClass}>Login: {login}</td>
-                    <td className={customClass}>Server: {server}</td>
-                    <td className={customClass}>Profit: {profit}</td>
-                    <td className={customClass}>Leverage: {leverage}</td>
-                    <td className={customClass}>Date: {date}</td>
-                    <td className={customClass}>Last Status: {error.error} [{error.text}]</td>
+                    <td title="Company" className={customClass}>{company}</td>
+                    <td title="Balance" className={customClass}>{balance}{currency}</td>
+                    <td title="Login" className={customClass}>{login}</td>
+                    <td title="Server" className={customClass}>{server}</td>
+                    <td title="Profit" className={customClass}>{profit}</td>
+                    <td title="Leverage" className={customClass}>{leverage}</td>
+                    <td title="Date" className={customClass}>{date}</td>
+                    <td title="Last Status" className={customClass}>{error.error} [{error.text}]</td>
                 </tr>
             </tbody>
         </table>

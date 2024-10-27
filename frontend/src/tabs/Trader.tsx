@@ -1,30 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
-import Orders from "src/tabs/Orders";
-import Calculator from "src/tabs/Calculator";
+import React, { Component } from "react";
+import { Calculator, Trade } from "src/tabs/Calculator";
 import { createPostRequest } from "src/utils";
 
 const SPREADMULTIPLIFER = 5;
+const INITIAL_RISK_PERCENTAGE = 1.0;
 
-interface Trade {
-  name: string;
-  type: string;
-  risk: number;
-  ratio: number;
-  ratio_step: number;
-  bid: number;
-  ask: number;
-  risk_volume: number;
-  volume_step: number;
-  risk_step: number;
-  balance: number;
-  point_value: number;
-  contract_size: number;
-  points: number;
-  digits: number;
-  tick_size: number;
-  tick_value: number;
-  conversion: boolean;
-  comment?: string;
+function round(number: number, digits: number): number {
+  const d = Math.pow(10, digits);
+  return Math.round((number + Number.EPSILON) * d) / d;
 }
 
 interface Symbol {
@@ -58,215 +41,237 @@ interface TraderProps {
   handlers: Handlers;
 }
 
-function round(number: number, digits: number) {
-  const d = Math.pow(10, digits);
-  return Math.round((number + Number.EPSILON) * d) / d;
+interface TraderState {
+  trade: Trade;
 }
 
-function calculatePoints(
-  ask: number,
-  riskAmount: number,
-  contractSize: number,
-  pointValue: number,
-  riskLot: number,
-  conversion: boolean
-) {
-  if (conversion) {
-    pointValue = 1 / ask;
+class Trader extends Component<TraderProps, TraderState> {
+  REQUEST_BUILD_HANDLERS: Record<string, Function>;
+  isInternalUpdate: boolean;
+  isPriceFrozen: boolean;
+
+  constructor(props: TraderProps) {
+    super(props);
+
+    this.state = {
+      trade: {
+        name: "",
+        type: "",
+        risk: INITIAL_RISK_PERCENTAGE,
+        ratio: 2.25,
+        ratio_step: 0.25,
+        bid: 0.0,
+        ask: 0.0,
+        risk_volume: 0.0,
+        volume_step: 0,
+        risk_step: 0.25,
+        balance: 0,
+        point_value: 0,
+        contract_size: 0,
+        points: 0,
+        digits: 0,
+        tick_size: 0,
+        tick_value: 0,
+        conversion: false,
+      },
+    };
+
+    this.isPriceFrozen = false,
+      this.isInternalUpdate = false
+
+    this.REQUEST_BUILD_HANDLERS = {
+      market_buy: this.buildBuyRequest,
+      limit_buy: this.buildBuyStopLimitRequest,
+      stop_buy: this.buildBuyStopLimitRequest,
+      market_sell: this.buildSellRequest,
+      limit_sell: this.buildSellStopLimitRequest,
+      stop_sell: this.buildSellStopLimitRequest,
+    };
   }
-  return riskAmount / (contractSize * pointValue * riskLot);
-}
 
-function calculateInitialRisk(
-  ask: number,
-  bid: number,
-  riskAmount: number,
-  contractSize: number,
-  pointValue: number,
-  volumeStep: number,
-  conversion: boolean
-) {
-  if (conversion) {
-    pointValue = 1 / ask;
+
+
+  calculatePoints(
+    ask: number,
+    riskAmount: number,
+    contractSize: number,
+    pointValue: number,
+    riskLot: number,
+    conversion: boolean
+  ): number {
+    if (conversion) {
+      pointValue = 1 / ask;
+    }
+    return riskAmount / (contractSize * pointValue * riskLot);
   }
 
-  const priceRisk = (ask - bid) * SPREADMULTIPLIFER;
-  const riskLot = riskAmount / (contractSize * pointValue * priceRisk);
-  const initialRiskLot = Math.trunc(riskLot / volumeStep) * volumeStep;
-  return priceRisk <= 0 || initialRiskLot < volumeStep ? volumeStep : initialRiskLot;
-}
+  calculateInitialRisk(
+    ask: number,
+    bid: number,
+    riskAmount: number,
+    contractSize: number,
+    pointValue: number,
+    volumeStep: number,
+    conversion: boolean
+  ): number {
+    if (conversion) {
+      pointValue = 1 / ask;
+    }
 
-function buildBaseRequest(symbol: string, type: string, lot: number, comment: string) {
-  return { symbol, lot, comment, type };
-}
+    const priceRisk = (ask - bid) * SPREADMULTIPLIFER;
+    const riskLot = riskAmount / (contractSize * pointValue * priceRisk);
+    const initialRiskLot = Math.trunc(riskLot / volumeStep) * volumeStep;
+    return priceRisk <= 0 || initialRiskLot < volumeStep ? volumeStep : initialRiskLot;
+  }
 
-function buildBuyRequest(
-  request: any,
-  ask: number,
-  bid: number,
-  points: number,
-  digits: number,
-  ratio: number
-) {
-  request.price = ask;
-  request.stoploss = round(ask - points, digits);
-  request.takeprofit = round(ask + points * ratio, digits);
-  return request;
-}
+  buildBaseRequest(symbol: string, type: string, lot: number, comment: string) {
+    return { symbol, lot, comment, type };
+  }
 
-function buildBuyStopLimitRequest(
-  request: any,
-  ask: number,
-  bid: number,
-  points: number,
-  digits: number,
-  ratio: number
-) {
-  request.price = ask;
-  request.stoploss = round(ask - points, digits);
-  request.takeprofit = round(ask + points * ratio, digits);
-  request.pending = true;
-  return request;
-}
+  buildBuyRequest(
+    request: any,
+    ask: number,
+    bid: number,
+    points: number,
+    digits: number,
+    ratio: number
+  ) {
+    request.price = ask;
+    request.stoploss = round(ask - points, digits);
+    request.takeprofit = round(ask + points * ratio, digits);
+    return request;
+  }
 
-function buildSellRequest(
-  request: any,
-  ask: number,
-  bid: number,
-  points: number,
-  digits: number,
-  ratio: number
-) {
-  request.price = bid;
-  request.stoploss = round(bid + points, digits);
-  request.takeprofit = round(bid - points * ratio, digits);
-  return request;
-}
+  buildBuyStopLimitRequest(
+    request: any,
+    ask: number,
+    bid: number,
+    points: number,
+    digits: number,
+    ratio: number
+  ) {
+    request.price = ask;
+    request.stoploss = round(ask - points, digits);
+    request.takeprofit = round(ask + points * ratio, digits);
+    request.pending = true;
+    return request;
+  }
 
-function buildSellStopLimitRequest(
-  request: any,
-  ask: number,
-  bid: number,
-  points: number,
-  digits: number,
-  ratio: number
-) {
-  request.price = bid;
-  request.stoploss = round(bid + points, digits);
-  request.takeprofit = round(bid - points * ratio, digits);
-  request.pending = true;
-  return request;
-}
+  buildSellRequest(
+    request: any,
+    ask: number,
+    bid: number,
+    points: number,
+    digits: number,
+    ratio: number
+  ) {
+    request.price = bid;
+    request.stoploss = round(bid + points, digits);
+    request.takeprofit = round(bid - points * ratio, digits);
+    return request;
+  }
 
-const Trader: React.FC<TraderProps> = ({
-  customClass,
-  account,
-  symbol,
-  headers,
-  data,
-  handlers,
-}) => {
-  const REQUEST_BUILD_HANDLERS: Record<string, Function> = {
-    market_buy: buildBuyRequest,
-    limit_buy: buildBuyStopLimitRequest,
-    stop_buy: buildBuyStopLimitRequest,
-    market_sell: buildSellRequest,
-    limit_sell: buildSellStopLimitRequest,
-    stop_sell: buildSellStopLimitRequest,
-  };
+  buildSellStopLimitRequest(
+    request: any,
+    ask: number,
+    bid: number,
+    points: number,
+    digits: number,
+    ratio: number
+  ) {
+    request.price = bid;
+    request.stoploss = round(bid + points, digits);
+    request.takeprofit = round(bid - points * ratio, digits);
+    request.pending = true;
+    return request;
+  }
 
-  const INITIAL_RISK_PERCENTAGE = 1.0;
-  const INITIAL_RISK = INITIAL_RISK_PERCENTAGE / 100.0;
-  const localSymbol = useRef<Symbol | undefined>();
-  const localFreezePrice = useRef(false);
+  componentDidUpdate(prevProps: TraderProps) {
+    const { symbol, account } = this.props;
+    const { trade } = this.state;
 
-  const [trade, setTrade] = useState<Trade>({
-    name: "",
-    type: "",
-    risk: INITIAL_RISK_PERCENTAGE,
-    ratio: 2.25,
-    ratio_step: 0.25,
-    bid: 0.0,
-    ask: 0.0,
-    risk_volume: 0.0,
-    volume_step: 0,
-    risk_step: 0.25,
-    balance: 0,
-    point_value: 0,
-    contract_size: 0,
-    points: 0,
-    digits: 0,
-    tick_size: 0,
-    tick_value: 0,
-    conversion: false,
-  });
+    // console.log("DidUpdate", symbol)
 
-  useEffect(() => {
-    calculateParameters(trade.ask, trade.bid, trade.ratio, trade.points);
-  }, [trade.ask, trade.bid, trade.points, trade.ratio]);
+    /* when symbol changes */
+    if (prevProps.symbol.name !== symbol.name) {
+      const risk = this.calculateInitialRisk(
+        symbol.ask,
+        symbol.bid,
+        trade.risk * 0.01 * account.balance,
+        symbol.contract_size,
+        symbol.point_value,
+        symbol.volume_step,
+        symbol.conversion
+      );
+      const points = this.calculatePoints(
+        symbol.ask,
+        trade.risk * 0.01 * account.balance,
+        symbol.contract_size,
+        symbol.point_value,
+        risk,
+        symbol.conversion
+      );
 
-  if (localSymbol.current !== symbol) {
-    const risk = calculateInitialRisk(
-      symbol.ask,
-      symbol.bid,
-      trade.risk * INITIAL_RISK * account.balance,
-      symbol.contract_size,
-      symbol.point_value,
-      symbol.volume_step,
-      symbol.conversion
-    );
+      this.setState((prevState) => ({
+        trade: {
+          ...prevState.trade,
+          name: symbol.name,
+          bid: symbol.bid,
+          ask: symbol.ask,
+          risk_volume: risk,
+          volume_step: symbol.volume_step,
+          balance: account.balance,
+          point_value: symbol.point_value,
+          contract_size: symbol.contract_size,
+          digits: symbol.digits,
+          tick_size: symbol.tick_size,
+          tick_value: round(symbol.tick_value, 4),
+          conversion: symbol.conversion,
+          points: points
+        }
+      }))
 
-    const points = calculatePoints(
-      symbol.ask,
-      trade.risk * INITIAL_RISK * account.balance,
-      symbol.contract_size,
-      symbol.point_value,
-      risk,
-      symbol.conversion
-    );
-
-    if (localSymbol.current && localSymbol.current.name === symbol.name) {
-      if (!localFreezePrice.current) {
-        setTrade((previousTrade) => ({
-          ...previousTrade,
+      /* when symbol bid or as change */
+    } else if (!this.isPriceFrozen && (trade.ask !== symbol.ask || trade.bid !== symbol.bid)) {
+      this.setState((prevState) => ({
+        trade: {
+          ...prevState.trade,
           bid: symbol.bid,
           ask: symbol.ask,
           balance: account.balance,
           point_value: symbol.point_value,
           tick_value: round(symbol.tick_value, 4),
-        }));
-      }
-    } else {
-      setTrade((previousTrade) => ({
-        ...previousTrade,
-        name: symbol.name,
-        bid: symbol.bid,
-        ask: symbol.ask,
-        risk_volume: risk,
-        volume_step: symbol.volume_step,
-        balance: account.balance,
-        point_value: symbol.point_value,
-        contract_size: symbol.contract_size,
-        digits: symbol.digits,
-        tick_size: symbol.tick_size,
-        tick_value: round(symbol.tick_value, 4),
-        conversion: symbol.conversion,
-        points: points,
+        },
       }));
+
+      /* internal update updates the outter modules  */
+    } else if (this.isInternalUpdate) {
+      this.isInternalUpdate = false
+      this.setExternalParameters(trade.ask, trade.bid, trade.ratio, trade.points)
     }
-    localSymbol.current = symbol;
   }
 
-  function _getCorrespondingClosingType(type: string) {
+  getClosingType(type: string) {
     return type.includes("buy") ? "close_buy" : "close_sell";
   }
 
-  function requestTrade(request: any) {
+  executeInternalUpdate(newState: Partial<Trade>) {
+    this.isInternalUpdate = true
+    this.setState((prevState) => ({
+      trade: {
+        ...prevState.trade,
+        ...newState
+      },
+    }));
+  }
+
+
+  requestTrade(request: any) {
     const requestOptions = createPostRequest(request);
     fetch("/api/trade", requestOptions)
       .then((response) => response.json())
       .then((idResponse) => {
-        handlers.setErrorData({
+        this.props.handlers.setErrorData({
           error: idResponse.error,
           text: idResponse.text,
         });
@@ -276,14 +281,15 @@ const Trader: React.FC<TraderProps> = ({
       });
   }
 
-  function calculateParameters(ask: number, bid: number, ratio: number, points: number) {
+  setExternalParameters(ask: number, bid: number, ratio: number, points: number) {
     const sl = [ask - points, bid + points];
     const tp = [ask + points * ratio, bid - points * ratio];
-    handlers.setCommand(ask, bid, sl, tp);
+    this.props.handlers.setCommand(ask, bid, sl, tp);
   }
 
-  function handleVolumeChange(risk_volume: number) {
-    const points = calculatePoints(
+  handleVolumeChange = (risk_volume: number) => {
+    const { trade } = this.state;
+    const points = this.calculatePoints(
       trade.ask,
       trade.risk * 0.01 * trade.balance,
       trade.contract_size,
@@ -292,24 +298,17 @@ const Trader: React.FC<TraderProps> = ({
       trade.conversion
     );
 
-    setTrade((previousTrade) => ({
-      ...previousTrade,
-      risk_volume: risk_volume,
-      points: points,
-    }));
-  }
+    this.executeInternalUpdate({ risk_volume, points })
+  };
 
-  function handleTypeChange(type: string) {
-    setTrade((previousTrade) => ({
-      ...previousTrade,
-      type: type,
-    }));
+  handleTypeChange = (type: string) => {
+    this.isPriceFrozen = type.includes("limit") || type.includes("stop")
+    this.executeInternalUpdate({ type })
+  };
 
-    localFreezePrice.current = type.includes("limit") || type.includes("stop");
-  }
-
-  function handleRiskChange(risk: number) {
-    const points = calculatePoints(
+  handleRiskChange = (risk: number) => {
+    const { trade } = this.state;
+    const points = this.calculatePoints(
       trade.ask,
       risk * 0.01 * trade.balance,
       trade.contract_size,
@@ -318,15 +317,12 @@ const Trader: React.FC<TraderProps> = ({
       trade.conversion
     );
 
-    setTrade((previousTrade) => ({
-      ...previousTrade,
-      risk: risk,
-      points: points,
-    }));
-  }
+    this.executeInternalUpdate({ risk, points })
+  };
 
-  function handleRatioChange(ratio: number) {
-    const points = calculatePoints(
+  handleRatioChange = (ratio: number) => {
+    const { trade } = this.state;
+    const points = this.calculatePoints(
       trade.ask,
       trade.risk * 0.01 * trade.balance,
       trade.contract_size,
@@ -335,92 +331,67 @@ const Trader: React.FC<TraderProps> = ({
       trade.conversion
     );
 
-    setTrade((previousTrade) => ({
-      ...previousTrade,
-      ratio: ratio,
-      points: points,
-    }));
-  }
-
-  function handleCommentChange(comment: string) {
-    setTrade((previousTrade) => ({
-      ...previousTrade,
-      comment: comment,
-    }));
-  }
-
-  function handleAskChange(ask: number) {
-    setTrade((previousTrade) => ({
-      ...previousTrade,
-      ask: ask,
-    }));
-  }
-
-  const handleBidChange = (bid: number) => {
-    setTrade((previousTrade) => ({
-      ...previousTrade,
-      bid: bid,
-    }));
+    this.executeInternalUpdate({ ratio, points })
   };
 
-  function handleOpenTrade() {
-    const comment = generateComment(trade.risk, trade.comment || "");
-    const request = REQUEST_BUILD_HANDLERS[trade.type](
-      buildBaseRequest(trade.name, trade.type, trade.risk_volume, comment),
+  handleCommentChange = (comment: string) => { this.executeInternalUpdate({ comment }) };
+  handleAskChange = (ask: number) => { this.executeInternalUpdate({ ask }) };
+  handleBidChange = (bid: number) => { this.executeInternalUpdate({ bid }) };
+  handleOpenTrade = () => {
+    const { trade } = this.state;
+    const comment = this.generateComment(trade.risk, trade.comment || "");
+    const request = this.REQUEST_BUILD_HANDLERS[trade.type](
+      this.buildBaseRequest(trade.name, trade.type, trade.risk_volume, comment),
       trade.ask,
       trade.bid,
       trade.points,
       trade.digits,
       trade.ratio
     );
-    requestTrade(request);
-  }
+    this.requestTrade(request);
+  };
 
-  function generateComment(risk: number, text: string) {
-    return `R${risk}%G${trade.ratio}%` + text;
-  }
-
-  function handleCloseTrade(type: string, name: string, position: number, volume: number) {
+  handleCloseTrade = (type: string, name: string, position: number, volume: number) => {
     const request = {
       symbol: name,
       position: position,
       lot: volume,
-      type: _getCorrespondingClosingType(type),
+      type: this.getClosingType(type),
     };
 
-    requestTrade(request);
+    this.requestTrade(request);
+  };
+
+  generateComment(risk: number, text: string) {
+    return `R${risk}%G${this.state.trade.ratio}%` + text;
   }
 
-  return (
-    <>
-      <nav className="cls50PContainer">
-        <Calculator
-          customClass={customClass}
-          trade={trade}
-          types={Object.keys(REQUEST_BUILD_HANDLERS)}
-          handlers={{
-            handleOpenTrade,
-            handleTypeChange,
-            handleVolumeChange,
-            handleRiskChange,
-            handleRatioChange,
-            handleCommentChange,
-            handleAskChange,
-            handleBidChange,
-          }}
-        />
-      </nav>
-      <nav className="cls50PContainer">
-        <Orders
-          customClass={customClass}
-          headers={headers}
-          data={data}
-          handlers={{ handleCloseTrade }}
-        />
-      </nav>
-    </>
-  );
-};
+  render() {
+    const { customClass } = this.props;
+    const { trade } = this.state;
+    // console.log("render", trade)
+    return (
+      <>
+        <nav className="cls50PContainer">
+          <Calculator
+            customClass={customClass}
+            trade={trade}
+            types={Object.keys(this.REQUEST_BUILD_HANDLERS)}
+            handlers={{
+              openTrade: this.handleOpenTrade,
+              typeChange: this.handleTypeChange,
+              volumeChange: this.handleVolumeChange,
+              riskChange: this.handleRiskChange,
+              ratioChange: this.handleRatioChange,
+              commentChange: this.handleCommentChange,
+              askChange: this.handleAskChange,
+              bidChange: this.handleBidChange,
+            }} />
+        </nav>
+      </>
+    );
+  }
+}
 
-Trader.whyDidYouRender = false;
+// Trader.whyDidYouRender = true;
 export default Trader;
