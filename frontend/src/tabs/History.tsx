@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPostRequest } from "src/utils";
 import { LazyLoadImage } from 'react-lazy-load-image-component';
+import Table from "src/elements/Table";
 
 interface HistoryProps {
     customClass: string;
@@ -10,6 +11,17 @@ interface PositionData {
     headers: string[];
     positions: any[][];
 }
+
+
+function mapTerminalData(data:any[][]) {
+    return Object.entries(data).map(([key, value]) => ({
+      id: key,
+      items: value,
+      updated: false,
+      change: false
+    }));
+  }
+  
 
 const History: React.FC<HistoryProps> = ({ customClass }) => {
     const [positionData, setPositionData] = useState<PositionData>({ headers: [], positions: [] });
@@ -32,6 +44,10 @@ const History: React.FC<HistoryProps> = ({ customClass }) => {
         fetchHistory();
     }, []);
 
+    const handleOnClick = (id: string, items: any[]) => {
+        setSelectedImage(items[0])
+    }
+
     return (
         <>
             <div>
@@ -52,32 +68,12 @@ const History: React.FC<HistoryProps> = ({ customClass }) => {
             </div>
             <nav className="clsGlobalContainer">
                 <nav className="clsHistoryContainer">
-                    <table className={customClass}>
-                        <thead>
-                            <tr>
-                                {positionData.headers.map((header, index) => (
-                                    <th key={index} title={header} className={customClass}>
-                                        {header}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {positionData.positions.map((entry, entryIndex) => (
-                                <tr
-                                    key={entry[0] || entryIndex}
-                                    onClick={() => setSelectedImage(entry[0])}
-                                    style={{
-                                        backgroundColor: entry[0] === selectedImage ? 'orange' : ''
-                                    }}
-                                >
-                                    {entry.map((cellData, cellIndex) => (
-                                        <td key={cellIndex}>{cellData}</td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <Table customClass={customClass}
+                        customHeaderClass=" css-orange-background"
+                        headers={positionData.headers}
+                        data={mapTerminalData(positionData.positions)}
+                        onRowClick={handleOnClick}
+                    />
                 </nav>
                 <LazyLoadImage
                     src={`api/${selectedImage}.png`}

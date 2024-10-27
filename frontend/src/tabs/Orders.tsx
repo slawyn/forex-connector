@@ -5,19 +5,13 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import TableHeads from "src/elements/TableHeads";
-import TableRows from "src/elements/TableRows";
+import Table from "src/elements/Table";
 
-interface Order {
-    id: number;
-    items: any[];
-    change: string;
-}
 
 interface OrdersProps {
     customClass: string;
     headers: string[];
-    data: Order[];
+    data: { id: string, items: any[], change: string }[];
     handlers: {
         closeOrder: (type: string, name: string, id: number, volume: number) => void;
     };
@@ -46,7 +40,7 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, data, handlers })
         setDialogData(prev => ({ ...prev, state: false }));
     };
 
-    const handleRowClick = (id: number, items: any[]) => {
+    const handleRowClick = (id: string, items: any[]) => {
         setDialogData({
             name: items[1],
             id: items[0],
@@ -81,18 +75,12 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, data, handlers })
                     </Button>
                 </DialogActions>
             </Dialog>
-            <table className={customClass} style={{ width: "100%" }}>
-                <TableHeads
-                    customClass={`${customClass} css-green-background`}
-                    data={headers}
-                    onHeaderClick={() => {}}
-                />
-                <TableRows
-                    customClass={customClass}
+            <Table customClass={customClass}
+                    customHeaderClass="css-green-background"
+                    headers={headers}
                     data={data}
                     onRowClick={handleRowClick}
-                />
-            </table>
+            />
         </>
     );
 };
