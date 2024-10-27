@@ -1,8 +1,9 @@
 import React, { useRef, useMemo, MutableRefObject } from "react";
 import Grid from "src/elements/Grid";
 import DynamicChart from "src/tabs/DynamicChart";
-import { mergeArray, calculateDeltas } from "src/utils";
+import { mergeArray, calculateDeltaDays } from "src/utils";
 
+const DAYS = 50
 const TIMEFRAMES = ["D1", "H4", "M6"] as const;
 
 type Timeframe = typeof TIMEFRAMES[number];
@@ -50,7 +51,7 @@ async function fetchRates(
 
 function createTimeframeConfig(timeframes: Timeframe[]): Record<Timeframe, number> {
     return timeframes.reduce((config, timeframe) => {
-        config[timeframe] = calculateDeltas(timeframe, 100);
+        config[timeframe] = calculateDeltaDays(DAYS);
         return config;
     }, {} as Record<Timeframe, number>);
 }

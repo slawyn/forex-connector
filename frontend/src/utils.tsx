@@ -12,8 +12,12 @@ const deltaTable = {
     M1: millisecondsInSecond * secondsInMinute,
 };
 
-export function calculateDeltas(timeframe: keyof typeof deltaTable, bars: number): number {
+export function calculateDeltaBars(timeframe: keyof typeof deltaTable, bars: number): number {
     return deltaTable[timeframe] * bars;
+}
+
+export function calculateDeltaDays(days: number): number {
+    return deltaTable["D1"] * days;
 }
 
 export function mergeArray(array: Record<string, any>[]): Record<string, any> {

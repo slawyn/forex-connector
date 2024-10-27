@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from "react";
 import Grid from "src/elements/Grid";
 import DynamicChart from "src/tabs/DynamicChart";
-import { mergeArray, calculateDeltas, createPostRequest } from "src/utils";
+import { mergeArray, calculateDeltaBars, createPostRequest } from "src/utils";
 import { TextField, InputAdornment, InputLabel, MenuItem, FormControl, Select } from '@mui/material';
 
 const TIMEFRAMES = ["D1", "H4"] as const;
@@ -48,7 +48,7 @@ async function fetchRates(
 
 function createTimeframeConfig(timeframes: Timeframe[]): Record<Timeframe, number> {
     return timeframes.reduce((config, timeframe) => {
-        config[timeframe] = calculateDeltas(timeframe, 300);
+        config[timeframe] = calculateDeltaBars(timeframe, 300);
         return config;
     }, {} as Record<Timeframe, number>);
 }
