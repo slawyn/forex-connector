@@ -111,7 +111,7 @@ const Backtester: React.FC<BacktesterProps> = ({ customClass, instruments, timeo
 
     return (
         <>
-            <nav className="clsGlobalContainer">
+            <nav className="clsFlexContainer">
                 <FormControl fullWidth>
                     <InputLabel id="symbol-label">Symbol</InputLabel>
                     <Select

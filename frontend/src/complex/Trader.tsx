@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { Calculator, Trade } from "src/complex/Calculator";
+import { ControlPanel } from "src/complex/ControlPanel";
 import { createPostRequest } from "src/utils";
 
 const SPREADMULTIPLIFER = 5;
@@ -30,6 +31,7 @@ interface Account {
 interface Handlers {
   setCommand: (ask: number, bid: number, sl: number[], tp: number[]) => void;
   setErrorData: (errorData: { error: number; text: string }) => void;
+  enableSimulation: (state: boolean) => void;
 }
 
 interface TraderProps {
@@ -49,6 +51,7 @@ class Trader extends Component<TraderProps, TraderState> {
   REQUEST_BUILD_HANDLERS: Record<string, Function>;
   isInternalUpdate: boolean;
   isPriceFrozen: boolean;
+  isTradingEnabled: boolean;
 
   constructor(props: TraderProps) {
     super(props);
@@ -62,6 +65,7 @@ class Trader extends Component<TraderProps, TraderState> {
         ratio_step: 0.25,
         bid: 0.0,
         ask: 0.0,
+        spread: 0.0,
         risk_volume: 0.0,
         volume_step: 0,
         risk_step: 0.25,
@@ -76,8 +80,9 @@ class Trader extends Component<TraderProps, TraderState> {
       },
     };
 
-    this.isPriceFrozen = false,
-      this.isInternalUpdate = false
+    this.isPriceFrozen = false
+    this.isInternalUpdate = false
+    this.isTradingEnabled = false
 
     this.REQUEST_BUILD_HANDLERS = {
       market_buy: this.buildBuyRequest,
@@ -88,8 +93,6 @@ class Trader extends Component<TraderProps, TraderState> {
       stop_sell: this.buildSellStopLimitRequest,
     };
   }
-
-
 
   calculatePoints(
     ask: number,
@@ -267,18 +270,20 @@ class Trader extends Component<TraderProps, TraderState> {
 
 
   requestTrade(request: any) {
-    const requestOptions = createPostRequest(request);
-    fetch("/api/trade", requestOptions)
-      .then((response) => response.json())
-      .then((idResponse) => {
-        this.props.handlers.setErrorData({
-          error: idResponse.error,
-          text: idResponse.text,
+    if (this.isTradingEnabled) {
+      const requestOptions = createPostRequest(request);
+      fetch("/api/trade", requestOptions)
+        .then((response) => response.json())
+        .then((idResponse) => {
+          this.props.handlers.setErrorData({
+            error: idResponse.error,
+            text: idResponse.text,
+          });
+          if (idResponse.error !== 10009) {
+            throw new Error(`Result: [${idResponse.error}] ${idResponse.text}`);
+          }
         });
-        if (idResponse.error !== 10009) {
-          throw new Error(`Result: [${idResponse.error}] ${idResponse.text}`);
-        }
-      });
+    }
   }
 
   setExternalParameters(ask: number, bid: number, ratio: number, points: number) {
@@ -362,6 +367,10 @@ class Trader extends Component<TraderProps, TraderState> {
     this.requestTrade(request);
   };
 
+  handleEnableTrading = (state: boolean) => {
+    this.isTradingEnabled = state
+  }
+
   generateComment(risk: number, text: string) {
     return `R${risk}%G${this.state.trade.ratio}%` + text;
   }
@@ -371,7 +380,7 @@ class Trader extends Component<TraderProps, TraderState> {
     const { trade } = this.state;
     // console.log("render", trade)
     return (
-      <>
+      <nav className="clsFlexContainer">
         <nav className="cls50PContainer">
           <Calculator
             customClass={customClass}
@@ -386,9 +395,15 @@ class Trader extends Component<TraderProps, TraderState> {
               commentChange: this.handleCommentChange,
               askChange: this.handleAskChange,
               bidChange: this.handleBidChange,
+              enableTrading: this.handleEnableTrading
             }} />
         </nav>
-      </>
+        <nav className="cls50PContainer">
+          <ControlPanel customClass={customClass}
+            handlers={{ enableSimulation: this.props.handlers.enableSimulation }}
+          />
+        </nav>
+      </nav>
     );
   }
 }

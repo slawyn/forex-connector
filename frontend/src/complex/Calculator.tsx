@@ -1,5 +1,6 @@
 import { TextField, InputAdornment, InputLabel, MenuItem, FormControl, Select } from '@mui/material';
 import * as React from 'react';
+import MiscCheckbox from 'src/elements/Misc';
 
 export interface Trade {
   name: string;
@@ -9,6 +10,7 @@ export interface Trade {
   ratio_step: number;
   bid: number;
   ask: number;
+  spread: number;
   risk_volume: number;
   volume_step: number;
   risk_step: number;
@@ -32,6 +34,7 @@ interface Handlers {
     askChange: (value: number) => void;
     bidChange: (value: number) => void;
     commentChange: (value: string) => void;
+    enableTrading: (state: boolean) => void;
 }
 
 interface CalculatorProps {
@@ -53,6 +56,13 @@ export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, tra
                     <th title="Digits Count" className={customClass}>DC: {trade.digits}</th>
                     <th title="Tick Size" className={customClass}>TS: {trade.tick_size}</th>
                     <th title="Tick Value" className={customClass}>TV: {trade.tick_value}</th>
+                    <th className={customClass}>
+                        <MiscCheckbox customClass={"css-button-checkbox property-fullsize"}
+                            text ="Enable Trading"
+                            handler={(state) => {
+                                handlers.enableTrading(state);
+                            }}
+                        /></th>
                     <th title="" className="css-blue-button property-fullsize" onClick={handlers.openTrade}>
                         {"Execute Trade"}
                     </th>
@@ -147,6 +157,17 @@ export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, tra
                             onChange={(e) => handlers.bidChange(parseFloat(e.target.value))}
                             inputProps={{
                                 startAdornment: <InputAdornment position="start">Price</InputAdornment>,
+                            }}
+                        />
+                    </td>
+                    <td>
+                        <TextField
+                            id="trade-spread"
+                            label="Spread"
+                            value={trade.spread}
+                            inputProps={{
+                                readOnly: true,
+                                startAdornment: <InputAdornment position="start">PP</InputAdornment>,
                             }}
                         />
                     </td>

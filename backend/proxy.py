@@ -7,14 +7,12 @@ from commander.commander import Commander
 from trader.trader import Trader
 from components.position import ClosedPosition, OpenPosition
 from components.rate import Rate
+from components.tick import Tick
 
 from config import Config
 from helpers import *
 from grafana import Grafana
 from backtester.backtester import Backtester
-
-# Configurable values
-CONFIG_ENABLE_TRADING = True
 
 
 def calculate_indicators(spread, open_price, bid, atr):
@@ -53,7 +51,7 @@ class App(Flask):
 
     def initialize(self, cfg):
         self.cfg = cfg
-        self.trader = Trader(cfg.get_metatrader_configuration(), cfg.get_metatrader_process(), CONFIG_ENABLE_TRADING)
+        self.trader = Trader(cfg.get_metatrader_configuration(), cfg.get_metatrader_process())
         self.commander = Commander()
         self.grafana = Grafana(
             cb_get_timeframes=self.trader.get_timeframes,
@@ -92,7 +90,7 @@ class App(Flask):
 
     def show_closed_positions(self):
         start_date = convert_string_to_date(self.cfg.get_google_startdate())
-        positions = self.trader.get_history_positions(start_date, only_finished=True)
+        positions = self.trader.get_history_positions(start_date, local_timestamp(), only_finished=True)
         return ClosedPosition.get_info_header(), [positions[p].get_info() for p in positions]
 
     def show_open_positions(self):
@@ -100,41 +98,52 @@ class App(Flask):
         positions = self.trader.get_open_positions()
         return OpenPosition.get_info_header(), [positions[p].get_info() for p in positions]
 
-    def show_symbols(self, filter):
+    def show_symbols(self, end_ms, filter):
         """Builds a list of instruments based on filter"""
-        react_data = {}
+        table_data = {}
 
         ##
-        syms = self.trader.get_symbols()
-        for idx in range(len(syms)):
-            sym = syms[idx]
+        for symbol in self.trader.get_symbols():
+            name = symbol.get_name()
+            spread = symbol.get_spread()
+            ask = symbol.get_ask()
+            bid = symbol.get_bid()
+            digits = symbol.get_digits()
 
-            name = sym.get_name()
-            spread = sym.get_spread()
-            bid = sym.get_bid()
-            digits = sym.get_digits()
+            rates = self.trader.get_rates(symbol, "D1", time_go_back_n_weeks(end_ms, 2), int(end_ms))
+            alt_atr = Rate.calculate_average_true_range(rates)
+
+            current_tick = self.trader.get_symbol_ticks(symbol, end_ms)
+
+            alt_ask = current_tick.ask
+            alt_bid = current_tick.bid
+            alt_spread = current_tick.spread
 
             # indicators
-            atr = self.trader.get_atr(sym)
-            formatted_signal, ratio, atr_reserve = calculate_indicators(spread, sym.get_session_open(), bid, atr)
+            atr = self.trader.get_atr(symbol)
+            formatted_signal, ratio, atr_reserve = calculate_indicators(spread, symbol.get_session_open(), bid, atr)
 
             # Create data set
             timer = get_current_date()
-            if sym.is_updated() or filter:
-                react_data[name] = [name,
-                                    sym.get_currency(),
-                                    sym.get_description(),
-                                    f"%2.{digits}f" % sym.get_ask(),
+            if symbol.is_updated() or filter:
+                table_data[name] = [name,
+                                    symbol.get_currency(),
+                                    symbol.get_description(),
+                                    f"%2.{digits}f" % ask,
+                                    f"%2.{digits}f" % alt_ask,
                                     f"%2.{digits}f" % bid,
-                                    f"%2.{digits}f" % (spread),
+                                    f"%2.{digits}f" % alt_bid,
+                                    f"%2.{digits}f" % spread,
+                                    f"%2.{digits}f" % alt_spread,
                                     "%-2.4f" % atr,
+                                    "%-2.4f" % alt_atr,
                                     "%-2.2f" % (ratio),
                                     "%-2.2f" % abs(atr_reserve),
                                     formatted_signal,
                                     timer,
-                                    f"%2.2f" % sym.get_price_change()]
+                                    f"%2.2f" % symbol.get_price_change()]
 
-        return App.COLUMNS,  react_data
+        return App.COLUMNS,  table_data
 
 
 app = App()
@@ -181,7 +190,8 @@ def on_backtesting():
 @app.route('/update', methods=['GET'])
 def on_update():
     force = request.args.get("force", default=False, type=is_it_true)
-    instr_headers, instr = app.show_symbols(filter=force)
+    start_ms = request.args.get("start", type=int)
+    instr_headers, instr = app.show_symbols(start_ms, filter=force)
     op_headers, open_positions = app.show_open_positions()
     return {"date": get_current_date(), "timeoffset":app.trader.get_timeoffset_ms(),"headers": instr_headers, "instruments": instr, "account":  app.get_account_info(), "op_headers": op_headers, "open": open_positions}
 

@@ -5,6 +5,7 @@ from components.account import Account
 from components.position import ClosedPosition, OpenPosition
 from components.rate import Rate
 from components.symbol import Symbol
+from components.tick import Tick
 from helpers import *
 from trader.request import TradeRequest
 from trader.mt5api import MetatraderApi
@@ -16,10 +17,10 @@ class Trader:
         description: Used for communicating over the connector with mt5
     """
 
-    def __init__(self, mt_config, mt_process, is_trading_enabled=False):
-        self.is_trading_enabled = is_trading_enabled
+    def __init__(self, mt_config, mt_process):
         self.mt5api = MetatraderApi(mt_process, mt_config)
         self.symbols = {}
+        self.ticks = {}
         self.open_positions = {}
 
         # 1. Establish connection to the MetaTrader 5 terminal
@@ -107,12 +108,6 @@ class Trader:
         else:
             return mt5.symbol_info_tick(sym.name)
 
-    def _get_symbols(self):
-        """ Collect Symbols """
-        if self.mt5api.is_connection_present():
-            return mt5.symbols_get()
-        return []
-
     def get_symbol(self, sym_name):
         return self.symbols.get(sym_name, None)
 
@@ -121,15 +116,24 @@ class Trader:
         rates = []
         tf = self.mt5api.get_mt5_timeframe(timeframe)
         if start_ms != end_ms and tf >= 0:
-            timestamp_start = convert_timestamp_ms_to_date(start_ms)
-            timestamp_end = convert_timestamp_ms_to_date(end_ms)
-            rates = self.mt5api.get_rates(symbol.name, utc_from=timestamp_start, utc_to=timestamp_end, frame=tf)
+            rates = self.mt5api.get_rates(symbol.name,
+                                          utc_from=convert_timestamp_ms_to_date(start_ms),
+                                          utc_to=convert_timestamp_ms_to_date(end_ms),
+                                          frame=tf)
 
         return rates
 
+    def get_ticks(self, symbol: Symbol, start_ms, end_ms):
+        ticks = []
+        if start_ms != end_ms:
+            ticks = self.mt5api.get_ticks(symbol.name,
+                                          utc_from=convert_timestamp_ms_to_date(start_ms),
+                                          utc_to=convert_timestamp_ms_to_date(end_ms))
+        return ticks
+
     def get_symbols(self, sorted=True):
         syms = []
-        for sym in self._get_symbols():
+        for sym in self.mt5api.get_symbols():
             if not (sym.name in self.symbols):
                 self.symbols[sym.name] = Symbol(sym, conversion=(sym.currency_profit != self.account.currency))
 
@@ -142,18 +146,22 @@ class Trader:
         if sorted:
             syms.sort(key=lambda x: x.name)
         return syms
+    
+    def get_symbol_ticks(self, symbol, end_ms):
+        if not (symbol.name in self.ticks):
+            self.ticks[symbol.name] = Tick(symbol.name, end_ms)
 
-    def get_symbols_by_wildcard(self, wildcard):
-        syms = []
-        for _sym in self._get_symbols():
-            if wildcard in _sym:
-                syms.append(_sym)
-        return syms
+        exported_tick = self.ticks[symbol.name]
+        # print("ticks span: ", end_ms - exported_tick.time_ms)
 
-    def get_history_positions(self, start_date, only_finished=True):
+        exported_tick.update(self.get_ticks(symbol, exported_tick.time_ms, end_ms), end_ms)
+        return exported_tick
+
+
+    def get_history_positions(self, start_date, end_date, only_finished=True):
         pos_temporary = {}
         pos_finished = {}
-        end_date = convert_timestamp_to_date(local_timestamp(), self.time_offset_s)
+        end_date = convert_timestamp_to_date(end_date, self.time_offset_s)
 
         history_deals = mt5.history_deals_get(start_date, end_date)
         for deal in history_deals:
@@ -187,9 +195,6 @@ class Trader:
         return pos_finished if only_finished else pos_temporary
 
     def trade(self, symbol, lot, type, price, stoplimit, stoploss, takeprofit, comment, pending=False, position=0):
-        if not self.is_trading_enabled:
-            return {0, ""}
-
         mt5_type = self.mt5api.resolve_type_api_to_mt5(type)
         trade_request = TradeRequest(symbol, lot, mt5_type, price, stoplimit, stoploss, takeprofit, position, pending, comment)
         return_info = self.mt5api.trade(trade_request.get_request())

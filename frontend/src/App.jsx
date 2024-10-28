@@ -100,7 +100,7 @@ class App extends Component {
   };
 
   fetchTerminalData = (force) => {
-    fetch(`/api/update?force=${force}`).then((response) =>
+    fetch(`/api/update?force=${force}&start=${this.getCurrentTime()}`).then((response) =>
       response.json().then((receivedTerminalData) => {
         this.setState((prevState) => ({
           terminalData: {
@@ -149,11 +149,6 @@ class App extends Component {
                 handler={(state) => {
                   this.commander.setCommand({ preview: state });
                 }}
-              />
-              <MiscCheckbox
-                customClass={"css-button-checkbox"}
-                text="Sim"
-                handler={(state) => { this.toggleSimulation(state) }}
               />
               <button className={"css-blue-button"} onClick={() => this.fetchTerminalData(true)}>
                 [{this.KEY_GET_SYMBOLS}]etch Symbols
@@ -230,6 +225,7 @@ class App extends Component {
                     }));
                     this.commander.setCommand({ calculator: { ask, bid, sl, tp } });
                   },
+                  enableSimulation: (state) => this.toggleSimulation(state)
                 }}
               />
               <Charter symbol={symbolData.info} calculator={calculatorState.calculator} currentTime={this.getCurrentTime()} timeframes={TIMEFRAMES}/>

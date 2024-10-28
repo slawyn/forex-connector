@@ -55,7 +55,7 @@ const History: React.FC<HistoryProps> = ({ customClass }) => {
                     Fetch Trades
                 </button>
             </div>
-            <nav className="clsGlobalContainer">
+            <nav className="clsFlexContainer">
                 <nav className="clsHistoryContainer">
                     <Table customClass={customClass}
                         customHeaderClass=" css-orange-background"

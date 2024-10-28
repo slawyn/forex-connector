@@ -93,7 +93,7 @@ class MetatraderApi:
             loge(e)
         return Rate.add(data)
 
-    def get_ticks_for_symbol(self, symbol_name, utc_from, utc_to):
+    def get_ticks(self, symbol_name, utc_from, utc_to):
         data = []
         try:
             data = mt5.copy_ticks_range(symbol_name, utc_from, utc_to, mt5.COPY_TICKS_ALL)
@@ -119,6 +119,18 @@ class MetatraderApi:
             print("Exception", e)
 
         return [-1, "unknown error"]
+
+
+    def get_symbols(self, wildcard=""):
+        if self.is_connection_present():
+            if wildcard:
+                syms = []
+                for _sym in self.mt5api.get_symbols():
+                    if wildcard in _sym:
+                        syms.append(_sym)
+                return syms
+            return mt5.symbols_get()
+        return []
 
     def calculate_broke_time_difference_seconds(self):
         symbol = "EURUSD"

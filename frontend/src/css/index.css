@@ -100,7 +100,7 @@ button {
   overflow-y: auto;
   min-width: fit-content;
 }
-.clsGlobalContainer {
+.clsFlexContainer {
   display: flex;
 }
 
