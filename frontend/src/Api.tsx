@@ -64,8 +64,8 @@ export default class Api {
         return result
     }
 
-    async fetchTerminalData(force: boolean, start:number): Promise<TerminalData> {
-        const result = await fetch(`/api/update?force=${force}&start=${start}`)
+    async fetchTerminalData(force: boolean, end:number): Promise<TerminalData> {
+        const result = await fetch(`/api/update?force=${force}&end=${end}`)
             .then((response) => response.json())
             .then((receivedSymbol) => receivedSymbol);
 

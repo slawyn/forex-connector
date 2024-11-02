@@ -25,7 +25,7 @@ function getFormattedData(timeMilliseconds) {
 
 const darkTheme = createTheme({ palette: { mode: 'dark' } });
 const THEME = "clsBorderless";
-const TIMESTAMP_MS_BASE = Date.parse('01/01/2020 00:00:00')
+const TIMESTAMP_MS_BASE = Date.parse('01/01/2023 00:00:00')
 const TIMEFRAMES = ["D1", "H4", "M20"];
 
 class App extends Component {
@@ -105,8 +105,7 @@ class App extends Component {
   execBacktester = async () => {
     this.backtester.risk = this.state.calculatorState.calculator.risk
     this.backtester.volume = this.state.calculatorState.calculator.volume
-    console.log(this.backtester)
-    const result = await new Api().postBacktest(this.backtester)
+    await new Api().postBacktest(this.backtester)
   }
 
   togglePane(pane) {
@@ -259,8 +258,8 @@ class App extends Component {
                   <Orders
                     customClass={THEME}
                     headers={headers.openHeaders}
-                    openPositions={terminalData.openPositions}
                     handlers={{ closeOrder: this.handleCloseOrder }}
+                    openPositions={terminalData.openPositions}
                   />
                 }
               />
@@ -274,7 +273,6 @@ class App extends Component {
                     handlers={{
                       setErrorData: (errorData) => this.setState({ errorData }),
                       setCommand: (ask, bid, sl, tp, risk, volume) => {
-                        console.log(risk, volume)
                         this.setState((prevState) => ({
                           calculatorState: {
                             calculator: { ask, bid, sl, tp, risk, volume }

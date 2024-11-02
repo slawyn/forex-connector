@@ -104,7 +104,7 @@ class App(Flask):
     def get_headers(self):
         return App.COLUMNS, OpenPosition.get_info_header(), ClosedPosition.get_info_header()
 
-    def show_symbols(self, end_ms, filter):
+    def show_symbols(self, end_ms, force):
         table_data = {}
         for symbol in self.trader.get_symbols():
             current_tick = self.trader.get_symbol_ticks(symbol, end_ms)
@@ -118,7 +118,7 @@ class App(Flask):
             timer = get_current_date()
             name = symbol.get_name()
             digits = symbol.get_digits()
-            if symbol.is_updated() or filter:
+            if symbol.is_updated() or force:
                 table_data[name] = [name,
                                     symbol.get_currency(),
                                     symbol.get_description(),
@@ -179,10 +179,10 @@ def on_backtesting():
 @app.route('/update', methods=['GET'])
 def on_update():
     force = request.args.get("force", default=False, type=is_it_true)
-    start_ms = request.args.get("start", type=int)
-    instr = app.show_symbols(start_ms, filter=force)
+    end_ms = request.args.get("end", type=int)
+    instr = app.show_symbols(end_ms, force=force)
     open_positions = app.show_open_positions()
-    return {"date": get_current_date(), "timeoffset": app.trader.get_timeoffset_ms(), "instruments": instr, "account":  app.get_account_info(), "openPositions": open_positions}
+    return {"date": convert_timestamp_ms_to_date_formatted(end_ms), "timeoffset": app.trader.get_timeoffset_ms(), "instruments": instr, "account":  app.get_account_info(), "openPositions": open_positions}
 
 
 @app.route('/headers', methods=['GET'])
@@ -238,7 +238,7 @@ def on_resource(path):
 def on_trade():
     data = request.get_json()
     symbol = data.get("symbol")
-    position = data.get("position")
+    position = data.get("position","0")
     pending = data.get("pending", False)
     lot = data.get("lot")
     type = data.get("type")

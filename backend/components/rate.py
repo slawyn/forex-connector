@@ -10,15 +10,15 @@ class Rate:
     IDX_VOLUME = 5
     IDX_SPREAD = 6
 
-    def __init__(self, rate):
+    def __init__(self, data):
         # convert to ms
-        self.time = int(rate[Rate.IDX_TIME])
-        self.open = rate[Rate.IDX_OPEN]
-        self.high = rate[Rate.IDX_HIGH]
-        self.low = rate[Rate.IDX_LOW]
-        self.close = rate[Rate.IDX_CLOSE]
-        self.volume = int(rate[Rate.IDX_VOLUME])
-        self.spread = int(rate[Rate.IDX_SPREAD])
+        self.time = int(data[Rate.IDX_TIME])
+        self.open = data[Rate.IDX_OPEN]
+        self.high = data[Rate.IDX_HIGH]
+        self.low = data[Rate.IDX_LOW]
+        self.close = data[Rate.IDX_CLOSE]
+        self.volume = int(data[Rate.IDX_VOLUME])
+        self.spread = int(data[Rate.IDX_SPREAD])
 
     def add(data):
         rates = [Rate(d) for d in data]
@@ -67,7 +67,7 @@ class Rate:
             if len(trs) != 0:
                 atr = sum(trs)/(len(trs))
         except Exception as e:
-            print(e)
+            pass
         return atr
 
     def to_pandas(rates):

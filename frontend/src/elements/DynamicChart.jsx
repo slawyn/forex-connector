@@ -48,31 +48,58 @@ function mergeMarkers(open, closed) {
     return merged;
 }
 
-function mapPositionalData(data, closed = false) {
+function mapPositionalData(data, closed = false, timestep) {
     const addEntry = (dictType, timeIndex, priceIndex, text) => ({
         ...mappedTypes[dictType],
-        time: Date.parse(timeIndex)/1000,
+        time: Math.floor(Date.parse(timeIndex) / 1000 / timestep) * timestep,
         price: priceIndex,
         text: text
     });
-    if (data) {
 
+    if (data) {
         return data.reduce((acc, entry) => {
             if (closed) {
-                if (entry[4] === "BUY") {
-                    acc.push(addEntry("market_buy", entry[2], entry[5], entry[0]));
-                    acc.push(addEntry("market_sell", entry[3], entry[6], entry[0]));
+                const tradeId = entry[0]
+                const type = entry[4]
+                const timeStart = entry[2]
+                const timeEnd = entry[3]
+                const priceStart = entry[5]
+                const priceEnd = entry[6]
+                if (type === "BUY") {
+                    acc.push(addEntry("market_buy", timeStart, priceStart, tradeId));
+                    acc.push(addEntry("market_sell", timeEnd, priceEnd, ""));
                 } else {
-                    acc.push(addEntry("market_sell", entry[2], entry[5], entry[0]));
-                    acc.push(addEntry("market_buy", entry[3], entry[6], entry[0]));
+                    acc.push(addEntry("market_sell", timeStart, priceStart, tradeId));
+                    acc.push(addEntry("market_buy", timeEnd, priceEnd,""));
                 }
             } else {
                 acc.push(addEntry(entry[3], entry[2], entry[4], entry[0]));
             }
-            return acc;
+            return acc.sort((a, b) => new Date(a.time) - new Date(b.time));;
         }, []);
     }
     return []
+}
+
+function getConnectionsForClosed(data, timestep) {
+    if (!data) return {};
+
+    return data.reduce((acc, entry) => {
+        const tradeId = entry[0];
+        const timeStart = Math.floor(Date.parse(entry[2]) / 1000 / timestep) * timestep
+        const timeEnd = Math.floor(Date.parse(entry[3]) / 1000 / timestep) * timestep
+        const priceStart = entry[5];
+        const priceEnd = entry[6];
+
+        acc[tradeId] = {
+            timeStart,
+            timeEnd,
+            priceStart,
+            priceEnd
+        };
+
+        return acc;
+    }, {});
 }
 
 
@@ -83,7 +110,8 @@ export default class DynamicChart extends React.Component {
         this.state = {
             data: [],
             sl: [],
-            tp: []
+            tp: [],
+            connections: {}
         };
         this.title = props.title
         this.handler = props.handler
@@ -231,6 +259,34 @@ export default class DynamicChart extends React.Component {
             title
         });
     };
+
+    _createConnection = (timeStart, timeEnd, priceStart, priceEnd, id) => {
+        if (!(id in this.state.connections)) {
+            // console.log(id)
+            this.state.connections[id] = this.chart.addLineSeries({
+                color: '#ffffff80',
+                lineWidth: 2,
+                lineStyle: 4,
+                axisLabelVisible: false,
+                lastValueVisible: false
+            });
+
+            if (timeStart !== timeEnd) {
+                this.state.connections[id].setData([
+                    { time: timeStart, value: priceStart },
+                    { time: timeEnd, value: priceEnd }]
+                )
+            }
+        }
+    }
+    _getChartTimeStep() {
+        if (this.state.data?.length > 2) {
+            const length = this.state.data.length
+            return Math.min(this.state.data[length - 1].time - this.state.data[length - 2].time, this.state.data[length - 2].time - this.state.data[length - 3].time)
+        }
+        return -1
+    }
+
     updateLines = (sl, tp) => {
         this.state.sl.forEach(slLine => this.candleSeries.removePriceLine(slLine));
         this.state.tp.forEach(tpLine => this.candleSeries.removePriceLine(tpLine));
@@ -242,13 +298,21 @@ export default class DynamicChart extends React.Component {
     };
 
     updatePositions(openPositions, closedPositions) {
-        const open = mapPositionalData(openPositions, false)
-        const closed = mapPositionalData(closedPositions, true)
-        this.candleSeries.setMarkers(mergeMarkers(open, closed))
+        const timestep = this._getChartTimeStep()
+        if (timestep > 0) {
+            const open = mapPositionalData(openPositions, false, timestep)
+            const closed = mapPositionalData(closedPositions, true, timestep)
+
+            const connections = getConnectionsForClosed(closedPositions, timestep)
+            for (const [id, value] of Object.entries(connections)) {
+                this._createConnection(value.timeStart, value.timeEnd, value.priceStart, value.priceEnd, id)
+            }
+            this.candleSeries.setMarkers(mergeMarkers(open, closed))
+        }
     }
 
     resetData(digits) {
-        this.setState({ data: [] });
+        this.setState({ data: [], connections: {} });
         this.candleSeries.setData([]);
         this.volumeSeries.setData([]);
         this.candleSeries.applyOptions({
@@ -259,11 +323,17 @@ export default class DynamicChart extends React.Component {
         });
         this.selectionRange.setData([])
     }
-    _getCurrentPrice() {
-        const last = this.state.data.length - 1
-        return this.state.data[last].open
-    }
 
+    _getCurrentHighestPrice() {
+        const visibleRange = this.chart.timeScale().getVisibleRange();
+        const highestPrice = this.state.data.reduce((max, point) => {
+            if (point.time >= visibleRange.from && point.time <= visibleRange.to) {
+                return Math.max(max, point.open);
+
+            } return max;
+        }, -Infinity);
+        return highestPrice;
+    }
     _subscribeSelectableRange(handler) {
         if (handler) {
             let selecting = false
@@ -285,7 +355,7 @@ export default class DynamicChart extends React.Component {
             this.chart.subscribeClick((params) => {
                 if (!selecting) {
                     times.A = params.time
-                    prices.A = this._getCurrentPrice()
+                    prices.A = this._getCurrentHighestPrice()
                 }
                 else {
                     if (times.B < times.A) {
@@ -327,7 +397,7 @@ export default class DynamicChart extends React.Component {
                 this.candleSeries.setData(mappedData.price);
                 this.volumeSeries.setData(mappedData.volume);
             } else {
-                this.setState({ data: mappedData.price });
+                this.setState((prevState) => { data: [...prevState.data, ...mappedData.price] });
                 mappedData.price.forEach(pricePoint => this.candleSeries.update(pricePoint));
                 mappedData.volume.forEach(volumePoint => this.volumeSeries.update(volumePoint));
             }

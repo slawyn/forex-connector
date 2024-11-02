@@ -90,7 +90,7 @@ class MetatraderApi:
                 data = []
                 raise Exception(f"{__class__.__name__}: During fetching of rates symbol:{symbol_name} timeframe:{frame} error:{mt5.last_error()}")
         except Exception as e:
-            loge(e)
+            loge("get_rates", e)
         return Rate.add(data)
 
     def get_ticks(self, symbol_name, utc_from, utc_to):
@@ -102,7 +102,7 @@ class MetatraderApi:
                 data = []
                 raise Exception(f"{__class__.__name__}: During fetching of ticks {symbol_name} {mt5.last_error()}")
         except Exception as e:
-            loge(e)
+            loge("get_ticks", e)
 
         return data
 
@@ -133,7 +133,7 @@ class MetatraderApi:
         return []
 
     def calculate_broke_time_difference_seconds(self):
-        symbol = "EURUSD"
+        symbol = "BITCOIN"
         symbol_info = mt5.symbol_info(symbol)
 
         # Check if rates were retrieved successfully
@@ -151,8 +151,8 @@ class MetatraderApi:
             system_time_utc = utc_now()
 
             # Calculate the difference in hours between broker time and UTC
-            time_difference = system_time_utc - broker_time_utc
-            time_difference_seconds = -time_difference.total_seconds()
+            time_difference = broker_time_utc - system_time_utc
+            time_difference_seconds = time_difference.total_seconds()
 
             logi(f"Broker time (UTC): {broker_time_utc}")
             logi(f"System time (UTC): {system_time_utc}")

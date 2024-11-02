@@ -137,17 +137,16 @@ class Trader:
         if sorted:
             syms.sort(key=lambda x: x.name)
         return syms
-    
+
     def get_symbol_ticks(self, symbol, end_ms):
-        if not (symbol.name in self.ticks):
+        if not (symbol.name in self.ticks) or end_ms < self.ticks[symbol.name].time_ms or end_ms - self.ticks[symbol.name].time_ms > 10000:
             self.ticks[symbol.name] = Tick(symbol.name, end_ms)
 
         exported_tick = self.ticks[symbol.name]
-        # print("ticks span: ", end_ms - exported_tick.time_ms)
-
-        exported_tick.update(self.get_ticks(symbol, exported_tick.time_ms, end_ms), end_ms)
+        ticks = self.get_ticks(symbol, exported_tick.time_ms, end_ms)
+        rates = self.get_rates(symbol, "M1", exported_tick.time_ms, end_ms)
+        exported_tick.update(ticks, rates, symbol.get_step(), end_ms)
         return exported_tick
-
 
     def get_history_positions(self, start_date, end_date, only_finished=True):
         pos_temporary = {}
