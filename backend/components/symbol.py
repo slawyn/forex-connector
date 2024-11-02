@@ -11,6 +11,12 @@ class Symbol:
         self.contract_size = sym.trade_contract_size
         self.currency = f"{sym.currency_base}/{sym.currency_profit}"
         self.conversion = conversion
+
+        # Override point value based on currency exception
+        self.point_value = 1
+        if Symbol.EXCEPTED_FIXED in self.currency:
+            self.point_value /= 100.0
+
         self.update(sym)  # Call `update()` method to set initial values
 
     def update(self, sym):
@@ -26,13 +32,8 @@ class Symbol:
         self.tick_value = sym.trade_tick_value
 
         # Calculate point value, does not always work
-        # self.point_value = (self.tick_value * sym.point) / self.step if self.step else 0
-        self.point_value = 1
         self.price_change = ((self.bid - self.session_open) / (self.session_open)) * 100.0
 
-        # Override point value based on currency exception
-        if Symbol.EXCEPTED_FIXED in self.currency:
-            self.point_value /= 100.0
 
     def get_price_change(self):
         return self.price_change

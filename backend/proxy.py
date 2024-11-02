@@ -77,73 +77,61 @@ class App(Flask):
         return self.trader.get_account_info().to_json()
 
     def save_to_google(self):
-        """ Collect Information and add to excel sheet"""
         drive_handle = DriveFileController(self.cfg.get_google_secrets_file(),
                                            self.cfg.get_google_folder_id(),
                                            self.cfg.get_google_spreadsheet(),
                                            self.cfg.get_google_worksheet(),
                                            self.cfg.get_export_folder())
         start_date = convert_string_to_date(self.cfg.get_google_startdate())
-        positions = self.trader.get_closed_positions(start_date, drive_handle.get_optimal_bar_count())
+        positions = self.trader.get_closed_positions(start_date, local_timestamp(), drive_handle.get_optimal_bar_count())
         drive_handle.update_google_sheet(positions)
         return []
 
     def show_closed_positions(self):
+        remapped_positions = {}
         start_date = convert_string_to_date(self.cfg.get_google_startdate())
-        positions = self.trader.get_history_positions(start_date, local_timestamp(), only_finished=True)
-        return ClosedPosition.get_info_header(), [positions[p].get_info() for p in positions]
+        for ticket, position in self.trader.get_history_positions(start_date, local_timestamp(), only_finished=True).items():
+            remapped_positions.setdefault(position.get_symbol(), []).append(position.get_info())
+        return remapped_positions
 
     def show_open_positions(self):
-        """Gets open positions with headers"""
-        positions = self.trader.get_open_positions()
-        return OpenPosition.get_info_header(), [positions[p].get_info() for p in positions]
+        remapped_positions = {}
+        for ticket, position in self.trader.get_open_positions().items():
+            remapped_positions.setdefault(position.get_symbol(), []).append(position.get_info())
+        return remapped_positions
+
+    def get_headers(self):
+        return App.COLUMNS, OpenPosition.get_info_header(), ClosedPosition.get_info_header()
 
     def show_symbols(self, end_ms, filter):
-        """Builds a list of instruments based on filter"""
         table_data = {}
-
-        ##
         for symbol in self.trader.get_symbols():
-            name = symbol.get_name()
-            spread = symbol.get_spread()
-            ask = symbol.get_ask()
-            bid = symbol.get_bid()
-            digits = symbol.get_digits()
-
-            rates = self.trader.get_rates(symbol, "D1", time_go_back_n_weeks(end_ms, 2), int(end_ms))
-            alt_atr = Rate.calculate_average_true_range(rates)
-
             current_tick = self.trader.get_symbol_ticks(symbol, end_ms)
 
-            alt_ask = current_tick.ask
-            alt_bid = current_tick.bid
-            alt_spread = current_tick.spread
-
             # indicators
-            atr = self.trader.get_atr(symbol)
-            formatted_signal, ratio, atr_reserve = calculate_indicators(spread, symbol.get_session_open(), bid, atr)
+            rates = self.trader.get_rates(symbol, "D1", time_go_back_n_weeks(end_ms, 2), int(end_ms))
+            atr = Rate.calculate_average_true_range(rates)
+            formatted_signal, ratio, atr_reserve = calculate_indicators(current_tick.spread, symbol.get_session_open(), current_tick.bid, atr)
 
             # Create data set
             timer = get_current_date()
+            name = symbol.get_name()
+            digits = symbol.get_digits()
             if symbol.is_updated() or filter:
                 table_data[name] = [name,
                                     symbol.get_currency(),
                                     symbol.get_description(),
-                                    f"%2.{digits}f" % ask,
-                                    f"%2.{digits}f" % alt_ask,
-                                    f"%2.{digits}f" % bid,
-                                    f"%2.{digits}f" % alt_bid,
-                                    f"%2.{digits}f" % spread,
-                                    f"%2.{digits}f" % alt_spread,
+                                    f"%2.{digits}f" % current_tick.ask,
+                                    f"%2.{digits}f" % current_tick.bid,
+                                    f"%2.{digits}f" % current_tick.spread,
                                     "%-2.4f" % atr,
-                                    "%-2.4f" % alt_atr,
                                     "%-2.2f" % (ratio),
                                     "%-2.2f" % abs(atr_reserve),
                                     formatted_signal,
                                     timer,
                                     f"%2.2f" % symbol.get_price_change()]
 
-        return App.COLUMNS,  table_data
+        return table_data
 
 
 app = App()
@@ -191,15 +179,20 @@ def on_backtesting():
 def on_update():
     force = request.args.get("force", default=False, type=is_it_true)
     start_ms = request.args.get("start", type=int)
-    instr_headers, instr = app.show_symbols(start_ms, filter=force)
-    op_headers, open_positions = app.show_open_positions()
-    return {"date": get_current_date(), "timeoffset":app.trader.get_timeoffset_ms(),"headers": instr_headers, "instruments": instr, "account":  app.get_account_info(), "op_headers": op_headers, "open": open_positions}
+    instr = app.show_symbols(start_ms, filter=force)
+    open_positions = app.show_open_positions()
+    return {"date": get_current_date(), "timeoffset": app.trader.get_timeoffset_ms(), "instruments": instr, "account":  app.get_account_info(), "openPositions": open_positions}
+
+
+@app.route('/headers', methods=['GET'])
+def on_headers():
+    headers, op_headers, cp_headers = app.get_headers()
+    return {"terminalHeaders": headers, "openHeaders": op_headers, "closeHeaders": cp_headers}
 
 
 @app.route('/history', methods=['GET'])
 def on_history():
-    headers, positions = app.show_closed_positions()
-    return {"positions": positions, "headers": headers}
+    return app.show_closed_positions()
 
 
 @app.route('/rates', methods=['GET'])
@@ -208,31 +201,24 @@ def on_rates():
     start_ms = request.args.get("start", default=0, type=int)
     end_ms = request.args.get("end", default=0, type=int)
     time_frame = request.args.get("timeframe", default="D1", type=str)
-    return {"instrument": instrument,
-            "data":
-            {
-                time_frame: app.get_rates_json(instrument, time_frame, start_ms, end_ms)
-            }}
+    return {"instrument": instrument, "data": {time_frame: app.get_rates_json(instrument, time_frame, start_ms, end_ms)}}
 
 
 @app.route('/symbol', methods=['GET'])
 def on_symbol():
     symbol = app.trader.get_symbol(request.args.get("instrument", ""))
     if symbol is not None:
-        return {"info":
-                {"name": symbol.get_name(),
-                 "step": symbol.get_step(),
-                 "ask": symbol.get_ask(),
-                 "bid": symbol.get_bid(),
-                 "volume_step": symbol.get_volume_step(),
-                 "point_value": symbol.get_point_value(),
-                 "contract_size": symbol.get_contract_size(),
-                 "digits": symbol.get_digits(),
-                 "tick_size": symbol.get_step(),
-                 "tick_value": symbol.get_tick_value(),
-                 "conversion": symbol.get_conversion()
-                 }
-                }
+        return {
+            "name": symbol.get_name(),
+            "step": symbol.get_step(),
+            "volume_step": symbol.get_volume_step(),
+            "point_value": symbol.get_point_value(),
+            "contract_size": symbol.get_contract_size(),
+            "digits": symbol.get_digits(),
+            "tick_size": symbol.get_step(),
+            "tick_value": symbol.get_tick_value(),
+            "conversion": symbol.get_conversion()
+        }
     return {}
 
 

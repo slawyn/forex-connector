@@ -15,14 +15,18 @@ import SlidingPane from "src/elements/SlidingPane";
 import MiscCheckbox from "src/elements/Misc";
 import Commander from "src/Commander";
 import Orders from "src/complex/Orders";
-import {randomIntFromInterval} from "src/utils"
+import { randomIntFromInterval } from "src/utils"
+import Api from "src/Api"
 
+
+function getFormattedData(timeMilliseconds) {
+  return new Date(timeMilliseconds).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
 
 const darkTheme = createTheme({ palette: { mode: 'dark' } });
 const THEME = "clsBorderless";
 const TIMESTAMP_MS_BASE = Date.parse('01/01/2020 00:00:00')
 const TIMEFRAMES = ["D1", "H4", "M20"];
-
 
 class App extends Component {
   constructor(props) {
@@ -33,15 +37,16 @@ class App extends Component {
     this.commander = new Commander();
     this.state = {
       calculatorState: { instrument: "", calculator: {} },
-      symbolData: { info: { name: "", ask: 0, bid: 0, step: 0, volume_step: 0, point_value: 0, digits: 0 } },
+      symbolData: { name: "", ask: 0, bid: 0, step: 0, volume_step: 0, point_value: 0, digits: 0 },
       paneState: { symbols: false, orders: false },
-      terminalData: { date: "", timeoffset: 0, account: [], headers: [], instruments: {}, updates: {}, op_headers: [], open: {} },
+      terminalData: { date: "", timeoffset: 0, account: [], instruments: {}, updates: {}, openPositions: {}, closedPositions: {} },
+      headers: { terminalHeaders: [], openHeaders: [], closeHeaders: [] },
       errorData: { error: 0, text: "" }
     };
 
     this.simulation = {
-      isEnabled:false,
-      timeoffset:0
+      isEnabled: false,
+      timeoffset: 0
     }
     this.intervalRef = null;
     this.traderRef = React.createRef();
@@ -49,6 +54,8 @@ class App extends Component {
 
   componentDidMount() {
     window.addEventListener('keydown', this.handleKeyPress);
+    this.fetchHeaders();
+    this.fetchClosedPositions();
     this.fetchTerminalData(false);
     this.startDataFetchInterval();
   }
@@ -77,10 +84,9 @@ class App extends Component {
     this.simulation.isEnabled = state
     if (this.simulation.isEnabled) {
       this.simulation.timeoffset = randomIntFromInterval(TIMESTAMP_MS_BASE, Date.now()) - Date.now()
-      console.log(this.simulation.timeoffset)
     } else {
       this.simulation.timeoffset = 0
-    } 
+    }
   }
 
   togglePane(pane) {
@@ -93,23 +99,33 @@ class App extends Component {
   }
 
   startDataFetchInterval = () => {
-    this.intervalRef = setInterval(() => {
-      this.fetchTerminalData(false);
-      this.fetchSymbolData(this.state.calculatorState.instrument);
-    }, 3000);
+    this.intervalRef = setInterval(() => { this.fetchTerminalData(false) }, 3000);
   };
 
   fetchTerminalData = (force) => {
     fetch(`/api/update?force=${force}&start=${this.getCurrentTime()}`).then((response) =>
       response.json().then((receivedTerminalData) => {
-        this.setState((prevState) => ({
-          terminalData: {
-            ...prevState.terminalData,
-            ...receivedTerminalData,
-            instruments: { ...prevState.terminalData.instruments, ...receivedTerminalData.instruments },
+        this.setState((prevState) => {
+          const instruments = { ...prevState.terminalData.instruments, ...receivedTerminalData.instruments };
+          const symbolName = prevState.symbolData.name;
+          const terminalData = {
+            ...prevState.terminalData, ...receivedTerminalData,
+            instruments: instruments,
             updates: Object.keys(receivedTerminalData.instruments),
           }
-        }));
+
+          /* Update symbolData only if a symbol is selected */
+          if (symbolName) {
+            const symbolData = {
+              ...prevState.symbolData,
+              ask: parseFloat(instruments[symbolName][3]),
+              bid: parseFloat(instruments[symbolName][4])
+            }
+            return { terminalData: terminalData, symbolData: symbolData }
+          }
+
+          return { terminalData: terminalData };
+        });
       })
     );
   };
@@ -118,19 +134,46 @@ class App extends Component {
     if (instrument) {
       fetch(`/api/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
         response.json().then((receivedSymbol) => {
-          this.setState({ symbolData: receivedSymbol });
+          this.setState((prevState) => {
+            const instruments = prevState.terminalData.instruments
+            const symbolName = receivedSymbol.name
+            return {
+              symbolData: {
+                ...receivedSymbol,
+                ask: parseFloat(instruments[symbolName][3]),
+                bid: parseFloat(instruments[symbolName][4])
+              }
+            }
+          });
         })
       );
     }
   };
 
-  getCurrentTime(){
+  fetchHeaders = async () => {
+    const result = await new Api().fetchHeaders();
+    this.setState({ headers: result });
+  };
+
+  fetchClosedPositions = async () => {
+    const result = await new Api().fetchHistory();
+    this.setState((prevState) => {
+      return {
+        terminalData: {
+          ...prevState.terminalData,
+          closedPositions: result
+        }
+      }
+    });
+  };
+
+  getCurrentTime() {
     const currentBrokerTime = Date.now() + this.state.terminalData.timeoffset + this.simulation.timeoffset;
     return currentBrokerTime
   }
 
   render() {
-    const { calculatorState, symbolData, paneState, terminalData, errorData } = this.state;
+    const { calculatorState, symbolData, paneState, terminalData, headers, errorData } = this.state;
 
     return (
       <main className="App">
@@ -170,6 +213,7 @@ class App extends Component {
                 leverage={terminalData.account.leverage}
                 date={terminalData.date}
                 error={errorData}
+                brokerDate={getFormattedData(this.getCurrentTime())}
               />
             </nav>
             <TabPanel>
@@ -180,7 +224,7 @@ class App extends Component {
                   <Symbols
                     customClass={THEME}
                     account={terminalData.account}
-                    headers={terminalData.headers}
+                    headers={headers.terminalHeaders}
                     instruments={terminalData.instruments}
                     updates={terminalData.updates}
                     handlers={{
@@ -204,8 +248,8 @@ class App extends Component {
                 child={
                   <Orders
                     customClass={THEME}
-                    headers={terminalData.op_headers}
-                    open={terminalData.open}
+                    headers={headers.openHeaders}
+                    openPositions={terminalData.openPositions}
                     handlers={{ closeOrder: this.handleCloseOrder }}
                   />
                 }
@@ -214,7 +258,7 @@ class App extends Component {
                 ref={this.traderRef}
                 customClass={THEME}
                 account={terminalData.account}
-                symbol={symbolData.info}
+                symbol={symbolData}
                 handlers={{
                   setErrorData: (errorData) => this.setState({ errorData }),
                   setCommand: (ask, bid, sl, tp) => {
@@ -228,13 +272,26 @@ class App extends Component {
                   enableSimulation: (state) => this.toggleSimulation(state)
                 }}
               />
-              <Charter symbol={symbolData.info} calculator={calculatorState.calculator} currentTime={this.getCurrentTime()} timeframes={TIMEFRAMES}/>
+              <Charter
+                symbol={symbolData}
+                openPositions={terminalData.openPositions}
+                closedPositions={terminalData.closedPositions}
+                calculator={calculatorState.calculator}
+                currentTime={this.getCurrentTime()}
+                timeframes={TIMEFRAMES} />
             </TabPanel>
             <TabPanel>
-              <History customClass={THEME} />
+              <History
+                customClass={THEME}
+                headers={headers.closeHeaders}
+              />
             </TabPanel>
             <TabPanel>
-              <Backtester customClass={THEME} instruments={terminalData.instruments} timeoffset={terminalData.timeoffset} />
+              <Backtester
+                customClass={THEME}
+                instruments={terminalData.instruments}
+                timeoffset={terminalData.timeoffset}
+              />
             </TabPanel>
           </Tabs>
         </ThemeProvider>

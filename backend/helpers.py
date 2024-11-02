@@ -80,8 +80,7 @@ def utc_convert_to_utc(timestamp_s):
 
 
 def convert_timestamp_ms_to_date_formatted(timestamp_ms):
-    date_time = datetime.datetime.fromtimestamp(timestamp_ms/1000.0)
-    return date_time.strftime('%y.%m.%d [%H:%M:%S]')
+    return datetime.datetime.fromtimestamp(timestamp_ms/1000.0).strftime('%Y-%m-%d %H:%M')
 
 def convert_delta_ms_to_formatted_string(delta_ms):
     hours = int(delta_ms/ 1000.0/3600) 

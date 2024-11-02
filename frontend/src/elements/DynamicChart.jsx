@@ -26,6 +26,55 @@ const mapData = (data) => {
     }, { price: [], volume: [] });
 };
 
+const mappedTypes = {
+    market_sell: {
+        position: 'inBar',
+        color: 'yellow',
+        shape: 'arrowDown',
+    },
+    market_buy: {
+        position: 'inBar',
+        color: 'white',
+        shape: 'arrowUp',
+    }
+}
+
+function mergeMarkers(open, closed) {
+    // Merge the arrays
+    const merged = [...open, ...closed];
+
+    // Sort the merged array by the 'time' key
+    merged.sort((a, b) => new Date(a.time) - new Date(b.time));
+    return merged;
+}
+
+function mapPositionalData(data, closed = false) {
+    const addEntry = (dictType, timeIndex, priceIndex, text) => ({
+        ...mappedTypes[dictType],
+        time: Date.parse(timeIndex)/1000,
+        price: priceIndex,
+        text: text
+    });
+    if (data) {
+
+        return data.reduce((acc, entry) => {
+            if (closed) {
+                if (entry[4] === "BUY") {
+                    acc.push(addEntry("market_buy", entry[2], entry[5], entry[0]));
+                    acc.push(addEntry("market_sell", entry[3], entry[6], entry[0]));
+                } else {
+                    acc.push(addEntry("market_sell", entry[2], entry[5], entry[0]));
+                    acc.push(addEntry("market_buy", entry[3], entry[6], entry[0]));
+                }
+            } else {
+                acc.push(addEntry(entry[3], entry[2], entry[4], entry[0]));
+            }
+            return acc;
+        }, []);
+    }
+    return []
+}
+
 
 export default class DynamicChart extends React.Component {
     constructor(props) {
@@ -181,7 +230,7 @@ export default class DynamicChart extends React.Component {
             title
         });
     };
-    updateMarkers = (sl, tp) => {
+    updateLines = (sl, tp) => {
         this.state.sl.forEach(slLine => this.candleSeries.removePriceLine(slLine));
         this.state.tp.forEach(tpLine => this.candleSeries.removePriceLine(tpLine));
 
@@ -190,6 +239,12 @@ export default class DynamicChart extends React.Component {
 
         this.setState({ sl: newSL, tp: newTP });
     };
+
+    updatePositions(openPositions, closedPositions) {
+        const open = mapPositionalData(openPositions, false)
+        const closed = mapPositionalData(closedPositions, true)
+        this.candleSeries.setMarkers(mergeMarkers(open, closed))
+    }
 
     resetData(digits) {
         this.setState({ data: [] });

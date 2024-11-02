@@ -9,20 +9,19 @@ class OpenPosition:
               "SYMBOL",
               "TIME",
               "TYPE",
-              "MAGIC",
-              "COMMENT",
-              "PROFIT",
               "OPEN",
+              "PRICE",
+              "VOLUME",
               "SL",
               "TP",
-              "PRICE",
+              "COMMENT",
+              "PROFIT",
               "SWAP",
-              "VOLUME"
               ]
 
     def __init__(self, pos, type):
         self.id = pos.ticket
-        self.time = datetime.datetime.fromtimestamp(pos.time).strftime('%Y-%m-%d %H:%M')
+        self.time = convert_timestamp_ms_to_date_formatted(pos.time*1000)
         self.type = type
         self.magic = pos.magic
         self.identifier = pos.identifier
@@ -49,7 +48,6 @@ class OpenPosition:
             "id": self.id,
             "time": self.time,
             "type": self.type,
-            "magic": self.magic,
             "comment": self.comment,
             "symbol": self.symbol,
             "profit": f"{self.profit:.2f}",
@@ -65,21 +63,23 @@ class OpenPosition:
     def get_info_header():
         return OpenPosition.HEADER
 
+    def get_symbol(self):
+        return self.symbol
+
     def get_info(self):
         data = []
-        data.append(self.id)
+        data.append(str(self.id))
         data.append(self.symbol)
         data.append(self.time)
         data.append(self.type)
-        data.append(self.magic)
-        data.append(self.comment)
-        data.append(f"{self.profit:.2f}")
         data.append(self.price_open)
+        data.append(self.price_current)
+        data.append(self.volume)
         data.append(self.price_sl)
         data.append(self.price_tp)
-        data.append(self.price_current)
+        data.append(self.comment)
+        data.append(f"{self.profit:.2f}")
         data.append(self.swap)
-        data.append(self.volume)
         return data
 
 
@@ -88,13 +88,14 @@ class ClosedPosition:
     HEADER = ["ID",
               "SYMBOL",
               "START",
-              "DURATION",
-              "VOLUME",
+              "END",
+              "TYPE",
               "OPEN",
               "CLOSE",
+              "VOLUME",
               "PROFIT",
-              "TYPE",
-              "COMMENT"
+              "COMMENT",
+              "DURATION",
               ]
 
     def __init__(self, pos_id):
@@ -170,9 +171,7 @@ class ClosedPosition:
         """
         self.symbol_info = sym
 
-    def get_symbol_name(self):
-        """Gets
-        """
+    def get_symbol(self):
         return self.opening_deals[0].symbol
 
     def get_id(self):
@@ -320,16 +319,17 @@ class ClosedPosition:
 
     def get_info(self):
         data = []
-        data.append(self.id)
+        data.append(str(self.id))
         data.append(self.symbol)
         data.append(convert_timestamp_ms_to_date_formatted(self.get_start_ms()))
-        data.append(convert_delta_ms_to_formatted_string(self.get_end_ms()-self.get_start_ms()))
-        data.append(self.closing_volume)
+        data.append(convert_timestamp_ms_to_date_formatted(self.get_end_ms()))
+        data.append(self.sell_or_buy)
         data.append(self.price_open_avg)
         data.append(self.price_close_avg)
+        data.append(self.closing_volume)
         data.append(self.profit_total)
-        data.append(self.sell_or_buy)
         data.append(self.comment)
+        data.append(convert_delta_ms_to_formatted_string(self.get_end_ms()-self.get_start_ms()))
         return data
 
     def to_json(self):

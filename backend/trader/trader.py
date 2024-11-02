@@ -44,15 +44,6 @@ class Trader:
     def get_timeframes(self):
         return Trader.TIMEFRAMES
 
-    def get_atr(self, sym):
-        if self.mt5api.is_connection_present():
-            info = mt5.symbol_info_tick(sym.name)
-            end_ms = info.time_msc
-            start_ms = time_go_back_n_weeks(end_ms, 2)
-            rates = self.get_rates(sym, "D1",  start_ms, end_ms)
-            return Rate.calculate_average_true_range(rates)
-        return -1
-
     def get_open_positions(self):
         """Get Open Positions"""
         tickets = []
@@ -71,10 +62,10 @@ class Trader:
 
         return self.open_positions
 
-    def get_closed_positions(self, start_date, barcount):
+    def get_closed_positions(self, start_date, end_date, barcount):
         """ Return the current positions. Position=0 --> Buy """
 
-        positions = self.get_history_positions(start_date)
+        positions = self.get_history_positions(start_date, end_date)
         for pid in positions:
             pd = positions[pid]
             start_ms = pd.get_start_ms()
@@ -88,7 +79,7 @@ class Trader:
                 end_ms = int(round(time.time() * 1000))
 
             for tf in reversed(Trader.TIMEFRAMES):
-                rates = self.mt5api.get_rates(pd.get_symbol_name(),
+                rates = self.mt5api.get_rates(pd.get_symbol(),
                                               utc_from=convert_timestamp_ms_to_date(start_ms),
                                               utc_to=convert_timestamp_ms_to_date(end_ms),
                                               frame=self.mt5api.get_mt5_timeframe(tf))
@@ -180,7 +171,7 @@ class Trader:
         # Process finished positions
         for pos_id, closed_pos in pos_finished.items():
             # Handle potential symbol name change (e.g. for futures)
-            symbol_info = mt5.symbol_info(closed_pos.get_symbol_name())
+            symbol_info = mt5.symbol_info(closed_pos.get_symbol())
             closed_pos.set_symbol_info(symbol_info)
 
             # Retrieve and add associated orders

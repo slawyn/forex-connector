@@ -398,7 +398,7 @@ class Trader extends Component<TraderProps, TraderState> {
               enableTrading: this.handleEnableTrading
             }} />
         </nav>
-        <nav className="cls50PContainer">
+        <nav className="cls50PContainer property-float-right">
           <ControlPanel customClass={customClass}
             handlers={{ enableSimulation: this.props.handlers.enableSimulation }}
           />

@@ -90,7 +90,7 @@ class DriveFileController:
             img_name = Chart.get_name(pd.get_id())
             chartpath = os.path.join(os.path.abspath(self.dir), img_name )
             if not os.path.exists(chartpath):
-                Chart().generate_chart(chartpath, pd.get_id(), pd.get_rates(), pd.get_limits(), pd.get_symbol_name(), pd.get_deals())
+                Chart().generate_chart(chartpath, pd.get_id(), pd.get_rates(), pd.get_limits(), pd.get_symbol(), pd.get_deals())
 
             # Add only if image was not uploaded
             if pid not in uploaded_images.keys():

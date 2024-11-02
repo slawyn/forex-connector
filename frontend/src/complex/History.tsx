@@ -2,31 +2,25 @@ import React, { useState, useEffect } from "react";
 import { createPostRequest } from "src/utils";
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import Table, { mapTerminalData } from "src/elements/table/Table";
+import Api, {HistoryData, transformHistoryData} from "src/Api"
+
 
 interface HistoryProps {
     customClass: string;
-}
-
-interface PositionData {
     headers: string[];
-    positions: any[][];
 }
 
-const History: React.FC<HistoryProps> = ({ customClass }) => {
-    const [positionData, setPositionData] = useState<PositionData>({ headers: [], positions: [] });
+const History: React.FC<HistoryProps> = ({ customClass, headers }) => {
+    const [positionData, setPositionData] = useState<any[][]>([]);
     const [selectedImage, setSelectedImage] = useState<string>("0");
 
-    const saveHistory = () => {
-        const requestOptions = createPostRequest({});
-        fetch('/api/save', requestOptions)
-            .then(response => response.json())
-            .then(() => { /* Handle response if needed */ });
+    const saveHistory = async () => {
+        const result = await new Api().saveHistory()
     };
 
-    const fetchHistory = () => {
-        fetch("/api/history")
-            .then(response => response.json())
-            .then(receivedPositions => setPositionData(receivedPositions));
+    const fetchHistory = async () => {
+        const result = await new Api().fetchHistory()
+        setPositionData(transformHistoryData(result));
     };
 
     useEffect(() => {
@@ -59,8 +53,8 @@ const History: React.FC<HistoryProps> = ({ customClass }) => {
                 <nav className="clsHistoryContainer">
                     <Table customClass={customClass}
                         customHeaderClass=" css-orange-background"
-                        headers={positionData.headers}
-                        data={mapTerminalData(positionData.positions)}
+                        headers={headers}
+                        data={mapTerminalData(positionData)}
                         onRowClick={handleOnClick}
                     />
                 </nav>

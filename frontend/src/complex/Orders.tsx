@@ -11,13 +11,13 @@ import Table, { mapTerminalData } from "src/elements/table/Table";
 interface OrdersProps {
     customClass: string;
     headers: string[];
-    open: any[][];
+    openPositions: any[][];
     handlers: {
         closeOrder: (type: string, name: string, id: number, volume: number) => void;
     };
 }
 
-const Orders: React.FC<OrdersProps> = ({ customClass, headers, open, handlers }) => {
+const Orders: React.FC<OrdersProps> = ({ customClass, headers, openPositions, handlers }) => {
     const [dialogData, setDialogData] = useState({
         type: "",
         state: false,
@@ -78,7 +78,7 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, open, handlers })
             <Table customClass={customClass}
                     customHeaderClass="css-green-background"
                     headers={headers}
-                    data={mapTerminalData(open)}
+                    data={mapTerminalData(Object.values(openPositions).flat())}
                     onRowClick={handleRowClick}
             />
         </>

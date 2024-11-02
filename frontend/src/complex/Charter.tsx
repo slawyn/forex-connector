@@ -55,11 +55,14 @@ function createTimeframeConfig(timeframes: Timeframe[]): Record<Timeframe, numbe
 
 interface CharterProps {
     calculator: Calculator;
+    openPositions: { [key: string]: any[][] };
+    closedPositions: { [key: string]: any[][] };
     symbol: Symbol;
     currentTime: number;
+    timeframes: Timeframe[];
 }
 
-const Charter: React.FC<CharterProps> = ({ calculator, symbol, currentTime, timeframes }) => {
+const Charter: React.FC<CharterProps> = ({ calculator, symbol, openPositions, closedPositions, currentTime, timeframes }) => {
     const config = useMemo(() => createTimeframeConfig(timeframes), []);
     const refCharts = useRef<MutableRefObject<any>[]>(Object.entries(config).map(() => React.createRef()));
     const localSymbol = useRef(symbol);
@@ -72,15 +75,17 @@ const Charter: React.FC<CharterProps> = ({ calculator, symbol, currentTime, time
                 reference.current?.resetData(symbol.digits);
             });
         }
+
         localSymbol.current = symbol;
         fetchRates(config, currentTime, localSymbol.current.name, localRates.current, updateRates);
+    
     }
 
     if (calculator && localCalculator.current !== calculator) {
         localCalculator.current = calculator;
         refCharts.current.forEach((reference, _index) => {
             if (reference.current) {
-                reference.current.updateMarkers(localCalculator.current.sl, localCalculator.current.tp);
+                reference.current.updateLines(localCalculator.current.sl, localCalculator.current.tp);
             }
         });
     }
@@ -93,6 +98,8 @@ const Charter: React.FC<CharterProps> = ({ calculator, symbol, currentTime, time
                 localSymbol.current.ask,
                 localSymbol.current.bid
             );
+
+            refCharts.current[index]?.current?.updatePositions(openPositions[symbol.name], closedPositions[symbol.name]);
         });
     }
 
@@ -106,5 +113,4 @@ const Charter: React.FC<CharterProps> = ({ calculator, symbol, currentTime, time
     return <Grid items={charts} />;
 };
 
-// Charter.whyDidYouRender = true
 export default Charter;
