@@ -87,6 +87,7 @@ export default class DynamicChart extends React.Component {
         };
         this.title = props.title
         this.handler = props.handler
+        this.selectionRange = null
     }
 
     componentDidMount() {
@@ -256,6 +257,7 @@ export default class DynamicChart extends React.Component {
                 formatter: (price) => price.toFixed(digits)
             }
         });
+        this.selectionRange.setData([])
     }
     _getCurrentPrice() {
         const last = this.state.data.length - 1
@@ -268,7 +270,7 @@ export default class DynamicChart extends React.Component {
             let times = { A: 0, B: 0 }
             let prices = { A: 0, B: 0 }
 
-            const selectionRange = this.chart.addAreaSeries({
+            this.selectionRange = this.chart.addAreaSeries({
                 topColor: 'rgba(38,198,218, 0.56)',
                 bottomColor: 'rgba(38,198,218, 0.04)',
                 lineColor: 'rgba(38,198,218, 1)',
@@ -277,7 +279,7 @@ export default class DynamicChart extends React.Component {
 
             this.chart.subscribeDblClick((params) => {
                 selecting = false
-                selectionRange.setData([])
+                this.selectionRange.setData([])
             })
 
             this.chart.subscribeClick((params) => {
@@ -287,11 +289,11 @@ export default class DynamicChart extends React.Component {
                 }
                 else {
                     if (times.B < times.A) {
-                        selectionRange.setData([{ time: times.B, value: prices.A }, { time: times.A, value: prices.A }])
+                        this.selectionRange.setData([{ time: times.B, value: prices.A }, { time: times.A, value: prices.A }])
                     }
                     else {
 
-                        selectionRange.setData([{ time: times.A, value: prices.A }, { time: times.B, value: prices.A }])
+                        this.selectionRange.setData([{ time: times.A, value: prices.A }, { time: times.B, value: prices.A }])
                     }
 
                     handler(times.A, times.B)

@@ -86,7 +86,7 @@ button {
   width: 100%;
 }
 
-.cls50PContainer {
+.container-50p {
   vertical-align: top;
   width: 50%;
 }
@@ -99,7 +99,7 @@ button {
   overflow-y: auto;
   min-width: fit-content;
 }
-.clsFlexContainer {
+.container-flex {
   display: flex;
 }
 

@@ -2,10 +2,11 @@ import * as React from 'react';
 import MiscCheckbox from 'src/elements/Misc';
 
 interface Handlers {
-    enableSimulation: (state:boolean) => void;
+    enableSimulation: (state: boolean) => void;
     executeSimulationStep: () => void;
-    enableTrading: (state:boolean) => void;
-    
+    enableTrading: (state: boolean) => void;
+    execBacktester: () => void;
+
 }
 
 interface ControlPanelProps {
@@ -14,25 +15,30 @@ interface ControlPanelProps {
 }
 
 
-export const ControlPanel: React.FC<ControlPanelProps> =  ({ customClass, handlers}) => {
+export const ControlPanel: React.FC<ControlPanelProps> = ({ customClass, handlers }) => {
     return (
         <table className={customClass}>
             <thead>
                 <tr>
                     <th title="Enables simulation mode" className={customClass}>
                         <MiscCheckbox customClass={"css-button-checkbox"}
-                            text ="Enable Simulation"
+                            text="Enable Simulation"
                             handler={(state) => {
                                 handlers.enableSimulation(state);
                             }}
                         />
+                    </th>
+                    <th
+                        className={"css-blue-button property-fullsize"}
+                        onClick={() => handlers.execBacktester()}>
+                        Backtest
                     </th>
                 </tr>
             </thead>
             <tbody>
                 <tr key="order-row">
                     <td>
-                        
+
                     </td>
                 </tr>
             </tbody>

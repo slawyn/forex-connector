@@ -9,7 +9,6 @@ import Symbols from "src/complex/Symbols";
 import Trader from "src/complex/Trader";
 import History from "src/complex/History";
 import Charter from "src/complex/Charter";
-import Backtester from "src/complex/Backtester";
 import TopBar from "src/elements/TopBar";
 import SlidingPane from "src/elements/SlidingPane";
 import MiscCheckbox from "src/elements/Misc";
@@ -17,6 +16,7 @@ import Commander from "src/Commander";
 import Orders from "src/complex/Orders";
 import { randomIntFromInterval } from "src/utils"
 import Api from "src/Api"
+import { ControlPanel } from "src/complex/ControlPanel";
 
 
 function getFormattedData(timeMilliseconds) {
@@ -46,8 +46,14 @@ class App extends Component {
 
     this.simulation = {
       isEnabled: false,
-      timeoffset: 0
-    }
+      timeoffset: 0,
+    };
+
+    this.backtester = {
+      timeframe: "",
+      start: 0,
+      end: 0
+    };
     this.intervalRef = null;
     this.traderRef = React.createRef();
   }
@@ -76,6 +82,13 @@ class App extends Component {
     actions[event.key]?.();
   }
 
+  handleRangeSelection = (timeframe, start, end) => {
+    this.backtester.instrument = this.state.symbolData.name
+    this.backtester.timeframe = timeframe
+    this.backtester.start = start
+    this.backtester.end = end
+  }
+
   handleCloseOrder = (...args) => {
     this.traderRef.current?.handleCloseTrade(...args)
   }
@@ -87,6 +100,13 @@ class App extends Component {
     } else {
       this.simulation.timeoffset = 0
     }
+  }
+
+  execBacktester = async () => {
+    this.backtester.risk = this.state.calculatorState.calculator.risk
+    this.backtester.volume = this.state.calculatorState.calculator.volume
+    console.log(this.backtester)
+    const result = await new Api().postBacktest(this.backtester)
   }
 
   togglePane(pane) {
@@ -102,51 +122,45 @@ class App extends Component {
     this.intervalRef = setInterval(() => { this.fetchTerminalData(false) }, 3000);
   };
 
-  fetchTerminalData = (force) => {
-    fetch(`/api/update?force=${force}&start=${this.getCurrentTime()}`).then((response) =>
-      response.json().then((receivedTerminalData) => {
-        this.setState((prevState) => {
-          const instruments = { ...prevState.terminalData.instruments, ...receivedTerminalData.instruments };
-          const symbolName = prevState.symbolData.name;
-          const terminalData = {
-            ...prevState.terminalData, ...receivedTerminalData,
-            instruments: instruments,
-            updates: Object.keys(receivedTerminalData.instruments),
-          }
+  fetchTerminalData = async (force) => {
+    const result = await new Api().fetchTerminalData(force, this.getCurrentBrokerTime());
+    this.setState((prevState) => {
+      const instruments = { ...prevState.terminalData.instruments, ...result.instruments };
+      const symbolName = prevState.symbolData.name;
+      const terminalData = {
+        ...prevState.terminalData, ...result,
+        instruments: instruments,
+        updates: Object.keys(result.instruments),
+      }
 
-          /* Update symbolData only if a symbol is selected */
-          if (symbolName) {
-            const symbolData = {
-              ...prevState.symbolData,
-              ask: parseFloat(instruments[symbolName][3]),
-              bid: parseFloat(instruments[symbolName][4])
-            }
-            return { terminalData: terminalData, symbolData: symbolData }
-          }
+      /* Update symbolData only if a symbol is selected */
+      if (symbolName) {
+        const symbolData = {
+          ...prevState.symbolData,
+          ask: parseFloat(instruments[symbolName][3]),
+          bid: parseFloat(instruments[symbolName][4])
+        }
+        return { terminalData: terminalData, symbolData: symbolData }
+      }
 
-          return { terminalData: terminalData };
-        });
-      })
-    );
+      return { terminalData: terminalData };
+    });
   };
 
-  fetchSymbolData = (instrument) => {
+  fetchSymbolData = async (instrument) => {
     if (instrument) {
-      fetch(`/api/symbol?instrument=${encodeURIComponent(instrument)}`).then((response) =>
-        response.json().then((receivedSymbol) => {
-          this.setState((prevState) => {
-            const instruments = prevState.terminalData.instruments
-            const symbolName = receivedSymbol.name
-            return {
-              symbolData: {
-                ...receivedSymbol,
-                ask: parseFloat(instruments[symbolName][3]),
-                bid: parseFloat(instruments[symbolName][4])
-              }
-            }
-          });
-        })
-      );
+      const result = await new Api().fetchSymbolData(instrument)
+      this.setState((prevState) => {
+        const instruments = prevState.terminalData.instruments
+        const symbolName = result.name
+        return {
+          symbolData: {
+            ...result,
+            ask: parseFloat(instruments[symbolName][3]),
+            bid: parseFloat(instruments[symbolName][4])
+          }
+        }
+      });
     }
   };
 
@@ -157,19 +171,16 @@ class App extends Component {
 
   fetchClosedPositions = async () => {
     const result = await new Api().fetchHistory();
-    this.setState((prevState) => {
-      return {
-        terminalData: {
-          ...prevState.terminalData,
-          closedPositions: result
-        }
-      }
-    });
+    this.setState(prevState => ({
+      terminalData: {
+        ...prevState.terminalData,
+        closedPositions: result,
+      },
+    }));
   };
 
-  getCurrentTime() {
-    const currentBrokerTime = Date.now() + this.state.terminalData.timeoffset + this.simulation.timeoffset;
-    return currentBrokerTime
+  getCurrentBrokerTime() {
+    return Date.now() + this.state.terminalData.timeoffset + this.simulation.timeoffset;
   }
 
   render() {
@@ -184,7 +195,6 @@ class App extends Component {
               <TabList className="top-bar-tabs">
                 <Tab className="top-bar-tab">Trading</Tab>
                 <Tab className="top-bar-tab">History</Tab>
-                <Tab className="top-bar-tab">Backtester</Tab>
               </TabList>
               <MiscCheckbox
                 customClass={"css-button-checkbox"}
@@ -213,7 +223,7 @@ class App extends Component {
                 leverage={terminalData.account.leverage}
                 date={terminalData.date}
                 error={errorData}
-                brokerDate={getFormattedData(this.getCurrentTime())}
+                brokerDate={getFormattedData(this.getCurrentBrokerTime())}
               />
             </nav>
             <TabPanel>
@@ -254,43 +264,51 @@ class App extends Component {
                   />
                 }
               />
-              <Trader
-                ref={this.traderRef}
-                customClass={THEME}
-                account={terminalData.account}
-                symbol={symbolData}
-                handlers={{
-                  setErrorData: (errorData) => this.setState({ errorData }),
-                  setCommand: (ask, bid, sl, tp) => {
-                    this.setState((prevState) => ({
-                      calculatorState: {
-                        calculator: { ask, bid, sl, tp }
-                      },
-                    }));
-                    this.commander.setCommand({ calculator: { ask, bid, sl, tp } });
-                  },
-                  enableSimulation: (state) => this.toggleSimulation(state)
-                }}
-              />
+              <nav className="container-flex">
+                <nav className="container-50p">
+                  <Trader
+                    ref={this.traderRef}
+                    customClass={THEME}
+                    account={terminalData.account}
+                    symbol={symbolData}
+                    handlers={{
+                      setErrorData: (errorData) => this.setState({ errorData }),
+                      setCommand: (ask, bid, sl, tp, risk, volume) => {
+                        console.log(risk, volume)
+                        this.setState((prevState) => ({
+                          calculatorState: {
+                            calculator: { ask, bid, sl, tp, risk, volume }
+                          },
+                        }));
+                        this.commander.setCommand({ calculator: { ask, bid, sl, tp } });
+                      }
+                    }}
+                  />
+                </nav>
+                <nav className="container-50p property-float-right">
+                  <ControlPanel customClass={THEME}
+                    handlers={{
+                      enableSimulation: (state) => this.toggleSimulation(state),
+                      execBacktester: () => this.execBacktester()
+                    }}
+                  />
+                </nav>
+              </nav>
               <Charter
                 symbol={symbolData}
                 openPositions={terminalData.openPositions}
                 closedPositions={terminalData.closedPositions}
                 calculator={calculatorState.calculator}
-                currentTime={this.getCurrentTime()}
+                currentTime={this.getCurrentBrokerTime()}
+                handlers={{
+                  setRange: this.handleRangeSelection
+                }}
                 timeframes={TIMEFRAMES} />
             </TabPanel>
             <TabPanel>
               <History
                 customClass={THEME}
                 headers={headers.closeHeaders}
-              />
-            </TabPanel>
-            <TabPanel>
-              <Backtester
-                customClass={THEME}
-                instruments={terminalData.instruments}
-                timeoffset={terminalData.timeoffset}
               />
             </TabPanel>
           </Tabs>

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Calculator, Trade } from "src/complex/Calculator";
-import { ControlPanel } from "src/complex/ControlPanel";
 import { createPostRequest } from "src/utils";
+import Api, { TradeData } from "src/Api";
 
 const SPREADMULTIPLIFER = 5;
 const INITIAL_RISK_PERCENTAGE = 1.0;
@@ -29,9 +29,8 @@ interface Account {
 }
 
 interface Handlers {
-  setCommand: (ask: number, bid: number, sl: number[], tp: number[]) => void;
+  setCommand: (ask: number, bid: number, sl: number[], tp: number[], risk: number, volume: number) => void;
   setErrorData: (errorData: { error: number; text: string }) => void;
-  enableSimulation: (state: boolean) => void;
 }
 
 interface TraderProps {
@@ -234,6 +233,9 @@ class Trader extends Component<TraderProps, TraderState> {
         }
       }))
 
+      /* Trigger internal update, once */
+      this.isInternalUpdate = true
+
       /* when symbol bid or as change */
     } else if (!this.isPriceFrozen && (trade.ask !== symbol.ask || trade.bid !== symbol.bid)) {
       this.setState((prevState) => ({
@@ -250,7 +252,7 @@ class Trader extends Component<TraderProps, TraderState> {
       /* internal update updates the outter modules  */
     } else if (this.isInternalUpdate) {
       this.isInternalUpdate = false
-      this.setExternalParameters(trade.ask, trade.bid, trade.ratio, trade.points)
+      this.setExternalParameters(trade.ask, trade.bid, trade.ratio, trade.points, trade.risk, trade.risk_volume)
     }
   }
 
@@ -269,27 +271,24 @@ class Trader extends Component<TraderProps, TraderState> {
   }
 
 
-  requestTrade(request: any) {
+  async requestTrade(request: any) {
     if (this.isTradingEnabled) {
-      const requestOptions = createPostRequest(request);
-      fetch("/api/trade", requestOptions)
-        .then((response) => response.json())
-        .then((idResponse) => {
-          this.props.handlers.setErrorData({
-            error: idResponse.error,
-            text: idResponse.text,
-          });
-          if (idResponse.error !== 10009) {
-            throw new Error(`Result: [${idResponse.error}] ${idResponse.text}`);
-          }
-        });
+      const result = await new Api().postTrade(request)
+      this.props.handlers.setErrorData({
+        error: result.error,
+        text: result.text,
+      });
+
+      if (result.error !== 10009) {
+        throw new Error(`Result: [${result.error}] ${result.text}`);
+      }
     }
   }
 
-  setExternalParameters(ask: number, bid: number, ratio: number, points: number) {
+  setExternalParameters(ask: number, bid: number, ratio: number, points: number, risk: number, volume: number) {
     const sl = [ask - points, bid + points];
     const tp = [ask + points * ratio, bid - points * ratio];
-    this.props.handlers.setCommand(ask, bid, sl, tp);
+    this.props.handlers.setCommand(ask, bid, sl, tp, risk, volume);
   }
 
   handleVolumeChange = (risk_volume: number) => {
@@ -378,35 +377,24 @@ class Trader extends Component<TraderProps, TraderState> {
   render() {
     const { customClass } = this.props;
     const { trade } = this.state;
-    // console.log("render", trade)
     return (
-      <nav className="clsFlexContainer">
-        <nav className="cls50PContainer">
-          <Calculator
-            customClass={customClass}
-            trade={trade}
-            types={Object.keys(this.REQUEST_BUILD_HANDLERS)}
-            handlers={{
-              openTrade: this.handleOpenTrade,
-              typeChange: this.handleTypeChange,
-              volumeChange: this.handleVolumeChange,
-              riskChange: this.handleRiskChange,
-              ratioChange: this.handleRatioChange,
-              commentChange: this.handleCommentChange,
-              askChange: this.handleAskChange,
-              bidChange: this.handleBidChange,
-              enableTrading: this.handleEnableTrading
-            }} />
-        </nav>
-        <nav className="cls50PContainer property-float-right">
-          <ControlPanel customClass={customClass}
-            handlers={{ enableSimulation: this.props.handlers.enableSimulation }}
-          />
-        </nav>
-      </nav>
+      <Calculator
+        customClass={customClass}
+        trade={trade}
+        types={Object.keys(this.REQUEST_BUILD_HANDLERS)}
+        handlers={{
+          openTrade: this.handleOpenTrade,
+          typeChange: this.handleTypeChange,
+          volumeChange: this.handleVolumeChange,
+          riskChange: this.handleRiskChange,
+          ratioChange: this.handleRatioChange,
+          commentChange: this.handleCommentChange,
+          askChange: this.handleAskChange,
+          bidChange: this.handleBidChange,
+          enableTrading: this.handleEnableTrading
+        }} />
     );
   }
 }
 
-// Trader.whyDidYouRender = true;
 export default Trader;

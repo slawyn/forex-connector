@@ -23,9 +23,7 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, openPositions, ha
         state: false,
         id: 0,
         name: "",
-        volume: 0,
-        ask: 0,
-        bid: 0
+        volume: 0
     });
 
     const handleDialogClose = (confirm: boolean) => {
@@ -44,10 +42,8 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, openPositions, ha
         setDialogData({
             name: items[1],
             id: items[0],
-            volume: items[items.length - 1],
+            volume: items[6],
             type: items[3],
-            ask: items[8],
-            bid: items[9],
             state: true,
         });
     };

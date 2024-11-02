@@ -2,6 +2,7 @@ import React, { useRef, useMemo, MutableRefObject } from "react";
 import Grid from "src/elements/Grid";
 import DynamicChart from "src/elements/DynamicChart";
 import { mergeArray, calculateDeltaDays } from "src/utils";
+import Api, { RateData } from "src/Api";
 
 const DAYS = 50
 type Timeframe = string;
@@ -23,6 +24,15 @@ interface Rates {
     data?: Record<Timeframe, { time: number }[]>;
 }
 
+interface SelectedTimes {
+    volume: number;
+    risk: number;
+    timeframe: string;
+    start: number;
+    end: number;
+    instrument?: string;
+}
+
 async function fetchRates(
     timeframes: Record<Timeframe, number>,
     currentTime: number,
@@ -36,10 +46,7 @@ async function fetchRates(
         if (rates.instrument === instrument && rates.data?.[timeframe]?.length > 0) {
             start = rates.data[timeframe][rates.data[timeframe].length - 1].time;
         }
-        const response = await fetch(
-            `/api/rates?instrument=${encodeURIComponent(instrument)}&start=${start}&end=${end}&timeframe=${timeframe}`
-        );
-        return response.json();
+        return await new Api().fetchRateData(instrument, start, end, timeframe)
     });
     const receivedRatesData = await Promise.all(promises);
     const mergedData = mergeArray(receivedRatesData);
@@ -60,9 +67,12 @@ interface CharterProps {
     symbol: Symbol;
     currentTime: number;
     timeframes: Timeframe[];
+    handlers: {
+        setRange: (timeframe: string, start: number, end: number) => void
+    }
 }
 
-const Charter: React.FC<CharterProps> = ({ calculator, symbol, openPositions, closedPositions, currentTime, timeframes }) => {
+const Charter: React.FC<CharterProps> = ({ calculator, symbol, openPositions, closedPositions, currentTime, timeframes, handlers }) => {
     const config = useMemo(() => createTimeframeConfig(timeframes), []);
     const refCharts = useRef<MutableRefObject<any>[]>(Object.entries(config).map(() => React.createRef()));
     const localSymbol = useRef(symbol);
@@ -78,7 +88,7 @@ const Charter: React.FC<CharterProps> = ({ calculator, symbol, openPositions, cl
 
         localSymbol.current = symbol;
         fetchRates(config, currentTime, localSymbol.current.name, localRates.current, updateRates);
-    
+
     }
 
     if (calculator && localCalculator.current !== calculator) {
@@ -106,7 +116,7 @@ const Charter: React.FC<CharterProps> = ({ calculator, symbol, openPositions, cl
     /* Memoize chart components to prevent unnecessary re-renders */
     const charts = useMemo(() => (
         Object.keys(config).map((timeframe, index) => (
-            <DynamicChart ref={refCharts.current[index]} title={timeframe} key={timeframe} />
+            <DynamicChart ref={refCharts.current[index]} title={timeframe} key={timeframe} handler={(start: number, end: number) => handlers?.setRange(timeframe, start * 1000, end * 1000)} />
         ))
     ), [refCharts, config]);
 

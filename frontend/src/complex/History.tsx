@@ -14,8 +14,8 @@ const History: React.FC<HistoryProps> = ({ customClass, headers }) => {
     const [positionData, setPositionData] = useState<any[][]>([]);
     const [selectedImage, setSelectedImage] = useState<string>("0");
 
-    const saveHistory = async () => {
-        const result = await new Api().saveHistory()
+    const postSaveHistory = async () => {
+        const result = await new Api().postSaveHistory()
     };
 
     const fetchHistory = async () => {
@@ -35,7 +35,7 @@ const History: React.FC<HistoryProps> = ({ customClass, headers }) => {
         <>
             <div>
                 <button
-                    onClick={saveHistory}
+                    onClick={postSaveHistory}
                     className="clsOrangebutton"
                     style={{ width: "fit-content" }}
                 >
@@ -49,7 +49,7 @@ const History: React.FC<HistoryProps> = ({ customClass, headers }) => {
                     Fetch Trades
                 </button>
             </div>
-            <nav className="clsFlexContainer">
+            <nav className="container-flex">
                 <nav className="clsHistoryContainer">
                     <Table customClass={customClass}
                         customHeaderClass=" css-orange-background"

@@ -71,6 +71,7 @@ class App(Flask):
 
     def get_rates_pandas(self, instrument, time_frame, start_ms, end_ms):
         symbol = self.trader.get_symbol(instrument)
+        print(symbol, instrument, time_frame, start_ms, end_ms)
         return Rate.to_pandas(self.trader.get_rates(symbol, time_frame, int(start_ms), int(end_ms)))
 
     def get_account_info(self):
@@ -246,7 +247,7 @@ def on_trade():
     stoploss = data.get("stoploss")
     takeprofit = data.get("takeprofit")
     comment = data.get("comment")
-    result = app.trader.trade(symbol, lot, type, price, stoplimit, stoploss, takeprofit, comment, pending, position)
+    result = app.trader.trade(symbol, lot, type, price, stoplimit, stoploss, takeprofit, comment, pending, int(position))
     return {"error": result[0], "text": result[1]}
 
 

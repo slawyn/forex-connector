@@ -1,4 +1,4 @@
-import { createPostRequest } from "src/utils";
+import Api from "src/Api";
 
 interface Calculator {
     ask?: number;
@@ -45,12 +45,10 @@ export default class Commander {
 
         if (this.preview) {
             if (!this.selected && this.instrument !== "") {
-                const requestOptions = createPostRequest({ command: 'select', data: this.instrument });
-                fetch('/api/command', requestOptions).then(response => response.json());
+                new Api().postCommand({ command: 'select', data: this.instrument })
                 this.selected = true;
             } else if (this.selected && Object.keys(this.calculator).length > 0) {
-                const requestOptions = createPostRequest({ command: 'preview', data: this.calculator });
-                fetch('/api/command', requestOptions).then(response => response.json());
+                new Api().postCommand({ command: 'preview', data: this.calculator })
             }
         } else {
             this.selected = false;
