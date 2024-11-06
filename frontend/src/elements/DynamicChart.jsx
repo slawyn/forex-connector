@@ -70,7 +70,7 @@ function mapPositionalData(data, closed = false, timestep) {
                     acc.push(addEntry("market_sell", timeEnd, priceEnd, ""));
                 } else {
                     acc.push(addEntry("market_sell", timeStart, priceStart, tradeId));
-                    acc.push(addEntry("market_buy", timeEnd, priceEnd,""));
+                    acc.push(addEntry("market_buy", timeEnd, priceEnd, ""));
                 }
             } else {
                 acc.push(addEntry(entry[3], entry[2], entry[4], entry[0]));
@@ -261,9 +261,8 @@ export default class DynamicChart extends React.Component {
     };
 
     _createConnection = (timeStart, timeEnd, priceStart, priceEnd, id) => {
-        if (!(id in this.state.connections)) {
-            // console.log(id)
-            this.state.connections[id] = this.chart.addLineSeries({
+        if (!(id in this.state.connections) && timeStart !== timeEnd) {
+            const connection = this.chart.addLineSeries({
                 color: '#ffffff80',
                 lineWidth: 2,
                 lineStyle: 4,
@@ -271,12 +270,11 @@ export default class DynamicChart extends React.Component {
                 lastValueVisible: false
             });
 
-            if (timeStart !== timeEnd) {
-                this.state.connections[id].setData([
-                    { time: timeStart, value: priceStart },
-                    { time: timeEnd, value: priceEnd }]
-                )
-            }
+            connection.setData([
+                { time: timeStart, value: priceStart },
+                { time: timeEnd, value: priceEnd }]
+            )
+            return connection
         }
     }
     _getChartTimeStep() {
@@ -303,15 +301,25 @@ export default class DynamicChart extends React.Component {
             const open = mapPositionalData(openPositions, false, timestep)
             const closed = mapPositionalData(closedPositions, true, timestep)
 
-            const connections = getConnectionsForClosed(closedPositions, timestep)
-            for (const [id, value] of Object.entries(connections)) {
-                this._createConnection(value.timeStart, value.timeEnd, value.priceStart, value.priceEnd, id)
+            let connections = {}
+            for (const [id, value] of Object.entries(getConnectionsForClosed(closedPositions, timestep))) {
+                const connection = this._createConnection(value.timeStart, value.timeEnd, value.priceStart, value.priceEnd, id)
+                if (connection) {
+                    connections[id] = connection
+                }
             }
+
+            this.setState(prevState => ({ connections: { ...prevState.connections, ...connections } }))
             this.candleSeries.setMarkers(mergeMarkers(open, closed))
         }
     }
 
+    _removeAllSeries() {
+        Object.values(this.state.connections).forEach(series => this.chart.removeSeries(series));
+    }
+
     resetData(digits) {
+        this._removeAllSeries()
         this.setState({ data: [], connections: {} });
         this.candleSeries.setData([]);
         this.volumeSeries.setData([]);
