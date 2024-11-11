@@ -1,9 +1,6 @@
 import React from 'react';
 import { createChart, CrosshairMode } from 'lightweight-charts';
 
-
-
-
 const mapData = (data) => {
     return data.reduce((acc, entry) => {
         const time = entry.time / 1000;
@@ -40,10 +37,7 @@ const mappedTypes = {
 }
 
 function mergeMarkers(open, closed) {
-    // Merge the arrays
     const merged = [...open, ...closed];
-
-    // Sort the merged array by the 'time' key
     merged.sort((a, b) => new Date(a.time) - new Date(b.time));
     return merged;
 }
@@ -116,6 +110,7 @@ export default class DynamicChart extends React.Component {
         this.title = props.title
         this.handler = props.handler
         this.selectionRange = null
+        this.timeDeltaMs = 0
     }
 
     componentDidMount() {
@@ -277,13 +272,6 @@ export default class DynamicChart extends React.Component {
             return connection
         }
     }
-    _getChartTimeStep() {
-        if (this.state.data?.length > 2) {
-            const length = this.state.data.length
-            return Math.min(this.state.data[length - 1].time - this.state.data[length - 2].time, this.state.data[length - 2].time - this.state.data[length - 3].time)
-        }
-        return -1
-    }
 
     updateLines = (sl, tp) => {
         this.state.sl.forEach(slLine => this.candleSeries.removePriceLine(slLine));
@@ -295,8 +283,11 @@ export default class DynamicChart extends React.Component {
         this.setState({ sl: newSL, tp: newTP });
     };
 
-    updatePositions(openPositions, closedPositions) {
-        const timestep = this._getChartTimeStep()
+    _removeAllSeries() {
+        Object.values(this.state.connections).forEach(series => this.chart.removeSeries(series));
+    }
+
+    updatePositions(openPositions, closedPositions, timestep) {
         if (timestep > 0) {
             const open = mapPositionalData(openPositions, false, timestep)
             const closed = mapPositionalData(closedPositions, true, timestep)
@@ -314,22 +305,18 @@ export default class DynamicChart extends React.Component {
         }
     }
 
-    _removeAllSeries() {
-        Object.values(this.state.connections).forEach(series => this.chart.removeSeries(series));
-    }
-
     resetData(digits) {
         this._removeAllSeries()
-        this.setState({ data: [], connections: {} });
-        this.candleSeries.setData([]);
-        this.volumeSeries.setData([]);
+        this.candleSeries.setData([])
+        this.volumeSeries.setData([])
+        this.selectionRange.setData([])
         this.candleSeries.applyOptions({
             priceFormat: {
                 type: "custom",
                 formatter: (price) => price.toFixed(digits)
             }
         });
-        this.selectionRange.setData([])
+        this.setState({ data: [], connections: {} });
     }
 
     _getCurrentHighestPrice() {
@@ -342,6 +329,7 @@ export default class DynamicChart extends React.Component {
         }, -Infinity);
         return highestPrice;
     }
+
     _subscribeSelectableRange(handler) {
         if (handler) {
             let selecting = false
@@ -405,7 +393,7 @@ export default class DynamicChart extends React.Component {
                 this.candleSeries.setData(mappedData.price);
                 this.volumeSeries.setData(mappedData.volume);
             } else {
-                this.setState((prevState) => { data: [...prevState.data, ...mappedData.price] });
+                this.setState((prevState) => ({ data: [...prevState.data, ...mappedData.price] }));
                 mappedData.price.forEach(pricePoint => this.candleSeries.update(pricePoint));
                 mappedData.volume.forEach(volumePoint => this.volumeSeries.update(volumePoint));
             }
@@ -419,9 +407,9 @@ export default class DynamicChart extends React.Component {
 
     render() {
         return (
-            <nav>
+            <>
                 <nav>{this.title}</nav>
                 <div ref={this.chartContainerRef} style={{ width: '100%', height: '400px' }} />
-            </nav>)
+            </>)
     }
 };

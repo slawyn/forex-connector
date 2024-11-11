@@ -1,11 +1,11 @@
 import React, { useRef, useMemo, MutableRefObject } from "react";
 import Grid from "src/elements/Grid";
 import DynamicChart from "src/elements/DynamicChart";
-import { mergeArray, calculateDeltaDays } from "src/utils";
+import { Timeframe, mergeArray, calculateDeltaDays, calculateDeltaSeconds } from "src/utils";
 import Api, { RateData } from "src/Api";
 
 const DAYS = 50
-type Timeframe = string;
+
 
 interface Calculator {
     sl: number;
@@ -24,14 +24,6 @@ interface Rates {
     data?: Record<Timeframe, { time: number }[]>;
 }
 
-interface SelectedTimes {
-    volume: number;
-    risk: number;
-    timeframe: string;
-    start: number;
-    end: number;
-    instrument?: string;
-}
 
 async function fetchRates(
     timeframes: Record<Timeframe, number>,
@@ -94,22 +86,23 @@ const Charter: React.FC<CharterProps> = ({ calculator, symbol, openPositions, cl
     if (calculator && localCalculator.current !== calculator) {
         localCalculator.current = calculator;
         refCharts.current.forEach((reference, _index) => {
-            if (reference.current) {
-                reference.current.updateLines(localCalculator.current.sl, localCalculator.current.tp);
-            }
+            reference.current?.updateLines(localCalculator.current.sl, localCalculator.current.tp);
         });
     }
 
     function updateRates(newRates: any) {
         localRates.current = newRates;
-        Object.keys(config).forEach((timeframe, index) => {
+        Object.keys(config).forEach((timeframe: Timeframe, index) => {
             refCharts.current[index]?.current?.updateData(
-                localRates.current.data?.[timeframe as Timeframe],
+                localRates.current.data?.[timeframe],
                 localSymbol.current.ask,
                 localSymbol.current.bid
             );
 
-            refCharts.current[index]?.current?.updatePositions(openPositions[symbol.name], closedPositions[symbol.name]);
+            refCharts.current[index]?.current?.updatePositions(
+                openPositions[localSymbol.current.name],
+                closedPositions[localSymbol.current.name],
+                calculateDeltaSeconds(timeframe));
         });
     }
 
