@@ -45,10 +45,11 @@ async function fetchRates(
     updateRatesHandler(mergedData);
 }
 
-function createTimeframeConfig(timeframes: Timeframe[]): Record<Timeframe, number> {
-    return timeframes.reduce((config, timeframe) => {
-        config[timeframe] = calculateDeltaDays(DAYS);
-        return config;
+function createTimeframeConfig(timeframes: Record<Timeframe, number>): Record<Timeframe, number> {
+    return Object.keys(timeframes).reduce((config, timeframe) => { 
+        const key = timeframe as Timeframe;
+        config[key] = calculateDeltaDays(timeframes[key]);
+        return config
     }, {} as Record<Timeframe, number>);
 }
 
@@ -58,7 +59,7 @@ interface CharterProps {
     closedPositions: { [key: string]: any[][] };
     symbol: Symbol;
     currentTime: number;
-    timeframes: Timeframe[];
+    timeframes: Record<Timeframe, number>;
     handlers: {
         setRange: (timeframe: string, start: number, end: number) => void
     }

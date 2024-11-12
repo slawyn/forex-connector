@@ -26,7 +26,10 @@ function getFormattedData(timeMilliseconds) {
 const darkTheme = createTheme({ palette: { mode: 'dark' } });
 const THEME = "clsBorderless";
 const TIMESTAMP_MS_BASE = Date.parse('01/01/2023 00:00:00')
-const TIMEFRAMES = ["D1", "H4", "M20"];
+const TIMEFRAMES = {"D1": 100,
+                    "H4": 50,
+                    "M20":50
+                  };
 
 class App extends Component {
   constructor(props) {
@@ -39,7 +42,9 @@ class App extends Component {
       calculatorState: { instrument: "", calculator: {} },
       symbolData: { name: "", ask: 0, bid: 0, step: 0, volume_step: 0, point_value: 0, digits: 0 },
       paneState: { symbols: false, orders: false },
-      terminalData: { date: "", timeoffset: 0, account: [], instruments: {}, updates: {}, openPositions: {}, closedPositions: {} },
+      terminalData: { date: "", account: [], instruments: {}, updates: {}, openPositions: {}, closedPositions: {} },
+      timeoffset: undefined,
+      fetchRate: 3000,
       headers: { terminalHeaders: [], openHeaders: [], closeHeaders: [] },
       errorData: { error: 0, text: "" }
     };
@@ -61,16 +66,33 @@ class App extends Component {
   componentDidMount() {
     window.addEventListener('keydown', this.handleKeyPress);
     this.fetchHeaders();
+    this.fetchTimeOffset();
     this.fetchClosedPositions();
-    this.fetchTerminalData(false);
-    this.startDataFetchInterval();
   }
 
   componentWillUnmount() {
-    if (this.intervalRef) {
-      clearInterval(this.intervalRef);
-    }
+    this.stopDataFetchInterval()
     window.removeEventListener('keydown', this.handleKeyPress);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.timeoffset !== this.state.timeoffset) {
+      this.fetchTerminalData(false);
+      this.startDataFetchInterval(this.state.fetchRate)
+    } else if (prevState.fetchRate !== this.state.fetchRate) {
+      this.stopDataFetchInterval()
+      this.startDataFetchInterval(this.state.fetchRate)
+    }
+  }
+
+  startDataFetchInterval = (fetchRate) => {
+    this.intervalRef = setInterval(() => { this.fetchTerminalData(false) }, fetchRate);
+  };
+
+  stopDataFetchInterval = () => {
+    if (this.intervalRef) {
+      clearInterval(this.intervalRef)
+    }
   }
 
   handleKeyPress = (event) => {
@@ -117,10 +139,6 @@ class App extends Component {
     }));
   }
 
-  startDataFetchInterval = () => {
-    this.intervalRef = setInterval(() => { this.fetchTerminalData(false) }, 3000);
-  };
-
   fetchTerminalData = async (force) => {
     const result = await new Api().fetchTerminalData(force, this.getCurrentBrokerTime());
     this.setState((prevState) => {
@@ -147,20 +165,24 @@ class App extends Component {
   };
 
   fetchSymbolData = async (instrument) => {
-    if (instrument) {
-      const result = await new Api().fetchSymbolData(instrument)
-      this.setState((prevState) => {
-        const instruments = prevState.terminalData.instruments
-        const symbolName = result.name
-        return {
-          symbolData: {
-            ...result,
-            ask: parseFloat(instruments[symbolName][3]),
-            bid: parseFloat(instruments[symbolName][4])
-          }
+    const result = await new Api().fetchSymbolData(instrument)
+    this.setState((prevState) => {
+      const instruments = prevState.terminalData.instruments
+      const symbolName = result.name
+      return {
+        symbolData: {
+          ...result,
+          ask: parseFloat(instruments[symbolName][3]),
+          bid: parseFloat(instruments[symbolName][4])
         }
-      });
-    }
+      }
+    });
+  };
+
+
+  fetchTimeOffset = async () => {
+    const result = await new Api().fetchTimeOffset();
+    this.setState({ timeoffset: result.timeoffset });
   };
 
   fetchHeaders = async () => {
@@ -179,7 +201,7 @@ class App extends Component {
   };
 
   getCurrentBrokerTime() {
-    return Date.now() + this.state.terminalData.timeoffset + this.simulation.timeoffset;
+    return Date.now() + this.state.timeoffset + this.simulation.timeoffset;
   }
 
   render() {

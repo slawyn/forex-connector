@@ -33,6 +33,15 @@ const mappedTypes = {
         position: 'inBar',
         color: 'white',
         shape: 'arrowUp',
+    },
+    sell_sl: {
+        position: 'aboveBar',
+        color: 'purple',
+        shape: 'circle',
+    },
+    sell_tp: {
+        color: 'teal',
+        shape: 'circle',
     }
 }
 
@@ -67,7 +76,11 @@ function mapPositionalData(data, closed = false, timestep) {
                     acc.push(addEntry("market_buy", timeEnd, priceEnd, ""));
                 }
             } else {
-                acc.push(addEntry(entry[3], entry[2], entry[4], entry[0]));
+                const tradeId = entry[0]
+                const type = entry[3]
+                const timeStart = entry[2]
+                const priceStart = entry[4]
+                acc.push(addEntry(type, timeStart, priceStart, tradeId));
             }
             return acc.sort((a, b) => new Date(a.time) - new Date(b.time));;
         }, []);
@@ -96,6 +109,23 @@ function getConnectionsForClosed(data, timestep) {
     }, {});
 }
 
+function getSlTpForOpen(data, timestep) {
+    if (!data) return {};
+
+    return data.reduce((acc, entry) => {
+        const tradeId = entry[0];
+        const slStart = entry[7]
+        const tpStart = entry[8]
+
+        acc[tradeId] = {
+            slStart,
+            tpStart
+        };
+
+        return acc;
+    }, {});
+}
+
 
 export default class DynamicChart extends React.Component {
     constructor(props) {
@@ -105,7 +135,8 @@ export default class DynamicChart extends React.Component {
             data: [],
             sl: [],
             tp: [],
-            connections: {}
+            connections: {},
+            sltp: {}
         };
         this.title = props.title
         this.handler = props.handler
@@ -254,6 +285,16 @@ export default class DynamicChart extends React.Component {
             title
         });
     };
+    _createSlTpLine = (price, color, title) => {
+        return this.candleSeries.createPriceLine({
+            price,
+            color,
+            lineWidth: 2,
+            lineStyle: 4,
+            axisLabelVisible: true,
+            title
+        });
+    };
 
     _createConnection = (timeStart, timeEnd, priceStart, priceEnd, id) => {
         if (!(id in this.state.connections) && timeStart !== timeEnd) {
@@ -283,8 +324,14 @@ export default class DynamicChart extends React.Component {
         this.setState({ sl: newSL, tp: newTP });
     };
 
-    _removeAllSeries() {
+    _removeConnections() {
         Object.values(this.state.connections).forEach(series => this.chart.removeSeries(series));
+    }
+    _removeSlTp() {
+        Object.values(this.state.sltp).forEach(sltp => {
+            this.candleSeries.removePriceLine(sltp[0]);
+            this.candleSeries.removePriceLine(sltp[1]);
+        });
     }
 
     updatePositions(openPositions, closedPositions, timestep) {
@@ -299,14 +346,24 @@ export default class DynamicChart extends React.Component {
                     connections[id] = connection
                 }
             }
+            let sltp = {}
+            for (const [id, value] of Object.entries(getSlTpForOpen(openPositions, timestep))) {
+                if (!(id in this.state.sltp)) {
+                    sltp[id] = [
+                        this._createSlTpLine(value.slStart, '#f2f54280', `${id} SL`),
+                        this._createSlTpLine(value.tpStart, '#f2f54280', `${id} TP`),
+                    ]
+                }
+            }
 
-            this.setState(prevState => ({ connections: { ...prevState.connections, ...connections } }))
+            this.setState(prevState => ({ connections: { ...prevState.connections, ...connections }, sltp: { ...prevState.sltp, ...sltp } }))
             this.candleSeries.setMarkers(mergeMarkers(open, closed))
         }
     }
 
     resetData(digits) {
-        this._removeAllSeries()
+        this._removeConnections()
+        this._removeSlTp()
         this.candleSeries.setData([])
         this.volumeSeries.setData([])
         this.selectionRange.setData([])
@@ -316,8 +373,9 @@ export default class DynamicChart extends React.Component {
                 formatter: (price) => price.toFixed(digits)
             }
         });
-        this.setState({ data: [], connections: {} });
+        this.setState({ data: [], connections: {}, sltp: {} });
     }
+
 
     _getCurrentHighestPrice() {
         const visibleRange = this.chart.timeScale().getVisibleRange();

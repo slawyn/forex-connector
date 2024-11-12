@@ -115,9 +115,9 @@ class App(Flask):
             formatted_signal, ratio, atr_reserve = calculate_indicators(current_tick.spread, symbol.get_session_open(), current_tick.bid, atr)
 
             # Create data set
-            timer = get_current_date()
             name = symbol.get_name()
             digits = symbol.get_digits()
+            time = symbol.get_time()
             if symbol.is_updated() or force:
                 table_data[name] = [name,
                                     symbol.get_currency(),
@@ -129,7 +129,7 @@ class App(Flask):
                                     "%-2.2f" % (ratio),
                                     "%-2.2f" % abs(atr_reserve),
                                     formatted_signal,
-                                    timer,
+                                    convert_timestamp_to_date(time),
                                     f"%2.2f" % symbol.get_price_change()]
 
         return table_data
@@ -182,13 +182,17 @@ def on_update():
     end_ms = request.args.get("end", type=int)
     instr = app.show_symbols(end_ms, force=force)
     open_positions = app.show_open_positions()
-    return {"date": convert_timestamp_ms_to_date_formatted(end_ms), "timeoffset": app.trader.get_timeoffset_ms(), "instruments": instr, "account":  app.get_account_info(), "openPositions": open_positions}
+    return {"date": convert_timestamp_ms_to_date_formatted(end_ms), "instruments": instr, "account":  app.get_account_info(), "openPositions": open_positions}
 
 
 @app.route('/headers', methods=['GET'])
 def on_headers():
     headers, op_headers, cp_headers = app.get_headers()
     return {"terminalHeaders": headers, "openHeaders": op_headers, "closeHeaders": cp_headers}
+
+@app.route('/timeoffset', methods=['GET'])
+def on_timeoffset():
+    return {"timeoffset": app.trader.get_timeoffset_ms()}
 
 
 @app.route('/history', methods=['GET'])

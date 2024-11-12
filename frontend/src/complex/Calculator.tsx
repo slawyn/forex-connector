@@ -98,7 +98,6 @@ export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, tra
                             onChange={(e) => handlers.volumeChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
-                                startAdornment: <InputAdornment position="start">LOT</InputAdornment>,
                                 step: trade.volume_step,
                             }}
                         />
@@ -113,7 +112,6 @@ export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, tra
                             onChange={(e) => handlers.riskChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
-                                startAdornment: <InputAdornment position="start">%</InputAdornment>,
                                 step: trade.risk_step,
                             }}
                         />
@@ -128,7 +126,6 @@ export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, tra
                             onChange={(e) => handlers.ratioChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
-                                startAdornment: <InputAdornment position="start">%</InputAdornment>,
                                 step: trade.ratio_step,
                             }}
                         />
@@ -143,7 +140,6 @@ export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, tra
                             onChange={(e) => handlers.askChange(parseFloat(e.target.value))}
                             InputLabelProps={{ shrink: true }}
                             inputProps={{
-                                startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                             }}
                         />
                     </td>
@@ -156,7 +152,6 @@ export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, tra
                             variant="outlined"
                             onChange={(e) => handlers.bidChange(parseFloat(e.target.value))}
                             inputProps={{
-                                startAdornment: <InputAdornment position="start">Price</InputAdornment>,
                             }}
                         />
                     </td>
@@ -167,7 +162,6 @@ export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, tra
                             value={trade.spread}
                             inputProps={{
                                 readOnly: true,
-                                startAdornment: <InputAdornment position="start">PP</InputAdornment>,
                             }}
                         />
                     </td>
@@ -178,7 +172,6 @@ export const Calculator: React.FC<CalculatorProps> =  ({ customClass, types, tra
                             value={trade.points}
                             inputProps={{
                                 readOnly: true,
-                                startAdornment: <InputAdornment position="start">PP</InputAdornment>,
                             }}
                         />
                     </td>

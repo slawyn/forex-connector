@@ -34,6 +34,8 @@ class Symbol:
         # Calculate point value, does not always work
         self.price_change = ((self.bid - self.session_open) / (self.session_open)) * 100.0
 
+    def get_time(self):
+        return self.time
 
     def get_price_change(self):
         return self.price_change

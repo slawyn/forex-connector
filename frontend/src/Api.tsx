@@ -55,6 +55,13 @@ export default class Api {
             .then((a) => a);
         return result;
     }
+    
+    async fetchTimeOffset(): Promise<any[][]> {
+        const result = await fetch("/api/timeoffset")
+            .then((response) => response.json())
+            .then((a) => a);
+        return result;
+    }
 
     async fetchSymbolData(instrument: string): Promise<SymbolData> {
         const result = await fetch(`/api/symbol?instrument=${encodeURIComponent(instrument)}`)
