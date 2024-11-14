@@ -132,7 +132,8 @@ export default class DynamicChart extends React.Component {
         super(props)
         this.chartContainerRef = React.createRef();
         this.state = {
-            data: [],
+            price: [],
+            volume: [],
             sl: [],
             tp: [],
             connections: {},
@@ -156,6 +157,10 @@ export default class DynamicChart extends React.Component {
     componentWillUnmount() {
         this._cleanupResizeHandler();
         this.chart?.remove();
+    }
+
+    componentDidUpdate() {
+        this._customDrawing()
     }
 
     _createChart() {
@@ -194,14 +199,30 @@ export default class DynamicChart extends React.Component {
                 fixLeftEdge: true
             }
         });
-
         this.chart.applyOptions({
             scaleMargins: {
                 top: 0.8,
                 bottom: 0,
             },
         });
+
+        this.customCanvas = this.chartContainerRef.current.querySelector('canvas');
+
     }
+
+    _customDrawing() {
+        if (this.chartContainerRef.current) {
+
+            const ctx = this.customCanvas.getContext('2d');
+            const x = this.customCanvas.width - 50
+            const y = this.customCanvas.height - 50
+            ctx.beginPath()
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+            ctx.fillRect(x, y, 50, 50);
+        }
+
+    }
+
     _createCandlesticks() {
         this.candleSeries = this.chart.addCandlestickSeries({
             upColor: "#4bffb5",
@@ -361,25 +382,9 @@ export default class DynamicChart extends React.Component {
         }
     }
 
-    resetData(digits) {
-        this._removeConnections()
-        this._removeSlTp()
-        this.candleSeries.setData([])
-        this.volumeSeries.setData([])
-        this.selectionRange.setData([])
-        this.candleSeries.applyOptions({
-            priceFormat: {
-                type: "custom",
-                formatter: (price) => price.toFixed(digits)
-            }
-        });
-        this.setState({ data: [], connections: {}, sltp: {} });
-    }
-
-
     _getCurrentHighestPrice() {
         const visibleRange = this.chart.timeScale().getVisibleRange();
-        const highestPrice = this.state.data.reduce((max, point) => {
+        const highestPrice = this.state.price.reduce((max, point) => {
             if (point.time >= visibleRange.from && point.time <= visibleRange.to) {
                 return Math.max(max, point.open);
 
@@ -442,16 +447,38 @@ export default class DynamicChart extends React.Component {
         }
     }
 
+    calculateHorizontalVolumes() {
+
+    }
+
+    resetData(digits) {
+        this._removeConnections()
+        this._removeSlTp()
+        this.candleSeries.setData([])
+        this.volumeSeries.setData([])
+        this.selectionRange.setData([])
+        this.candleSeries.applyOptions({
+            priceFormat: {
+                type: "custom",
+                formatter: (price) => price.toFixed(digits)
+            }
+        });
+        this.setState({ price: [], volume: [], connections: {}, sltp: {} });
+    }
+
     updateData(data, askPrice, bidPrice) {
         if (this.candleSeries && data.length > 0) {
             const mappedData = mapData(data);
 
-            if (this.state.data.length === 0 && mappedData.price.length > 2) {
-                this.setState({ data: mappedData.price });
+            if (this.state.price.length === 0 && mappedData.price.length > 2) {
+                this.setState({ price: mappedData.price });
                 this.candleSeries.setData(mappedData.price);
                 this.volumeSeries.setData(mappedData.volume);
             } else {
-                this.setState((prevState) => ({ data: [...prevState.data, ...mappedData.price] }));
+                this.setState((prevState) => ({
+                    price: [...prevState.price, ...mappedData.price],
+                    volume: [...prevState.volume, ...mappedData.volume]
+                }));
                 mappedData.price.forEach(pricePoint => this.candleSeries.update(pricePoint));
                 mappedData.volume.forEach(volumePoint => this.volumeSeries.update(volumePoint));
             }
@@ -466,8 +493,8 @@ export default class DynamicChart extends React.Component {
     render() {
         return (
             <>
-                <nav>{this.title}</nav>
-                <div ref={this.chartContainerRef} style={{ width: '100%', height: '400px' }} />
+                <>{this.title}</>
+                <div ref={this.chartContainerRef} style={{ width: '100%', height: '400px' }} ></div>
             </>)
     }
 };

@@ -17,6 +17,7 @@ import Orders from "src/complex/Orders";
 import { randomIntFromInterval } from "src/utils"
 import Api from "src/Api"
 import { ControlPanel } from "src/complex/ControlPanel";
+import Dashboard  from "src/complex/Dashboard";
 
 
 function getFormattedData(timeMilliseconds) {
@@ -44,7 +45,7 @@ class App extends Component {
       paneState: { symbols: false, orders: false },
       terminalData: { date: "", account: [], instruments: {}, updates: {}, openPositions: {}, closedPositions: {} },
       timeoffset: undefined,
-      fetchRate: 3000,
+      fetchRate: 2000,
       headers: { terminalHeaders: [], openHeaders: [], closeHeaders: [] },
       errorData: { error: 0, text: "" }
     };
@@ -216,6 +217,7 @@ class App extends Component {
               <TabList className="top-bar-tabs">
                 <Tab className="top-bar-tab">Trading</Tab>
                 <Tab className="top-bar-tab">History</Tab>
+                <Tab className="top-bar-tab">Dashboard</Tab>
               </TabList>
               <MiscCheckbox
                 customClass={"css-button-checkbox"}
@@ -331,6 +333,9 @@ class App extends Component {
                 headers={headers.closeHeaders}
               />
             </TabPanel>
+            <TabPanel>
+              <Dashboard></Dashboard>
+              </TabPanel>
           </Tabs>
         </ThemeProvider>
       </main>
