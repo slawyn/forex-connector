@@ -94,6 +94,12 @@ const Charter: React.FC<CharterProps> = ({ calculator, symbol, openPositions, cl
     function updateRates(newRates: any) {
         localRates.current = newRates;
         Object.keys(config).forEach((timeframe: Timeframe, index) => {
+
+            if(index == 2){
+                // refCharts.current[index]?.current?.drawHorizontalVolumes()
+            }
+
+
             refCharts.current[index]?.current?.updateData(
                 localRates.current.data?.[timeframe],
                 localSymbol.current.ask,

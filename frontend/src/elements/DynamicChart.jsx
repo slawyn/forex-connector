@@ -26,12 +26,12 @@ const mapData = (data) => {
 const mappedTypes = {
     market_sell: {
         position: 'inBar',
-        color: 'yellow',
+        color: '#fc0324',
         shape: 'arrowDown',
     },
     market_buy: {
         position: 'inBar',
-        color: 'white',
+        color: '#20fc03',
         shape: 'arrowUp',
     },
     sell_sl: {
@@ -160,7 +160,7 @@ export default class DynamicChart extends React.Component {
     }
 
     componentDidUpdate() {
-        this._customDrawing()
+        this.drawHorizontalVolumes()
     }
 
     _createChart() {
@@ -175,12 +175,12 @@ export default class DynamicChart extends React.Component {
             },
             grid: {
                 vertLines: {
-                    color: '#e0e0e060',
+                    color: '#e0e0e030',
                     style: 2,
                     visible: true
                 },
                 horzLines: {
-                    color: '#e0e0e060',
+                    color: '#e0e0e030',
                     style: 2,
                     visible: true
                 }
@@ -210,27 +210,33 @@ export default class DynamicChart extends React.Component {
 
     }
 
-    _customDrawing() {
+    _drawBar(xDistance, yDistance, yPosition) {
         if (this.chartContainerRef.current) {
 
             const ctx = this.customCanvas.getContext('2d');
-            const x = this.customCanvas.width - 50
-            const y = this.customCanvas.height - 50
+            const x = this.customCanvas.width - xDistance
+            const y = yPosition
             ctx.beginPath()
-            ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
-            ctx.fillRect(x, y, 50, 50);
+            ctx.fillStyle = 'rgba(214, 211, 201, 0.5)';
+            ctx.fillRect(x, y, xDistance, yDistance);
         }
 
     }
 
     _createCandlesticks() {
         this.candleSeries = this.chart.addCandlestickSeries({
-            upColor: "#4bffb5",
-            downColor: "#ff4976",
-            borderDownColor: "#ff4976",
-            borderUpColor: "#4bffb5",
-            wickDownColor: "#838ca1",
-            wickUpColor: "#838ca1",
+            upColor: "transparent",
+            downColor: "#fb803e",
+            borderDownColor: "#fb803e",
+            borderUpColor: "#fb803e",
+            wickDownColor: "#fb803e",
+            wickUpColor: "#fb803e",
+            // upColor: "#4bffb5",
+            // downColor: "#ff4976",
+            // borderDownColor: "#ff4976",
+            // borderUpColor: "#4bffb5",
+            // wickDownColor: "#838ca1",
+            // wickUpColor: "#838ca1",
 
 
         });
@@ -335,16 +341,6 @@ export default class DynamicChart extends React.Component {
         }
     }
 
-    updateLines = (sl, tp) => {
-        this.state.sl.forEach(slLine => this.candleSeries.removePriceLine(slLine));
-        this.state.tp.forEach(tpLine => this.candleSeries.removePriceLine(tpLine));
-
-        const newSL = sl.map(slPrice => this._createPriceLine(slPrice, '#aa00aa80', 'SL'));
-        const newTP = tp.map(tpPrice => this._createPriceLine(tpPrice, '#00aaaa80', 'TP'));
-
-        this.setState({ sl: newSL, tp: newTP });
-    };
-
     _removeConnections() {
         Object.values(this.state.connections).forEach(series => this.chart.removeSeries(series));
     }
@@ -382,15 +378,25 @@ export default class DynamicChart extends React.Component {
         }
     }
 
-    _getCurrentHighestPrice() {
+    _getHighestVisiblePrice() {
         const visibleRange = this.chart.timeScale().getVisibleRange();
         const highestPrice = this.state.price.reduce((max, point) => {
             if (point.time >= visibleRange.from && point.time <= visibleRange.to) {
-                return Math.max(max, point.open);
+                return Math.max(max, point.open, point.close);
 
             } return max;
         }, -Infinity);
         return highestPrice;
+    }
+    _getLowestVisiblePrice() {
+        const visibleRange = this.chart.timeScale().getVisibleRange();
+        const lowestPrice = this.state.price.reduce((min, point) => {
+            if (point.time >= visibleRange.from && point.time <= visibleRange.to) {
+                return Math.min(min, point.open, point.close);
+
+            } return min;
+        }, Infinity);
+        return lowestPrice;
     }
 
     _subscribeSelectableRange(handler) {
@@ -414,7 +420,7 @@ export default class DynamicChart extends React.Component {
             this.chart.subscribeClick((params) => {
                 if (!selecting) {
                     times.A = params.time
-                    prices.A = this._getCurrentHighestPrice()
+                    prices.A = this._getHighestVisiblePrice()
                 }
                 else {
                     if (times.B < times.A) {
@@ -447,7 +453,65 @@ export default class DynamicChart extends React.Component {
         }
     }
 
-    calculateHorizontalVolumes() {
+    _getCanvasCoordinatesForPrice(price) {
+        const yCoordinate = this.candleSeries.priceToCoordinate(price)
+        return yCoordinate
+    }
+
+    _calculateHorizontalVolumes() {
+        const max = this._getHighestVisiblePrice()
+        const min = this._getLowestVisiblePrice()
+        const barcount = 50;
+        const delta = (max - min) / barcount;
+        let bins = {};
+
+        // Initialize bins
+        for (let i = 0; i < barcount; i++) {
+            const discretePrice = min + i * delta
+            bins[discretePrice] = {value: 0, y: this._getCanvasCoordinatesForPrice(discretePrice)};
+        }
+
+        /* Distribute volumes more efficiently */
+        const visibleRange = this.chart.timeScale().getVisibleRange();
+        let maxVolume = 1
+        for (let i = 0; i < this.state.price.length; ++i) {
+            const price = this.state.price[i]
+            const volume = this.state.volume[i].value
+
+            /* calculate over the prices in visible range */
+            if (price.time >= visibleRange.from && price.time <= visibleRange.to) {
+                const cMin = Math.min(price.open, price.close)
+                const cMax = Math.max(price.open, price.close)
+
+                const indexStart = Math.floor((cMin - min) / delta);
+                const indexEnd = Math.floor((cMax - min) / delta);
+                const indexLength = indexEnd - indexStart
+
+                for (let h = 0; h < indexLength; ++h) {
+                    const partialVolume = (h / indexLength) * volume
+                    const binKey = min + ((indexStart + h) * delta);
+                    bins[binKey].value += partialVolume;
+                    if(bins[binKey].value > maxVolume){
+                        maxVolume = bins[binKey].value
+                    }
+                }
+            }
+        }
+
+        /* Normalize accumulated volumes */
+        let yDelta = (this._getCanvasCoordinatesForPrice(min) - this._getCanvasCoordinatesForPrice(max)) / barcount
+        for (const binKey of Object.keys(bins)) {
+            bins[binKey].value =  bins[binKey].value / maxVolume
+        }
+        return {bins, yDelta}
+    }
+
+    drawHorizontalVolumes(){
+        const {bins, yDelta} = this._calculateHorizontalVolumes()
+        for(const value of Object.values(bins))
+        {
+            this._drawBar(value.value*100, yDelta, value.y)
+        }
 
     }
 
@@ -466,12 +530,22 @@ export default class DynamicChart extends React.Component {
         this.setState({ price: [], volume: [], connections: {}, sltp: {} });
     }
 
+    updateLines = (sl, tp) => {
+        this.state.sl.forEach(slLine => this.candleSeries.removePriceLine(slLine));
+        this.state.tp.forEach(tpLine => this.candleSeries.removePriceLine(tpLine));
+
+        const newSL = sl.map(slPrice => this._createPriceLine(slPrice, '#aa00aa80', 'SL'));
+        const newTP = tp.map(tpPrice => this._createPriceLine(tpPrice, '#00aaaa80', 'TP'));
+
+        this.setState({ sl: newSL, tp: newTP });
+    };
+
     updateData(data, askPrice, bidPrice) {
         if (this.candleSeries && data.length > 0) {
             const mappedData = mapData(data);
 
             if (this.state.price.length === 0 && mappedData.price.length > 2) {
-                this.setState({ price: mappedData.price });
+                this.setState({ price: mappedData.price, volume: mappedData.volume });
                 this.candleSeries.setData(mappedData.price);
                 this.volumeSeries.setData(mappedData.volume);
             } else {
