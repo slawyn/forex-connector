@@ -179,7 +179,7 @@ class Trader:
 
             # Finalize calculations and print position data
             closed_pos.calculate()
-            closed_pos.print_data()
+            # closed_pos.print_data()
 
         logi(f"Finished Count: {len(pos_finished)} | Total Count: {len(pos_temporary)}")
         return pos_finished if only_finished else pos_temporary

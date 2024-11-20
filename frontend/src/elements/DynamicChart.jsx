@@ -262,7 +262,8 @@ export default class DynamicChart extends React.Component {
         const resizeHandler = () => {
             if (this.chartContainerRef.current) {
                 this.chart.applyOptions({
-                    width: this.chartContainerRef.current.clientWidth
+                    width: this.chartContainerRef.current.clientWidth,
+                    height: this.chartContainerRef.current.clientHeight
                 });
             }
         };
@@ -468,7 +469,7 @@ export default class DynamicChart extends React.Component {
         // Initialize bins
         for (let i = 0; i < barcount; i++) {
             const discretePrice = min + i * delta
-            bins[discretePrice] = {value: 0, y: this._getCanvasCoordinatesForPrice(discretePrice)};
+            bins[discretePrice] = { value: 0, y: this._getCanvasCoordinatesForPrice(discretePrice) };
         }
 
         /* Distribute volumes more efficiently */
@@ -491,7 +492,7 @@ export default class DynamicChart extends React.Component {
                     const partialVolume = (h / indexLength) * volume
                     const binKey = min + ((indexStart + h) * delta);
                     bins[binKey].value += partialVolume;
-                    if(bins[binKey].value > maxVolume){
+                    if (bins[binKey].value > maxVolume) {
                         maxVolume = bins[binKey].value
                     }
                 }
@@ -501,16 +502,15 @@ export default class DynamicChart extends React.Component {
         /* Normalize accumulated volumes */
         let yDelta = (this._getCanvasCoordinatesForPrice(min) - this._getCanvasCoordinatesForPrice(max)) / barcount
         for (const binKey of Object.keys(bins)) {
-            bins[binKey].value =  bins[binKey].value / maxVolume
+            bins[binKey].value = bins[binKey].value / maxVolume
         }
-        return {bins, yDelta}
+        return { bins, yDelta }
     }
 
-    drawHorizontalVolumes(){
-        const {bins, yDelta} = this._calculateHorizontalVolumes()
-        for(const value of Object.values(bins))
-        {
-            this._drawBar(value.value*100, yDelta, value.y)
+    drawHorizontalVolumes() {
+        const { bins, yDelta } = this._calculateHorizontalVolumes()
+        for (const value of Object.values(bins)) {
+            this._drawBar(value.value * 100, yDelta, value.y)
         }
 
     }
@@ -568,7 +568,8 @@ export default class DynamicChart extends React.Component {
         return (
             <>
                 <>{this.title}</>
-                <div ref={this.chartContainerRef} style={{ width: '100%', height: '400px' }} ></div>
-            </>)
+                <div ref={this.chartContainerRef} style={{ width: '100%', height: '100%' }} ></div>
+            </>
+        )
     }
 };

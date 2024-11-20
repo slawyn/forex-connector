@@ -29,7 +29,7 @@ const THEME = "clsBorderless";
 const TIMESTAMP_MS_BASE = Date.parse('01/01/2023 00:00:00')
 const TIMEFRAMES = {"D1": 100,
                     "H4": 50,
-                    "M20":50
+                     "M20":50
                   };
 
 class App extends Component {
@@ -229,10 +229,10 @@ class App extends Component {
               <button className={"css-blue-button"} onClick={() => this.fetchTerminalData(true)}>
                 [{this.KEY_GET_SYMBOLS}]etch Symbols
               </button>
-              <button className={"css-blue-button"} onClick={this.toggleSymbolsPane}>
+              <button className={"css-blue-button"} onClick={()=>this.togglePane('symbols')}>
                 Show [{this.KEY_OC_SYMBOLS}]ymbols
               </button>
-              <button className={"css-blue-button"} onClick={this.toggleOrdersPane}>
+              <button className={"css-blue-button"} onClick={() => this.togglePane('orders')}>
                 Show [{this.KEY_OC_ORDERS}]rders
               </button>
               <TopBar

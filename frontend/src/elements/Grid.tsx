@@ -1,4 +1,8 @@
 import React from 'react';
+import { useWindowSize } from 'src/elements/Resizable';
+
+
+const MOBILE_WIDTH = 768;
 
 interface GridProps {
     items: React.ReactNode[];
@@ -7,7 +11,17 @@ interface GridProps {
     gap?: string;
 }
 
-const Grid: React.FC<GridProps> = ({ items, columns = 2, rows = 2, gap = '10px' }) => {
+const Grid: React.FC<GridProps> = ({ items, columns = 2, rows = 0, gap = '0px' }) => {
+    const [width, height] = useWindowSize();
+    const isMobile = width <= MOBILE_WIDTH;
+
+    if (isMobile) {
+        columns = 1
+        rows = items.length
+    } else {
+        rows = Math.ceil(items.length / columns)
+    }
+
     const gridContainerStyle = {
         display: 'grid',
         gridTemplateColumns: `repeat(${columns}, 1fr)`, // Configurable columns
@@ -23,8 +37,7 @@ const Grid: React.FC<GridProps> = ({ items, columns = 2, rows = 2, gap = '10px' 
                 const isUnevenCount = items.length % columns !== 0;
 
                 // If the item is the last in an uneven row, span the remaining columns
-                const itemStyle = isLastItem && isUnevenCount ? { gridColumn: `span ${columns}` } : {};
-
+                const itemStyle = isLastItem && isUnevenCount ? { gridColumn: `span ${columns}` } : { width: `${(width / columns)}px`, height: `${(height / rows * 0.86)}px` };
                 return (
                     <div key={index} style={itemStyle}>
                         {item}

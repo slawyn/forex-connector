@@ -4,9 +4,6 @@ import DynamicChart from "src/elements/DynamicChart";
 import { Timeframe, mergeArray, calculateDeltaDays, calculateDeltaSeconds } from "src/utils";
 import Api, { RateData } from "src/Api";
 
-const DAYS = 50
-
-
 interface Calculator {
     sl: number;
     tp: number;
