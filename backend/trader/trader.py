@@ -94,7 +94,7 @@ class Trader:
 
     def get_tick(self, sym: Symbol):
         """ Gets tick for the symbol"""
-        if sym == None:
+        if sym == None and sym.time is not None:
             raise ValueError("ERROR: Symbol cannot be None")
         else:
             return mt5.symbol_info_tick(sym.name)
@@ -139,13 +139,21 @@ class Trader:
         return syms
 
     def get_symbol_ticks(self, symbol, end_ms):
-        if not (symbol.name in self.ticks) or end_ms < self.ticks[symbol.name].time_ms or end_ms - self.ticks[symbol.name].time_ms > 10000:
-            self.ticks[symbol.name] = Tick(symbol.name, end_ms)
+        try:
+            exported_tick = self.ticks[symbol.name]
+        except:
+           self.ticks[symbol.name]  = Tick(symbol.name, end_ms)
+           exported_tick = self.ticks[symbol.name]
 
-        exported_tick = self.ticks[symbol.name]
-        ticks = self.get_ticks(symbol, exported_tick.time_ms, end_ms)
-        rates = self.get_rates(symbol, "M1", exported_tick.time_ms, end_ms)
-        exported_tick.update(ticks, rates, symbol.get_step(), end_ms)
+        tick = self.mt5api.get_symbol_tick(symbol.name)
+        exported_tick.update([tick], [], 0, tick.time_msc)
+        # if not (symbol.name in self.ticks) or end_ms < self.ticks[symbol.name].time_ms or end_ms - self.ticks[symbol.name].time_ms > 10000:
+        #     self.ticks[symbol.name] = Tick(symbol.name, end_ms)
+
+        # exported_tick = self.ticks[symbol.name]
+        # ticks = self.get_ticks(symbol, exported_tick.time_ms, end_ms)
+        # rates = self.get_rates(symbol, "M1", exported_tick.time_ms, end_ms)
+        # exported_tick.update(ticks, rates, symbol.get_step(), end_ms)
         return exported_tick
 
     def get_history_positions(self, start_date, end_date, only_finished=True):

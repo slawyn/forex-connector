@@ -88,7 +88,7 @@ class MetatraderApi:
             code = mt5.last_error()[0]
             if code != 1:
                 data = []
-                raise Exception(f"{__class__.__name__}: During fetching of rates symbol:{symbol_name} timeframe:{frame} error:{mt5.last_error()}")
+                raise Exception(f"{__class__.__name__}: During fetching of rates symbol:{symbol_name} timeframe:{frame} error:{mt5.last_error()}\n")
         except Exception as e:
             loge("get_rates", e)
         return Rate.add(data)
@@ -96,11 +96,12 @@ class MetatraderApi:
     def get_ticks(self, symbol_name, utc_from, utc_to):
         data = []
         try:
-            data = mt5.copy_ticks_range(symbol_name, utc_from, utc_to, mt5.COPY_TICKS_ALL)
-            code = mt5.last_error()[0]
-            if code != 1:
-                data = []
-                raise Exception(f"{__class__.__name__}: During fetching of ticks {symbol_name} {mt5.last_error()}")
+            if utc_to> utc_from:
+                data = mt5.copy_ticks_range(symbol_name, utc_from, utc_to, mt5.COPY_TICKS_ALL)
+                code = mt5.last_error()[0]
+                if code != 1:
+                    data = []
+                    raise Exception(f"{__class__.__name__}: During fetching of ticks {symbol_name} {mt5.last_error()}")
         except Exception as e:
             loge("get_ticks", e)
 
@@ -131,7 +132,20 @@ class MetatraderApi:
                 return syms
             return mt5.symbols_get()
         return []
+    
+    def get_symbol_tick(self, symbol_name):
+        data = []
+        try:
+                data = mt5.symbol_info_tick(symbol_name)
+                code = mt5.last_error()[0]
+                if code != 1:
+                    data = []
+                    raise Exception(f"{__class__.__name__}: During fetching of ticks {symbol_name} {mt5.last_error()}")
+        except Exception as e:
+            loge("symbol_info_tick", e)
 
+        return data
+    
     def calculate_broke_time_difference_seconds(self):
         symbol = "BITCOIN"
         symbol_info = mt5.symbol_info(symbol)

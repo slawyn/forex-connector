@@ -15,7 +15,7 @@ MINUTES3 = HOURS1/20
 
 def logi(*s):
     """Log function"""
-    log("INFO:", s)
+    log("INFO:", *s)
 
 def loge(*s):
     """Log function"""
