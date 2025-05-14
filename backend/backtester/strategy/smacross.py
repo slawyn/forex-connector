@@ -1,6 +1,6 @@
 from backtesting import Strategy
 from backtesting.lib import crossover
-import talib
+# import talib
 import pandas as pd
 from helpers import *
 
@@ -24,18 +24,18 @@ class SmaCross(Strategy):
         close = self.data.Close
         
         # Calculate SMAs using TA-Lib
-        self.sma1 = self.I(lambda: talib.SMA(close, timeperiod=self.n1), name='SMA1')
-        self.sma2 = self.I(lambda: talib.SMA(close, timeperiod=self.n2), name='SMA2')
+        # self.sma1 = self.I(lambda: talib.SMA(close, timeperiod=self.n1), name='SMA1')
+        # self.sma2 = self.I(lambda: talib.SMA(close, timeperiod=self.n2), name='SMA2')
 
-        # Calculate Bollinger Bands using TA-Lib
-        self.upper_band, self.middle_band, self.lower_band = talib.BBANDS(
-            close, timeperiod=self.n, nbdevup=self.dev, nbdevdn=self.dev, matype=0
-        )
+        # # Calculate Bollinger Bands using TA-Lib
+        # self.upper_band, self.middle_band, self.lower_band = talib.BBANDS(
+        #     close, timeperiod=self.n, nbdevup=self.dev, nbdevdn=self.dev, matype=0
+        # )
 
-        # Register for plotting
-        self.I(lambda: self.upper_band, name='Upper Band')
-        self.I(lambda: self.middle_band, name='Middle Band')
-        self.I(lambda: self.lower_band, name='Lower Band')
+        # # Register for plotting
+        # self.I(lambda: self.upper_band, name='Upper Band')
+        # self.I(lambda: self.middle_band, name='Middle Band')
+        # self.I(lambda: self.lower_band, name='Lower Band')
 
     def _get_current_trades(self):
         current_equity = self.equity

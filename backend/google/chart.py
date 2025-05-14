@@ -5,6 +5,12 @@ from helpers import *
 import pandas
 # Draw Chart
 
+def reorder(x1, y1, x2, y2):
+    if y1 > y2:
+        y1, y2 = y2, y1
+    return x1, y1, x2, y2
+
+
 def create_point(basex, basey, offsetx, offsety, percentage=1.0):
     return (basex+offsetx*percentage, basey+offsety*percentage)
 
@@ -78,7 +84,9 @@ class Chart():
         point2 = (posx+self.bar_width*3/2,  posy+self.bar_width)    # Right
 
         self.draw.polygon([point0, point1, point2], fill=Chart.COLOR_ARROW_BUY)
-        self.draw.rectangle([posx+self.bar_width/4, posy+self.bar_width, posx+self.bar_width*3/4, posy+self.bar_width*2], fill=Chart.COLOR_ARROW_BUY)
+
+        x1, y1, x2, y2 = reorder(posx+self.bar_width/4,  posy+self.bar_width, posx+self.bar_width*3/4,  posy+self.bar_width*2)
+        self.draw.rectangle([x1, y1, x2, y2], fill=Chart.COLOR_ARROW_BUY)
 
     def draw_arrow_down(self, posx, posy):
 
@@ -87,7 +95,9 @@ class Chart():
         point1 = create_point(posx, posy, -self.bar_width/2, -self.bar_width)
         point2 = create_point(posx, posy, self.bar_width*3/2, -self.bar_width)
         self.draw.polygon([point0, point1, point2], fill=Chart.COLOR_ARROW_SELL)
-        self.draw.rectangle([posx+self.bar_width/4, posy-self.bar_width, posx+self.bar_width*3/4, posy-self.bar_width*2], fill=Chart.COLOR_ARROW_SELL)
+
+        x1, y1, x2, y2 = reorder(posx+self.bar_width/4,  posy-self.bar_width, posx+self.bar_width*3/4,  posy-self.bar_width*2)
+        self.draw.rectangle([x1, y1, x2, y2], fill=Chart.COLOR_ARROW_SELL)
 
 
     def draw_spread(self, start_x, start_y, width_x, fill):
@@ -145,8 +155,10 @@ class Chart():
 
     def draw_bar(self, idx, close, open, high, low, color):
         posx = Chart.SPACE_BETWEEN_BARS + (self.bar_width + Chart.SPACE_BETWEEN_BARS)*(idx)
-        self.draw.rectangle([posx, close, posx + self.bar_width, open], fill=color, outline=None, width=1)
-        self.draw.line([(posx+self.bar_width/2, high), (posx+self.bar_width/2, low)], fill=color)
+        x1, y1, x2, y2 = reorder(posx, close, posx+self.bar_width, open)
+
+        self.draw.rectangle([x1, y1, x2, y2], fill=color, outline=None, width=1)
+        self.draw.line([(x2- self.bar_width/2, high), (x2 - self.bar_width/2, low)], fill=color)
 
     def calculate_bar_y_coordinate(self, posy):
         mappedy = Chart.CHART_SIZEY-((posy*self.bar_scale)+Chart.CHART_OFFSET_BOTTOM)

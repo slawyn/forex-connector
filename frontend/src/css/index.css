@@ -41,7 +41,7 @@ button {
 }
 
 .css-blue-button {
-  background-color: rgb(0, 187, 255) !important; 
+  background-color: rgb(0, 187, 255) !important;
   color: #000000;
   width: auto;
   cursor: pointer;
@@ -52,18 +52,13 @@ button {
 }
 
 
-.clsBorderless td:nth-child(8),
-.clsBorderless td:nth-child(9),
-.clsBorderless td:nth-child(12),
-.clsBorderless td:nth-child(13)
-{
-  background-color:#3410ff53
+.clsBorderless td {
+  background-color: #3410ff53
 }
 
 
-.clsBorderless th
-{
-  font-size:8pt;
+.clsBorderless th {
+  font-size: 8pt;
   font-family: 'Consolas';
   border-collapse: collapse;
   width: fit-content;
@@ -99,6 +94,7 @@ button {
   overflow-y: auto;
   min-width: fit-content;
 }
+
 .container-flex {
   display: flex;
 }
@@ -131,8 +127,7 @@ button {
 }
 
 
-.clsSymbolProperties
-{
+.clsSymbolProperties {
   background-color: blueviolet;
   border: 1px solid silver;
   font-size: small;
@@ -184,12 +179,12 @@ button {
   width: 40%;
 }
 
-.apexcharts-tooltip  {
+.apexcharts-tooltip {
   background: #ffffff00 !important;
 }
 
-.top-bar{
-  font-size:10pt;
+.top-bar {
+  font-size: 10pt;
   font-family: 'Consolas';
   border-collapse: collapse;
   width: fit-content;
@@ -197,8 +192,8 @@ button {
 }
 
 .top-bar td {
-  padding-left:20px;
-  padding-right:20px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 .top-bar td:nth-child(even) {
@@ -210,28 +205,28 @@ button {
   cursor: pointer;
 }
 
-.css-button-checkbox{
+.css-button-checkbox {
   width: auto;
 }
 
-.css-button-checkbox:hover{
+.css-button-checkbox:hover {
   width: auto;
   background-color: #effff000;
-  color:white
+  color: white
 }
 
-.css-button-checkbox.active{
+.css-button-checkbox.active {
   background-color: #da5a11;
 }
 
 .top-bar-tabs {
-  font-size:10pt;
+  font-size: 10pt;
   font-family: 'Consolas';
   border-collapse: collapse;
   width: fit-content;
   font-style: italic;
-  margin:0px;
-  padding:0px;
+  margin: 0px;
+  padding: 0px;
   display: flex;
 }
 
@@ -241,50 +236,44 @@ button {
 }
 
 .top-bar-tab:hover {
-  background:#da5a11
+  background: #da5a11
 }
 
-.property-fullsize
-{
-  width:100%;
-  height:100%;
+.property-fullsize {
+  width: 100%;
+  height: 100%;
 }
 
-.property-fitcontent
-{
-  width:fit-content;
+.property-fitcontent {
+  width: fit-content;
 }
 
-.property-float-right
-{
+.property-float-right {
   float: right;
 }
 
-.sliding-pane-left{
+.sliding-pane-left {
   width: fit-content;
   z-index: 999;
   position: absolute;
   float: left;
-  top:10%;
-  left:0%;
+  top: 10%;
+  left: 0%;
 }
-.sliding-pane-right{
+
+.sliding-pane-right {
   width: fit-content;
   z-index: 999;
   position: absolute;
   float: right;
-  top:10%;
-  right:0%;
+  top: 10%;
+  right: 0%;
 }
 
-.chart-candlestick
-{
+.chart-candlestick {
   display: block;
 }
 
-.chart-bar
-{
+.chart-bar {
   display: block;
 }
-
-

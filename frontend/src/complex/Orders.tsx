@@ -14,6 +14,7 @@ interface OrdersProps {
     openPositions: any[][];
     handlers: {
         closeOrder: (type: string, name: string, id: number, volume: number) => void;
+        setId: (name: string) => void;
     };
 }
 
@@ -39,12 +40,16 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, openPositions, ha
     };
 
     const handleRowClick = (id: string, items: any[]) => {
-        setDialogData({
-            name: items[1],
-            id: items[0],
-            volume: items[6],
-            type: items[3],
-            state: true,
+        handlers.setId(items[1]);
+        setDialogData(prev => {
+            const visible = prev.id == items[0];
+            return {
+                ...prev, name: items[1],
+                id: items[0],
+                volume: items[6],
+                type: items[3],
+                state: visible
+            }
         });
     };
 
@@ -72,10 +77,10 @@ const Orders: React.FC<OrdersProps> = ({ customClass, headers, openPositions, ha
                 </DialogActions>
             </Dialog>
             <Table customClass={customClass}
-                    customHeaderClass="css-green-background"
-                    headers={headers}
-                    data={mapTerminalData(Object.values(openPositions).flat())}
-                    onRowClick={handleRowClick}
+                customHeaderClass="css-green-background"
+                headers={headers}
+                data={mapTerminalData(Object.values(openPositions).flat())}
+                onRowClick={handleRowClick}
             />
         </>
     );

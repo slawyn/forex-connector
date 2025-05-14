@@ -17,8 +17,12 @@ import Orders from "src/complex/Orders";
 import { randomIntFromInterval } from "src/utils"
 import Api from "src/Api"
 import { ControlPanel } from "src/complex/ControlPanel";
-import Dashboard  from "src/complex/Dashboard";
+import Dashboard from "src/complex/Dashboard";
 
+
+function checkIfNameInKeys(obj, name) {
+  return Object.keys(obj).includes(name);
+}
 
 function getFormattedData(timeMilliseconds) {
   return new Date(timeMilliseconds).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -27,10 +31,11 @@ function getFormattedData(timeMilliseconds) {
 const darkTheme = createTheme({ palette: { mode: 'dark' } });
 const THEME = "clsBorderless";
 const TIMESTAMP_MS_BASE = Date.parse('01/01/2023 00:00:00')
-const TIMEFRAMES = {"D1": 100,
-                    "H4": 50,
-                     "M20":50
-                  };
+const TIMEFRAMES = {
+  "D1": 100,
+  "H4": 50,
+  "M20": 50
+};
 
 class App extends Component {
   constructor(props) {
@@ -201,6 +206,19 @@ class App extends Component {
     }));
   };
 
+  setId = (id) => {
+    if (checkIfNameInKeys(this.state.terminalData.instruments, id)) {
+      this.fetchSymbolData(id);
+      this.setState((prevState) => ({
+        calculatorState: {
+          ...prevState.calculatorState,
+          instrument: id
+        },
+      }));
+      this.commander.setCommand({ instrument: id });
+    }
+  }
+
   getCurrentBrokerTime() {
     return Date.now() + this.state.timeoffset + this.simulation.timeoffset;
   }
@@ -229,7 +247,7 @@ class App extends Component {
               <button className={"css-blue-button"} onClick={() => this.fetchTerminalData(true)}>
                 [{this.KEY_GET_SYMBOLS}]etch Symbols
               </button>
-              <button className={"css-blue-button"} onClick={()=>this.togglePane('symbols')}>
+              <button className={"css-blue-button"} onClick={() => this.togglePane('symbols')}>
                 Show [{this.KEY_OC_SYMBOLS}]ymbols
               </button>
               <button className={"css-blue-button"} onClick={() => this.togglePane('orders')}>
@@ -260,18 +278,7 @@ class App extends Component {
                     headers={headers.terminalHeaders}
                     instruments={terminalData.instruments}
                     updates={terminalData.updates}
-                    handlers={{
-                      setId: (id) => {
-                        this.fetchSymbolData(id);
-                        this.setState((prevState) => ({
-                          calculatorState: {
-                            ...prevState.calculatorState,
-                            instrument: id
-                          },
-                        }));
-                        this.commander.setCommand({ instrument: id });
-                      },
-                    }}
+                    handlers={{ setId: this.setId }}
                   />
                 }
               />
@@ -282,7 +289,7 @@ class App extends Component {
                   <Orders
                     customClass={THEME}
                     headers={headers.openHeaders}
-                    handlers={{ closeOrder: this.handleCloseOrder }}
+                    handlers={{ closeOrder: this.handleCloseOrder, setId: this.setId }}
                     openPositions={terminalData.openPositions}
                   />
                 }
@@ -335,7 +342,7 @@ class App extends Component {
             </TabPanel>
             <TabPanel>
               <Dashboard></Dashboard>
-              </TabPanel>
+            </TabPanel>
           </Tabs>
         </ThemeProvider>
       </main>

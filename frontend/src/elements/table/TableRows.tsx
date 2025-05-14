@@ -18,7 +18,8 @@ const TableRows: React.FC<TableRowsProps> = ({ customClass, data, onRowClick }) 
         <tbody>
             {data.map(({ id, items, change }) => {
                 const wedgeIdx = items.length - 3;
-                const rowBackground = id === selectedId ? 'orange' : '';
+                const isSelected = id === selectedId;
+                const rowBackground = isSelected ? '#2d21ef' : '';
 
                 return (
                     <tr
@@ -30,7 +31,10 @@ const TableRows: React.FC<TableRowsProps> = ({ customClass, data, onRowClick }) 
                         {items.map((cellData, idx) => {
                             const isWedge = idx >= wedgeIdx;
                             const cellStyle = isWedge
-                                ? { color: change === 'positive' ? 'green' : change === 'negative' ? 'red' : '' }
+                                ? {
+                                    color: !isSelected ? (change === 'positive' ? 'green' : change === 'negative' ? 'red' : '') : '',
+                                    background: 'black',
+                                }
                                 : undefined;
 
                             return <td key={idx} style={cellStyle}>{cellData}</td>;
